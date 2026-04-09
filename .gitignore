@@ -1,6 +1,11 @@
 # Environment files
 backend/.env
 .env
+frontend/.env
+frontend/.env.local
+
+# Frontend dependencies
+frontend/node_modules/
 
 # Go binaries
 backend/bin/
