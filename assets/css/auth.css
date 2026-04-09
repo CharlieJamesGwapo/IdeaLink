@@ -1,0 +1,156 @@
+/* =============================================
+   AUTH PAGES - Login & Signup
+   ============================================= */
+
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated background elements */
+.auth-body::before,
+.auth-body::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.08;
+    animation: floatBg 8s ease-in-out infinite;
+}
+
+.auth-body::before {
+    width: 400px;
+    height: 400px;
+    background: var(--accent);
+    top: -100px;
+    right: -100px;
+}
+
+.auth-body::after {
+    width: 300px;
+    height: 300px;
+    background: var(--accent);
+    bottom: -80px;
+    left: -80px;
+    animation-delay: -4s;
+}
+
+@keyframes floatBg {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(30px, -20px) scale(1.05); }
+}
+
+.login-wrapper {
+    background: var(--glass-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 40px 35px;
+    width: 100%;
+    max-width: 420px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    z-index: 1;
+}
+
+.login-wrapper .logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-wrapper .logo-container .school-logo {
+    height: 70px;
+    width: auto;
+}
+
+.login-wrapper h2 {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+
+.login-wrapper h2 span {
+    color: var(--accent);
+}
+
+.login-wrapper .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 25px;
+}
+
+.login-wrapper .input-group {
+    margin-bottom: 18px;
+}
+
+.login-wrapper .btn-login {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: var(--primary-dark);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 5px;
+}
+
+.login-wrapper .btn-login:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+.login-wrapper .links {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+
+.login-wrapper .links a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-wrapper .links a:hover {
+    text-decoration: underline;
+}
+
+.login-wrapper .links p {
+    margin-bottom: 8px;
+}
+
+/* Signup page adjustments */
+.signup-body .login-wrapper {
+    margin: 40px auto;
+    max-width: 420px;
+}
+
+.signup-body {
+    height: auto;
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+@media (max-width: 480px) {
+    .login-wrapper {
+        padding: 30px 20px;
+    }
+
+    .login-wrapper h2 {
+        font-size: 1.4rem;
+    }
+}

@@ -1,0 +1,61 @@
+/* =============================================
+   USER PAGES
+   ============================================= */
+
+/* Main content wrapper for user pages */
+.user-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Quick stats row on dashboard */
+.quick-stats {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.quick-stat {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 15px 25px;
+    text-align: center;
+    min-width: 120px;
+    transition: var(--transition);
+}
+
+.quick-stat:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.quick-stat .stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.quick-stat .stat-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Submission table enhancements */
+.preview {
+    max-width: 900px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+}
+
+.preview h3 {
+    color: var(--accent);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}

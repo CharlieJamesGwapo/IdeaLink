@@ -1,0 +1,52 @@
+/* =============================================
+   ADMIN DASHBOARD
+   ============================================= */
+
+/* Announcement post form compact styling */
+.announce-form-card {
+    padding: 20px;
+}
+
+.announce-form-card h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.announce-form-card textarea {
+    min-height: 60px;
+}
+
+.announce-form-card .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+/* Toggle switch for testimonials */
+.toggle-status {
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition);
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.toggle-active {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.toggle-hidden {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.toggle-status:hover {
+    transform: translateY(-1px);
+}
