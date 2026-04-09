@@ -20,13 +20,14 @@ type SuggestionRepository interface {
 	FindByUserID(userID int) ([]*models.Suggestion, error)
 	FindByID(id int) (*models.Suggestion, error)
 	UpdateStatus(id int, status string) error
+	MarkAsRead(id int) error
 	GetAnalytics() (*models.Analytics, error)
 }
 
 type AnnouncementRepository interface {
 	FindAll() ([]*models.Announcement, error)
 	Create(adminID int, input models.CreateAnnouncementInput) (*models.Announcement, error)
-	Update(id int, input models.CreateAnnouncementInput) error
+	Update(id int, input models.UpdateAnnouncementInput) error
 	Delete(id int) error
 }
 

@@ -2,7 +2,7 @@
 package config
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -15,24 +15,32 @@ type Config struct {
 	FrontendURL string
 }
 
-func Load() *Config {
+func Load() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, reading env from OS")
+		// Not fatal — env vars can come from OS in production
+	}
+	databaseURL, err := requireEnv("DATABASE_URL")
+	if err != nil {
+		return nil, err
+	}
+	jwtSecret, err := requireEnv("JWT_SECRET")
+	if err != nil {
+		return nil, err
 	}
 	return &Config{
-		DatabaseURL: mustGet("DATABASE_URL"),
-		JWTSecret:   mustGet("JWT_SECRET"),
+		DatabaseURL: databaseURL,
+		JWTSecret:   jwtSecret,
 		Port:        getOr("PORT", "8080"),
 		FrontendURL: getOr("FRONTEND_URL", "http://localhost:5173"),
-	}
+	}, nil
 }
 
-func mustGet(key string) string {
+func requireEnv(key string) (string, error) {
 	v := os.Getenv(key)
 	if v == "" {
-		log.Fatalf("required env var %s is not set", key)
+		return "", fmt.Errorf("required environment variable %s is not set", key)
 	}
-	return v
+	return v, nil
 }
 
 func getOr(key, defaultVal string) string {

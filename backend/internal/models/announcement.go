@@ -15,3 +15,8 @@ type CreateAnnouncementInput struct {
 	Title   string `json:"title" binding:"required"`
 	Message string `json:"message" binding:"required"`
 }
+
+type UpdateAnnouncementInput struct {
+	Title   string `json:"title" binding:"required"`
+	Message string `json:"message" binding:"required"`
+}

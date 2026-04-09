@@ -3,12 +3,10 @@ package config
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"runtime"
+	"time"
 
+	"idealink/internal/migrations"
 	_ "github.com/lib/pq"
 )
 
@@ -17,6 +15,9 @@ func ConnectDB(databaseURL string) *sql.DB {
 	if err != nil {
 		log.Fatalf("failed to open DB: %v", err)
 	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
 	if err := db.Ping(); err != nil {
 		log.Fatalf("failed to ping DB: %v", err)
 	}
@@ -25,15 +26,8 @@ func ConnectDB(databaseURL string) *sql.DB {
 }
 
 func runMigrations(db *sql.DB) {
-	_, filename, _, _ := runtime.Caller(0)
-	// navigate from internal/config/ to internal/migrations/
-	migrationPath := filepath.Join(filepath.Dir(filename), "..", "migrations", "001_initial.sql")
-	content, err := os.ReadFile(migrationPath)
-	if err != nil {
-		log.Fatalf("failed to read migration: %v", err)
-	}
-	if _, err := db.Exec(string(content)); err != nil {
+	if _, err := db.Exec(migrations.InitialSQL); err != nil {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
-	fmt.Println("Migrations applied")
+	log.Println("Migrations applied")
 }

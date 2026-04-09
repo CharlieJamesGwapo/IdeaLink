@@ -7,7 +7,7 @@ type Suggestion struct {
 	ID            int       `json:"id"`
 	UserID        int       `json:"user_id"`
 	Department    string    `json:"department"`
-	UserRole      string    `json:"user_role"`
+	UserRole      *string   `json:"user_role,omitempty"`
 	Title         string    `json:"title"`
 	Description   string    `json:"description"`
 	Status        string    `json:"status"`
