@@ -1,0 +1,65 @@
+export interface User {
+  id: number
+  email: string
+  fullname: string
+  last_announcement_view: string
+  created_at: string
+}
+
+export interface AdminAccount {
+  id: number
+  email: string
+  fullname: string
+}
+
+export interface StaffAccount {
+  id: number
+  username: string
+}
+
+export type AuthUser =
+  | { role: 'user'; data: User }
+  | { role: 'admin'; data: AdminAccount }
+  | { role: 'registrar'; data: StaffAccount }
+  | { role: 'accounting'; data: StaffAccount }
+
+export interface Suggestion {
+  id: number
+  user_id: number
+  department: string
+  user_role: string
+  title: string
+  description: string
+  status: 'Pending' | 'Reviewed'
+  anonymous: boolean
+  is_read: boolean
+  submitted_at: string
+  submitter_name?: string
+}
+
+export interface Announcement {
+  id: number
+  admin_id: number
+  title: string
+  message: string
+  date_posted: string
+}
+
+export interface Testimonial {
+  id: number
+  suggestion_id: number | null
+  name: string
+  department: string
+  message: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface Analytics {
+  total_users: number
+  total_suggestions: number
+  this_month_suggestions: number
+  unread_suggestions: number
+  student_count: number
+  faculty_count: number
+}
