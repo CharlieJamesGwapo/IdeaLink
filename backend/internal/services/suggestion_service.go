@@ -8,16 +8,14 @@ import (
 
 type SuggestionService struct {
 	repo     repository.SuggestionRepository
-	userRepo repository.UserRepository
 	testRepo repository.TestimonialRepository
 }
 
 func NewSuggestionService(
 	repo repository.SuggestionRepository,
-	userRepo repository.UserRepository,
 	testRepo repository.TestimonialRepository,
 ) *SuggestionService {
-	return &SuggestionService{repo: repo, userRepo: userRepo, testRepo: testRepo}
+	return &SuggestionService{repo: repo, testRepo: testRepo}
 }
 
 func (s *SuggestionService) Submit(userID int, input models.CreateSuggestionInput) (*models.Suggestion, error) {
@@ -44,7 +42,11 @@ func (s *SuggestionService) UpdateStatus(id int, status string) error {
 	if status != "Pending" && status != "Reviewed" {
 		return errors.New("status must be 'Pending' or 'Reviewed'")
 	}
-	return s.repo.UpdateStatus(id, status)
+	if err := s.repo.UpdateStatus(id, status); err != nil {
+		return err
+	}
+	// Mark as read when status is explicitly updated by staff
+	return s.repo.MarkAsRead(id)
 }
 
 func (s *SuggestionService) Feature(suggestionID int) (*models.Testimonial, error) {

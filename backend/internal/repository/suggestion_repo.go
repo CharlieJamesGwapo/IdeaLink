@@ -135,14 +135,13 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	var a models.Analytics
 	err := r.db.QueryRow(`
 		SELECT
-			(SELECT COUNT(*) FROM users),
 			COUNT(*),
 			COUNT(*) FILTER (WHERE submitted_at >= DATE_TRUNC('month', NOW())),
 			COUNT(*) FILTER (WHERE is_read = false),
 			COUNT(*) FILTER (WHERE user_role = 'Student'),
 			COUNT(*) FILTER (WHERE user_role = 'Faculty Staff')
 		FROM suggestions
-	`).Scan(&a.TotalUsers, &a.TotalSuggestions, &a.ThisMonthSuggestions,
+	`).Scan(&a.TotalSuggestions, &a.ThisMonthSuggestions,
 		&a.UnreadSuggestions, &a.StudentCount, &a.FacultyCount)
 	return &a, err
 }

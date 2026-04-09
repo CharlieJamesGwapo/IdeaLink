@@ -30,7 +30,7 @@ func main() {
 	authSvc := services.NewAuthService(userRepo, cfg.JWTSecret)
 	announcementSvc := services.NewAnnouncementService(announcementRepo)
 	testimonialSvc := services.NewTestimonialService(testimonialRepo)
-	suggestionSvc := services.NewSuggestionService(suggestionRepo, userRepo, testimonialRepo)
+	suggestionSvc := services.NewSuggestionService(suggestionRepo, testimonialRepo)
 
 	// Handlers
 	authH := handlers.NewAuthHandler(authSvc)
