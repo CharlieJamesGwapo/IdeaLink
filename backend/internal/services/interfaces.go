@@ -1,0 +1,17 @@
+// backend/internal/services/interfaces.go
+package services
+
+import "idealink/internal/models"
+
+// AuthServicer defines the auth operations used by handlers.
+type AuthServicer interface {
+	SignToken(userID int, role string) (string, error)
+	ParseToken(tokenStr string) (*Claims, error)
+	HashPassword(password string) (string, error)
+	CheckPassword(hash, password string) bool
+	SignupUser(email, password, fullname string) (*models.User, string, error)
+	LoginUser(email, password string) (*models.User, string, error)
+	LoginAdmin(email, password string) (*models.AdminAccount, string, error)
+	LoginRegistrar(username, password string) (*models.RegistrarAccount, string, error)
+	LoginAccounting(username, password string) (*models.AccountingAccount, string, error)
+}

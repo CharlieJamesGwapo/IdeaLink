@@ -3,6 +3,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"idealink/internal/models"
@@ -10,6 +11,13 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+)
+
+const (
+	RoleUser       = "user"
+	RoleAdmin      = "admin"
+	RoleRegistrar  = "registrar"
+	RoleAccounting = "accounting"
 )
 
 type Claims struct {
@@ -32,6 +40,7 @@ func (s *AuthService) SignToken(userID int, role string) (string, error) {
 		UserID: userID,
 		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
@@ -40,6 +49,9 @@ func (s *AuthService) SignToken(userID int, role string) (string, error) {
 
 func (s *AuthService) ParseToken(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
 		return []byte(s.jwtSecret), nil
 	})
 	if err != nil || !token.Valid {
@@ -73,7 +85,7 @@ func (s *AuthService) SignupUser(email, password, fullname string) (*models.User
 	if err != nil {
 		return nil, "", err
 	}
-	token, err := s.SignToken(user.ID, "user")
+	token, err := s.SignToken(user.ID, RoleUser)
 	return user, token, err
 }
 
@@ -82,10 +94,15 @@ func (s *AuthService) LoginUser(email, password string) (*models.User, string, e
 	if err != nil {
 		return nil, "", err
 	}
-	if user == nil || !s.CheckPassword(user.Password, password) {
+	if user == nil {
+		// Dummy comparison to prevent timing-based email enumeration
+		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}
-	token, err := s.SignToken(user.ID, "user")
+	if !s.CheckPassword(user.Password, password) {
+		return nil, "", errors.New("invalid credentials")
+	}
+	token, err := s.SignToken(user.ID, RoleUser)
 	return user, token, err
 }
 
@@ -94,10 +111,15 @@ func (s *AuthService) LoginAdmin(email, password string) (*models.AdminAccount, 
 	if err != nil {
 		return nil, "", err
 	}
-	if admin == nil || !s.CheckPassword(admin.Password, password) {
+	if admin == nil {
+		// Dummy comparison to prevent timing-based email enumeration
+		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}
-	token, err := s.SignToken(admin.ID, "admin")
+	if !s.CheckPassword(admin.Password, password) {
+		return nil, "", errors.New("invalid credentials")
+	}
+	token, err := s.SignToken(admin.ID, RoleAdmin)
 	return admin, token, err
 }
 
@@ -106,10 +128,15 @@ func (s *AuthService) LoginRegistrar(username, password string) (*models.Registr
 	if err != nil {
 		return nil, "", err
 	}
-	if reg == nil || !s.CheckPassword(reg.Password, password) {
+	if reg == nil {
+		// Dummy comparison to prevent timing-based username enumeration
+		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}
-	token, err := s.SignToken(reg.ID, "registrar")
+	if !s.CheckPassword(reg.Password, password) {
+		return nil, "", errors.New("invalid credentials")
+	}
+	token, err := s.SignToken(reg.ID, RoleRegistrar)
 	return reg, token, err
 }
 
@@ -118,9 +145,14 @@ func (s *AuthService) LoginAccounting(username, password string) (*models.Accoun
 	if err != nil {
 		return nil, "", err
 	}
-	if acc == nil || !s.CheckPassword(acc.Password, password) {
+	if acc == nil {
+		// Dummy comparison to prevent timing-based username enumeration
+		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}
-	token, err := s.SignToken(acc.ID, "accounting")
+	if !s.CheckPassword(acc.Password, password) {
+		return nil, "", errors.New("invalid credentials")
+	}
+	token, err := s.SignToken(acc.ID, RoleAccounting)
 	return acc, token, err
 }
