@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Calendar, Megaphone } from 'lucide-react'
 import { useAnnouncements } from '../../hooks/useAnnouncements'
 import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../api/announcements'
 import { Button } from '../../components/ui/Button'
@@ -37,47 +37,70 @@ export function AdminAnnouncements() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-white">Announcements</h1>
-        <Button size="sm" onClick={openCreate}><Plus size={16} className="mr-1" /> New</Button>
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Announcements</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage school-wide announcements</p>
+        </div>
+        <Button onClick={openCreate}>
+          <Plus size={16} /> New Announcement
+        </Button>
       </div>
+
       {isLoading ? (
-        <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
+        <div className="space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-2xl" />)}</div>
       ) : announcements.length === 0 ? (
-        <p className="text-gray-500 text-center py-12">No announcements yet.</p>
+        <div className="text-center py-20 glass rounded-2xl">
+          <Megaphone size={36} className="text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400 font-medium">No announcements yet</p>
+          <p className="text-gray-600 text-sm mt-1">Create your first announcement</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {announcements.map((a) => (
-            <div key={a.id} className="bg-navy rounded-xl p-4 border border-navy-light flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-medium text-white text-sm">{a.title}</h3>
-                <p className="text-gray-400 text-sm mt-1 line-clamp-2">{a.message}</p>
-                <p className="text-gray-600 text-xs mt-1">{new Date(a.date_posted).toLocaleDateString()}</p>
-              </div>
-              <div className="flex gap-2 flex-shrink-0">
-                <Button size="sm" variant="ghost" onClick={() => openEdit(a)}><Pencil size={14} /></Button>
-                <Button size="sm" variant="danger" onClick={() => handleDelete(a.id)}><Trash2 size={14} /></Button>
+            <div key={a.id} className="glass rounded-2xl p-5 hover:border-accent/20 transition-all duration-200 group">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Megaphone size={18} className="text-accent" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white text-sm">{a.title}</h3>
+                    <p className="text-gray-400 text-sm mt-1 line-clamp-2 leading-relaxed">{a.message}</p>
+                    <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-600">
+                      <Calendar size={11} />
+                      {new Date(a.date_posted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <Button size="sm" variant="ghost" onClick={() => openEdit(a)}><Pencil size={14} /></Button>
+                  <Button size="sm" variant="danger" onClick={() => handleDelete(a.id)}><Trash2 size={14} /></Button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editing ? 'Edit Announcement' : 'New Announcement'}>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Title</label>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Title</label>
             <input value={title} onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-navy-dark border border-navy-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent" />
+              placeholder="Announcement title..."
+              className="input-field" />
           </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Message</label>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4}
-              className="w-full bg-navy-dark border border-navy-light rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent resize-none" />
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Message</label>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={5}
+              placeholder="Write your announcement..."
+              className="input-field resize-none leading-relaxed" />
           </div>
-          <div className="flex gap-2 justify-end">
+          <div className="flex gap-2 justify-end pt-1">
             <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button isLoading={isSaving} onClick={handleSave}>Save</Button>
+            <Button isLoading={isSaving} onClick={handleSave}>Save Announcement</Button>
           </div>
         </div>
       </Modal>

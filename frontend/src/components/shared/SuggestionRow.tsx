@@ -11,32 +11,26 @@ interface Props {
 }
 
 export function SuggestionRow({ suggestion, showActions, showFeature, onStatusChange, onFeature }: Props) {
-  const date = new Date(suggestion.submitted_at).toLocaleDateString()
+  const date = new Date(suggestion.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   const name = suggestion.anonymous ? 'Anonymous' : (suggestion.submitter_name ?? 'Unknown')
 
   return (
-    <tr className="border-b border-navy-light hover:bg-navy-light/50 transition-colors">
-      <td className="px-4 py-3 text-sm text-white font-medium">{suggestion.title}</td>
-      <td className="px-4 py-3 text-sm text-gray-400">{suggestion.department}</td>
-      <td className="px-4 py-3 text-sm text-gray-400">{name}</td>
-      <td className="px-4 py-3 text-sm text-gray-400">{date}</td>
-      <td className="px-4 py-3">
-        <Badge status={suggestion.status} />
+    <tr className="border-b border-navy-light/50 hover:bg-accent/5 transition-colors group">
+      <td className="px-4 py-3.5 text-sm text-white font-medium max-w-[200px] truncate">{suggestion.title}</td>
+      <td className="px-4 py-3.5 hidden sm:table-cell">
+        <span className="text-xs px-2 py-1 rounded-lg bg-navy-dark text-gray-400">{suggestion.department}</span>
       </td>
+      <td className="px-4 py-3.5 text-sm text-gray-400 hidden md:table-cell">{name}</td>
+      <td className="px-4 py-3.5 text-xs text-gray-500 hidden lg:table-cell">{date}</td>
+      <td className="px-4 py-3.5"><Badge status={suggestion.status} /></td>
       {showActions && (
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => onStatusChange?.(suggestion.id, suggestion.status === 'Pending' ? 'Reviewed' : 'Pending')}
-            >
-              {suggestion.status === 'Pending' ? 'Mark Reviewed' : 'Mark Pending'}
+        <td className="px-4 py-3.5">
+          <div className="flex items-center gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+            <Button size="sm" variant="secondary" onClick={() => onStatusChange?.(suggestion.id, suggestion.status === 'Pending' ? 'Reviewed' : 'Pending')}>
+              {suggestion.status === 'Pending' ? 'Reviewed' : 'Pending'}
             </Button>
             {showFeature && (
-              <Button size="sm" variant="ghost" onClick={() => onFeature?.(suggestion.id)}>
-                Feature
-              </Button>
+              <Button size="sm" variant="outline" onClick={() => onFeature?.(suggestion.id)}>Feature</Button>
             )}
           </div>
         </td>

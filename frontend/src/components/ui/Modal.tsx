@@ -19,12 +19,12 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative bg-navy-light rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative glass rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6 animate-fade-in border border-accent/10">
+        <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            <X size={20} />
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1 rounded-lg hover:bg-navy-light">
+            <X size={18} />
           </button>
         </div>
         {children}
