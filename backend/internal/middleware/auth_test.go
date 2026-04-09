@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"idealink/internal/middleware"
+	"idealink/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -30,20 +31,20 @@ func setupRouter(secret string, roles ...string) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	r.GET("/protected", middleware.AuthRequired(secret, roles...), func(c *gin.Context) {
-		userID, _ := c.Get("userID")
-		role, _ := c.Get("role")
+		userID, _ := c.Get(middleware.CtxKeyUserID)
+		role, _ := c.Get(middleware.CtxKeyRole)
 		c.JSON(200, gin.H{"user_id": userID, "role": role})
 	})
 	return r
 }
 
 func TestAuthRequired_ValidToken(t *testing.T) {
-	r := setupRouter(testSecret, "user", "admin")
+	r := setupRouter(testSecret, services.RoleUser, services.RoleAdmin)
 	token := makeToken(5, "user", testSecret)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: token})
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
@@ -51,7 +52,7 @@ func TestAuthRequired_ValidToken(t *testing.T) {
 }
 
 func TestAuthRequired_MissingToken(t *testing.T) {
-	r := setupRouter(testSecret, "user")
+	r := setupRouter(testSecret, services.RoleUser)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
 	r.ServeHTTP(w, req)
@@ -59,12 +60,12 @@ func TestAuthRequired_MissingToken(t *testing.T) {
 }
 
 func TestAuthRequired_WrongRole(t *testing.T) {
-	r := setupRouter(testSecret, "admin")
+	r := setupRouter(testSecret, services.RoleAdmin)
 	token := makeToken(5, "user", testSecret)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: token})
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 403, w.Code)
@@ -79,10 +80,10 @@ func TestAuthRequired_ExpiredToken(t *testing.T) {
 	}
 	token, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(testSecret))
 
-	r := setupRouter(testSecret, "user")
+	r := setupRouter(testSecret, services.RoleUser)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: token})
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 401, w.Code)
@@ -91,10 +92,10 @@ func TestAuthRequired_ExpiredToken(t *testing.T) {
 func TestAuthRequired_WrongSecret(t *testing.T) {
 	token := makeToken(5, "user", "wrong-secret")
 
-	r := setupRouter(testSecret, "user")
+	r := setupRouter(testSecret, services.RoleUser)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: token})
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 401, w.Code)
@@ -107,7 +108,7 @@ func TestAuthRequired_NoRoleRestriction(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "token", Value: token})
+	req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: token})
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)

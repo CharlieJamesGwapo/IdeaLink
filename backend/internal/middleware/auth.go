@@ -4,19 +4,30 @@ import (
 	"fmt"
 	"net/http"
 
+	"idealink/internal/services"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// AuthCookieName is the httpOnly cookie used to carry the JWT.
+const AuthCookieName = "token"
+
+// Context keys set by AuthRequired for downstream handlers.
+const (
+	CtxKeyUserID = "userID"
+	CtxKeyRole   = "role"
+)
+
 func AuthRequired(jwtSecret string, roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cookie, err := c.Cookie("token")
+		cookie, err := c.Cookie(AuthCookieName)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			return
 		}
 
-		token, err := jwt.Parse(cookie, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(cookie, &services.Claims{}, func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
@@ -27,15 +38,14 @@ func AuthRequired(jwtSecret string, roles ...string) gin.HandlerFunc {
 			return
 		}
 
-		claims, ok := token.Claims.(jwt.MapClaims)
+		claims, ok := token.Claims.(*services.Claims)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid claims"})
 			return
 		}
 
-		role, _ := claims["role"].(string)
-		userIDFloat, _ := claims["user_id"].(float64)
-		userID := int(userIDFloat)
+		role := claims.Role
+		userID := claims.UserID
 
 		if len(roles) > 0 {
 			allowed := false
@@ -51,8 +61,8 @@ func AuthRequired(jwtSecret string, roles ...string) gin.HandlerFunc {
 			}
 		}
 
-		c.Set("userID", userID)
-		c.Set("role", role)
+		c.Set(CtxKeyUserID, userID)
+		c.Set(CtxKeyRole, role)
 		c.Next()
 	}
 }
