@@ -8,7 +8,7 @@ backend/bin/
 *.out
 
 # Go test cache
-*.test
+backend/**/*.test
 
 # OS
 .DS_Store
