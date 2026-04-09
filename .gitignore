@@ -1,0 +1,15 @@
+# Environment files
+backend/.env
+.env
+
+# Go binaries
+backend/bin/
+*.exe
+*.out
+
+# Go test cache
+*.test
+
+# OS
+.DS_Store
+Thumbs.db
