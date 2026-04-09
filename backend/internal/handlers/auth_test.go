@@ -219,7 +219,11 @@ func TestAuthHandler_Logout(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/logout", nil)
 	r.ServeHTTP(w, req)
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, 200, w.Code)
+	// Verify cookie is cleared with SameSite=None for cross-origin compatibility
+	setCookie := w.Header().Get("Set-Cookie")
+	assert.Contains(t, setCookie, middleware.AuthCookieName)
+	assert.Contains(t, setCookie, "SameSite=None")
 }
 
 func TestAuthHandler_Me(t *testing.T) {
@@ -233,4 +237,49 @@ func TestAuthHandler_Me(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	assert.Equal(t, float64(1), resp["user_id"])
 	assert.Equal(t, services.RoleUser, resp["role"])
+}
+
+func TestAuthHandler_AdminLogin_InvalidCredentials(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	svc := &mockAuthSvc{loginErr: errors.New("invalid credentials")}
+	h := handlers.NewAuthHandler(svc)
+	r := gin.New()
+	r.POST("/api/auth/admin/login", h.AdminLogin)
+
+	body := `{"email":"bad@admin.com","password":"wrong"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/admin/login", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 401, w.Code)
+}
+
+func TestAuthHandler_RegistrarLogin_InvalidCredentials(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	svc := &mockAuthSvc{loginErr: errors.New("invalid credentials")}
+	h := handlers.NewAuthHandler(svc)
+	r := gin.New()
+	r.POST("/api/auth/registrar/login", h.RegistrarLogin)
+
+	body := `{"username":"baduser","password":"wrong"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/registrar/login", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 401, w.Code)
+}
+
+func TestAuthHandler_AccountingLogin_InvalidCredentials(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	svc := &mockAuthSvc{loginErr: errors.New("invalid credentials")}
+	h := handlers.NewAuthHandler(svc)
+	r := gin.New()
+	r.POST("/api/auth/accounting/login", h.AccountingLogin)
+
+	body := `{"username":"baduser","password":"wrong"}`
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/accounting/login", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, 401, w.Code)
 }
