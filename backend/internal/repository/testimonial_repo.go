@@ -25,13 +25,20 @@ func (r *TestimonialRepo) FindActive() ([]*models.Testimonial, error) {
 	}
 	defer rows.Close()
 
-	var list []*models.Testimonial
+	list := make([]*models.Testimonial, 0)
 	for rows.Next() {
 		var t models.Testimonial
-		if err := rows.Scan(&t.ID, &t.SuggestionID, &t.Name, &t.Department,
+		var sid sql.NullInt64
+		var dept sql.NullString
+		if err := rows.Scan(&t.ID, &sid, &t.Name, &dept,
 			&t.Message, &t.IsActive, &t.CreatedAt); err != nil {
 			return nil, err
 		}
+		if sid.Valid {
+			v := int(sid.Int64)
+			t.SuggestionID = &v
+		}
+		t.Department = dept.String
 		list = append(list, &t)
 	}
 	return list, rows.Err()
@@ -39,24 +46,44 @@ func (r *TestimonialRepo) FindActive() ([]*models.Testimonial, error) {
 
 func (r *TestimonialRepo) Create(suggestionID int, name, department, message string) (*models.Testimonial, error) {
 	var t models.Testimonial
+	var sid sql.NullInt64
+	var dept sql.NullString
 	err := r.db.QueryRow(
 		`INSERT INTO testimonials (suggestion_id, name, department, message)
 		 VALUES ($1, $2, $3, $4)
 		 RETURNING id, suggestion_id, name, department, message, is_active, created_at`,
 		suggestionID, name, department, message,
-	).Scan(&t.ID, &t.SuggestionID, &t.Name, &t.Department, &t.Message, &t.IsActive, &t.CreatedAt)
-	return &t, err
+	).Scan(&t.ID, &sid, &t.Name, &dept, &t.Message, &t.IsActive, &t.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	if sid.Valid {
+		v := int(sid.Int64)
+		t.SuggestionID = &v
+	}
+	t.Department = dept.String
+	return &t, nil
 }
 
 func (r *TestimonialRepo) ToggleActive(id int) (*models.Testimonial, error) {
 	var t models.Testimonial
+	var sid sql.NullInt64
+	var dept sql.NullString
 	err := r.db.QueryRow(
 		`UPDATE testimonials SET is_active = NOT is_active WHERE id = $1
 		 RETURNING id, suggestion_id, name, department, message, is_active, created_at`,
 		id,
-	).Scan(&t.ID, &t.SuggestionID, &t.Name, &t.Department, &t.Message, &t.IsActive, &t.CreatedAt)
+	).Scan(&t.ID, &sid, &t.Name, &dept, &t.Message, &t.IsActive, &t.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
-	return &t, err
+	if err != nil {
+		return nil, err
+	}
+	if sid.Valid {
+		v := int(sid.Int64)
+		t.SuggestionID = &v
+	}
+	t.Department = dept.String
+	return &t, nil
 }

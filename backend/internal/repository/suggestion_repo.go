@@ -19,7 +19,7 @@ const selectSuggestions = `
 	SELECT s.id, s.user_id, s.department, s.user_role, s.title, s.description,
 	       s.status, s.anonymous, s.is_read, s.submitted_at, u.fullname
 	FROM suggestions s
-	LEFT JOIN users u ON s.user_id = u.id`
+	LEFT JOIN users u ON s.user_id = u.id `
 
 func (r *SuggestionRepo) scanRows(rows *sql.Rows) ([]*models.Suggestion, error) {
 	var suggestions []*models.Suggestion
@@ -135,13 +135,14 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	var a models.Analytics
 	err := r.db.QueryRow(`
 		SELECT
+			(SELECT COUNT(*) FROM users),
 			COUNT(*),
 			COUNT(*) FILTER (WHERE submitted_at >= DATE_TRUNC('month', NOW())),
 			COUNT(*) FILTER (WHERE is_read = false),
 			COUNT(*) FILTER (WHERE user_role = 'Student'),
 			COUNT(*) FILTER (WHERE user_role = 'Faculty Staff')
 		FROM suggestions
-	`).Scan(&a.TotalSuggestions, &a.ThisMonthSuggestions,
+	`).Scan(&a.TotalUsers, &a.TotalSuggestions, &a.ThisMonthSuggestions,
 		&a.UnreadSuggestions, &a.StudentCount, &a.FacultyCount)
 	return &a, err
 }

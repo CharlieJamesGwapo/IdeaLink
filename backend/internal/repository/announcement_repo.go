@@ -25,7 +25,7 @@ func (r *AnnouncementRepo) FindAll() ([]*models.Announcement, error) {
 	}
 	defer rows.Close()
 
-	var list []*models.Announcement
+	list := make([]*models.Announcement, 0)
 	for rows.Next() {
 		var a models.Announcement
 		if err := rows.Scan(&a.ID, &a.AdminID, &a.Title, &a.Message, &a.DatePosted); err != nil {
@@ -48,14 +48,34 @@ func (r *AnnouncementRepo) Create(adminID int, input models.CreateAnnouncementIn
 }
 
 func (r *AnnouncementRepo) Update(id int, input models.UpdateAnnouncementInput) error {
-	_, err := r.db.Exec(
+	res, err := r.db.Exec(
 		`UPDATE announcements SET title = $1, message = $2 WHERE id = $3`,
 		input.Title, input.Message, id,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (r *AnnouncementRepo) Delete(id int) error {
-	_, err := r.db.Exec(`DELETE FROM announcements WHERE id = $1`, id)
-	return err
+	res, err := r.db.Exec(`DELETE FROM announcements WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
 }
