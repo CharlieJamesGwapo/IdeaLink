@@ -41,11 +41,11 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-16px); }
+  from { opacity: 0; transform: translateY(-20px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideInLeft {
@@ -80,42 +80,21 @@ body {
   0%   { transform: scale(0.8); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
 }
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
-@keyframes skeleton-shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
 
-.animate-fade-in       { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; will-change: opacity, transform; }
-.animate-fade-in-down  { animation: fadeInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-fade-in       { animation: fadeIn 0.6s ease forwards; }
+.animate-fade-in-down  { animation: fadeInDown 0.5s ease forwards; }
 .animate-slide-in-left { animation: slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-slide-in-right { animation: slideInRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-.animate-scale-in      { animation: scaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-float         { animation: float 4s ease-in-out infinite; }
 .animate-glow          { animation: glow 3s ease-in-out infinite; }
 .animate-pulse-ring    { animation: pulse-ring 1.5s ease-out infinite; }
 
 /* Staggered fade-in helpers */
-.stagger-1 { animation-delay: 0.05s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-2 { animation-delay: 0.10s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-3 { animation-delay: 0.15s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-4 { animation-delay: 0.20s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-5 { animation-delay: 0.25s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-6 { animation-delay: 0.30s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-7 { animation-delay: 0.35s; opacity: 0; animation-fill-mode: forwards; }
-.stagger-8 { animation-delay: 0.40s; opacity: 0; animation-fill-mode: forwards; }
-
-/* Respect user's motion preference */
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+.stagger-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-4 { animation-delay: 0.4s; opacity: 0; animation-fill-mode: forwards; }
+.stagger-5 { animation-delay: 0.5s; opacity: 0; animation-fill-mode: forwards; }
 
 /* ASCB gradient text */
 .gradient-text {
@@ -149,46 +128,17 @@ body {
   border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* Input field — in @layer components so Tailwind utilities (pl-10, pr-11, etc.) take precedence */
-@layer components {
-  .input-field {
-    @apply w-full rounded-xl px-4 py-3 text-white text-sm transition-all duration-200 focus:outline-none;
-    font-family: var(--font-ui);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color-scheme: dark;
-  }
-  .input-field::placeholder {
-    color: rgba(156, 163, 175, 0.55);
-  }
-  .input-field:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.26);
-  }
-  .input-field:focus {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--color-ascb-orange);
-    box-shadow: 0 0 0 3px rgba(244, 124, 32, 0.18);
-  }
-  /* Native select options — color-scheme: dark makes them readable on all platforms */
-  .input-field option {
-    background: #0D1F3C;
-    color: #ffffff;
-  }
+/* Input field */
+.input-field {
+  @apply w-full bg-ascb-navy-mid/60 border border-ascb-navy-mid rounded-xl px-4 py-3 text-white text-sm
+         placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-ascb-orange focus:border-transparent
+         transition-all duration-200 font-ui;
 }
 
 /* Stat card */
 .stat-card {
-  @apply bg-ascb-navy rounded-2xl p-6 border border-ascb-navy-mid transition-all duration-200
-         hover:border-ascb-orange/30 hover:shadow-lg hover:shadow-ascb-orange/8 hover:-translate-y-0.5
-         cursor-default select-none;
-}
-
-/* Interactive card — for clickable cards */
-.card-interactive {
-  @apply transition-all duration-200 cursor-pointer
-         hover:border-ascb-orange/25 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20
-         active:scale-[0.99] active:translate-y-0;
+  @apply bg-ascb-navy rounded-2xl p-6 border border-ascb-navy-mid transition-all duration-300
+         hover:border-ascb-orange/40 hover:shadow-lg hover:shadow-ascb-orange/10 hover:-translate-y-1;
 }
 
 /* Orange button */
@@ -228,41 +178,3 @@ body {
 .font-display { font-family: var(--font-display); }
 .font-body    { font-family: var(--font-body); }
 .font-ui      { font-family: var(--font-ui); }
-
-/* Skeleton shimmer */
-.skeleton {
-  border-radius: 0.75rem;
-  background: linear-gradient(
-    90deg,
-    rgba(36, 58, 94, 0.7) 0px,
-    rgba(55, 80, 120, 0.8) 200px,
-    rgba(36, 58, 94, 0.7) 400px
-  );
-  background-size: 800px 100%;
-  animation: skeleton-shimmer 1.4s ease-in-out infinite;
-}
-
-/* Safe area padding for iOS notch/home bar */
-.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
-.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
-
-/* Smooth tap highlight removal on mobile */
-* { -webkit-tap-highlight-color: transparent; }
-
-/* Touch targets — minimum 44px for accessibility */
-button, a, [role="button"] { touch-action: manipulation; }
-
-/* Hide scrollbar for overflow containers that shouldn't show it (sidebar nav, etc.) */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Smooth transitions for interactive elements */
-button, a, input, select, textarea {
-  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Focus ring style — consistent orange ring across all form controls */
-input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
-  outline: 2px solid rgba(244, 124, 32, 0.6);
-  outline-offset: 2px;
-}
