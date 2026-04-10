@@ -38,6 +38,10 @@ export function SignupPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!fullname.trim()) { toast.error('Please enter your full name'); return }
+    if (!email.trim()) { toast.error('Please enter your email address'); return }
+    if (!password.trim()) { toast.error('Please enter a password'); return }
+    if (password.length < 6) { toast.error('Password must be at least 6 characters'); return }
     setIsLoading(true)
     try {
       const res = await signup(email, password, fullname)
@@ -164,7 +168,7 @@ export function SignupPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {/* Full Name */}
             <div className="space-y-1.5">
               <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">
@@ -180,7 +184,6 @@ export function SignupPage() {
                   onChange={e => setFullname(e.target.value)}
                   onFocus={() => setFocused('name')}
                   onBlur={() => setFocused(null)}
-                  required
                   placeholder="Juan dela Cruz"
                   className="input-field pl-11 h-[50px] text-sm"
                   autoComplete="name"
@@ -203,7 +206,6 @@ export function SignupPage() {
                   onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
-                  required
                   placeholder="you@ascb.edu.ph"
                   className="input-field pl-11 h-[50px] text-sm"
                   autoComplete="email"
@@ -226,8 +228,6 @@ export function SignupPage() {
                   onChange={e => setPassword(e.target.value)}
                   onFocus={() => setFocused('pw')}
                   onBlur={() => setFocused(null)}
-                  required
-                  minLength={6}
                   placeholder="At least 6 characters"
                   className="input-field pl-11 pr-12 h-[50px] text-sm"
                   autoComplete="new-password"
