@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, Home } from 'lucide-react'
 import { login } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -93,6 +93,10 @@ export function StudentLoginPage() {
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center relative p-6 lg:p-10">
+        {/* Home button */}
+        <Link to="/" className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.10] hover:border-white/15 transition-all duration-200 text-xs font-ui z-10">
+          <Home size={13} /> Home
+        </Link>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
             style={{ background: 'radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 70%)' }} />
@@ -109,25 +113,25 @@ export function StudentLoginPage() {
 
           <div className="mb-8">
             <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Welcome back</h2>
-            <p className="text-gray-500 text-sm font-body mt-1.5">Sign in to your student account</p>
+            <p className="text-gray-500 text-sm font-body mt-1.5">Sign in with your registered email address</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">Email Address</label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Email Address</label>
               <div className="relative">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-500'}`}>
                   <Mail size={15} />
                 </div>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
-                  placeholder="student@ascb.edu.ph"
+                  placeholder="Enter your email"
                   className="input-field pl-11 h-[50px] text-sm" autoComplete="email" />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">Password</label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
               <div className="relative">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Lock size={15} />

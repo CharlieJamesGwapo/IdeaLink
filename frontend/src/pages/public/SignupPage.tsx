@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2, Sparkles } from 'lucide-react'
+import { User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2, Sparkles, Home } from 'lucide-react'
 import { signup } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -139,6 +139,10 @@ export function SignupPage() {
 
       {/* ── RIGHT PANEL — Signup Form ─────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center relative p-6 lg:p-10">
+        {/* Home button */}
+        <Link to="/" className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.10] hover:border-white/15 transition-all duration-200 text-xs font-ui z-10">
+          <Home size={13} /> Home
+        </Link>
         {/* Ambient glow */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
@@ -171,9 +175,7 @@ export function SignupPage() {
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {/* Full Name */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">
-                Full Name
-              </label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Full Name</label>
               <div className="relative">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'name' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <User size={15} />
@@ -193,9 +195,7 @@ export function SignupPage() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">
-                Email Address
-              </label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Email Address</label>
               <div className="relative">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Mail size={15} />
@@ -215,9 +215,7 @@ export function SignupPage() {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">
-                Password
-              </label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
               <div className="relative">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'pw' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Lock size={15} />

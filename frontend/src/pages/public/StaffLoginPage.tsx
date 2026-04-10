@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { Mail, Lock, User, ArrowRight, ShieldCheck, BookOpen, Calculator, MousePointerClick } from 'lucide-react'
+import { Mail, Lock, User, ArrowRight, ShieldCheck, BookOpen, Calculator, Home } from 'lucide-react'
 import { adminLogin, registrarLogin, accountingLogin } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -16,12 +16,6 @@ const ROLES: {
   { id: 'registrar',  label: 'Registrar',  icon: <BookOpen size={18} />,    desc: 'Registrar Office',     accent: '#34d399', placeholder: 'registrar'         },
   { id: 'accounting', label: 'Accounting', icon: <Calculator size={18} />,  desc: 'Accounting Office',    accent: '#a78bfa', placeholder: 'accounting'        },
 ]
-
-const DEMO: Record<StaffRole, { id: string; pw: string; label: string }> = {
-  admin:      { id: 'admin@ascb.edu.ph', pw: 'Admin@123',  label: 'Email' },
-  registrar:  { id: 'registrar',         pw: 'Staff@123',  label: 'Username' },
-  accounting: { id: 'accounting',        pw: 'Staff@123',  label: 'Username' },
-}
 
 export function StaffLoginPage() {
   const { setAuth } = useAuth()
@@ -37,13 +31,6 @@ export function StaffLoginPage() {
   const roleIndex = ROLES.findIndex(r => r.id === selected)
 
   const handleSelect = (role: StaffRole) => { setSelected(role); setIdentifier(''); setPassword('') }
-
-  const fillDemo = () => {
-    const d = DEMO[selected]
-    setIdentifier(d.id)
-    setPassword(d.pw)
-    toast.info(`${current.label} demo credentials filled`)
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -149,6 +136,10 @@ export function StaffLoginPage() {
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center relative p-6 lg:p-10">
+        {/* Home button */}
+        <Link to="/" className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.10] hover:border-white/15 transition-all duration-200 text-xs font-ui z-10">
+          <Home size={13} /> Home
+        </Link>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full transition-all duration-700"
             style={{ background: `radial-gradient(circle, ${current.accent}06 0%, transparent 70%)` }} />
@@ -199,7 +190,7 @@ export function StaffLoginPage() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">
+              <label className="block text-xs font-semibold text-gray-400 font-ui">
                 {usesEmail ? 'Email Address' : 'Username'}
               </label>
               <div className="relative">
@@ -216,7 +207,7 @@ export function StaffLoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em] font-ui">Password</label>
+              <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
               <div className="relative">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'pw' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Lock size={15} />
@@ -238,21 +229,6 @@ export function StaffLoginPage() {
                 : <><span>Sign In to {current.label}</span><ArrowRight size={15} /></>}
             </button>
           </form>
-
-          {/* Clickable demo credentials */}
-          <button type="button" onClick={fillDemo}
-            className="mt-5 w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/6 hover:bg-white/[0.07] hover:border-white/12 transition-all duration-200 group text-left">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-600 font-ui">
-                Demo — <span className="text-gray-400">{DEMO[selected].id}</span>
-                <span className="mx-2 text-white/10">·</span>
-                <span className="text-gray-400">{DEMO[selected].pw}</span>
-              </p>
-              <span className="text-[10px] font-ui flex items-center gap-1 transition-colors" style={{ color: `${current.accent}80` }}>
-                <MousePointerClick size={11} className="group-hover:scale-110 transition-transform" /> Fill
-              </span>
-            </div>
-          </button>
 
           <p className="mt-7 text-center text-xs text-gray-700 font-ui">
             Student portal?{' '}
