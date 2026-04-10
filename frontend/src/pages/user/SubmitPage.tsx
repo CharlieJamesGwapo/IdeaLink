@@ -10,6 +10,7 @@ import {
 import { submitSuggestion } from '../../api/suggestions'
 import { Button } from '../../components/ui/Button'
 import { OfficeHoursBanner } from '../../components/shared/OfficeHoursBanner'
+import axios from 'axios'
 
 // ── Service category definitions ─────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ export function SubmitPage() {
               onClick={() => {
                 setDepartment(d.id)
                 setService('')
-                setTimeout(() => goTo(2, 'forward'), 180)
+                goTo(2, 'forward')
               }}
               className={`group relative flex flex-col items-center text-center gap-3 p-6 rounded-2xl border-2 transition-all duration-200 active:scale-95 ${
                 selected
@@ -206,6 +207,10 @@ export function SubmitPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!department || !serviceCategory) {
+      toast.error('Please go back and select a department and category.')
+      return
+    }
     if (!title.trim() || !description.trim()) {
       toast.error('Please fill in all required fields.')
       return
@@ -222,8 +227,9 @@ export function SubmitPage() {
       })
       setSubmitted(true)
       toast.success('Feedback submitted successfully!')
-    } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Submission failed. Please try again.')
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? (err.response?.data?.error as string | undefined) : undefined
+      toast.error(msg ?? 'Submission failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -252,7 +258,7 @@ export function SubmitPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Subject / Title *</label>
+            <label htmlFor="suggestion-title" className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Subject / Title *</label>
             <span className={`text-xs font-ui tabular-nums transition-colors ${title.length > 140 ? 'text-yellow-400' : 'text-gray-600'}`}>
               {title.length} / 150
             </span>
@@ -263,6 +269,7 @@ export function SubmitPage() {
             onChange={e => { if (e.target.value.length <= 150) setTitle(e.target.value) }}
             required
             placeholder="e.g. Request for faster TOR processing"
+            id="suggestion-title"
             className="input-field"
             maxLength={150}
             autoFocus
@@ -271,7 +278,7 @@ export function SubmitPage() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Feedback Details *</label>
+            <label htmlFor="suggestion-description" className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Feedback Details *</label>
             <span className={`text-xs font-ui tabular-nums transition-colors ${description.length > 1800 ? 'text-red-400' : description.length > 1500 ? 'text-yellow-400' : 'text-gray-600'}`}>
               {description.length} / 2000
             </span>
@@ -282,6 +289,7 @@ export function SubmitPage() {
             required
             rows={6}
             placeholder="Describe your feedback or concern in detail. Include context, impact, and any suggestions for improvement…"
+            id="suggestion-description"
             className="input-field resize-none leading-relaxed font-body"
           />
         </div>
