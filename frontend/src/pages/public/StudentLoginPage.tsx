@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, MousePointerClick } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
 import { login } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -14,12 +14,6 @@ export function StudentLoginPage() {
   const [showPw, setShowPw]       = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [focused, setFocused]     = useState<string | null>(null)
-
-  const fillDemo = () => {
-    setEmail('student@ascb.edu.ph')
-    setPassword('Student@123')
-    toast.info('Demo credentials filled — click Sign In')
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -157,21 +151,6 @@ export function StudentLoginPage() {
                 : <><span>Sign In</span><ArrowRight size={15} /></>}
             </button>
           </form>
-
-          {/* Clickable demo credentials */}
-          <button type="button" onClick={fillDemo}
-            className="mt-5 w-full px-4 py-3 rounded-xl bg-white/[0.03] border border-white/6 hover:bg-white/[0.07] hover:border-ascb-orange/20 transition-all duration-200 group text-left">
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] text-gray-600 font-ui">
-                Demo — <span className="text-gray-400">student@ascb.edu.ph</span>
-                <span className="mx-2 text-white/10">·</span>
-                <span className="text-gray-400">Student@123</span>
-              </p>
-              <span className="text-[10px] text-ascb-orange/60 group-hover:text-ascb-orange font-ui flex items-center gap-1 transition-colors">
-                <MousePointerClick size={11} /> Fill
-              </span>
-            </div>
-          </button>
 
           <p className="mt-7 text-center text-sm text-gray-600 font-ui">
             No account?{' '}
