@@ -18,8 +18,10 @@ import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
 import { AdminTestimonials } from './pages/admin/AdminTestimonials'
 
 import { RegistrarSuggestions } from './pages/registrar/RegistrarSuggestions'
+import { RegistrarDashboard } from './pages/registrar/RegistrarDashboard'
 
 import { AccountingSuggestions } from './pages/accounting/AccountingSuggestions'
+import { AccountingDashboard } from './pages/accounting/AccountingDashboard'
 
 function PublicLayout() {
   return (
@@ -84,14 +86,14 @@ export function AppRouter() {
 
         <Route element={<RequireAuth role="registrar" />}>
           <Route element={<StaffLayout />}>
-            <Route path="/registrar/dashboard" element={<RegistrarSuggestions />} />
+            <Route path="/registrar/dashboard" element={<RegistrarDashboard />} />
             <Route path="/registrar/suggestions" element={<RegistrarSuggestions />} />
           </Route>
         </Route>
 
         <Route element={<RequireAuth role="accounting" />}>
           <Route element={<StaffLayout />}>
-            <Route path="/accounting/dashboard" element={<AccountingSuggestions />} />
+            <Route path="/accounting/dashboard" element={<AccountingDashboard />} />
             <Route path="/accounting/suggestions" element={<AccountingSuggestions />} />
           </Route>
         </Route>
