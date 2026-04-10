@@ -33,13 +33,10 @@ func (h *OfficeHoursHandler) Get(c *gin.Context) {
 		return
 	}
 
-	// If closed_until is in the past, treat as open
+	// If closed_until is in the past, auto-reopen in DB then return open state
 	if oh.ClosedUntil != nil && oh.ClosedUntil.Before(time.Now()) {
-		// Auto-reopen
-		_ = func() {
-			input := models.SetOfficeHoursInput{IsOpen: true}
-			h.repo.Update(dept, input)
-		}
+		input := models.SetOfficeHoursInput{IsOpen: true}
+		_, _ = h.repo.Update(dept, input) // best-effort; ignore error — client still gets correct state
 		c.JSON(http.StatusOK, gin.H{"department": dept, "is_open": isBusinessHours(), "closure_reason": nil, "closed_until": nil})
 		return
 	}
@@ -62,8 +59,8 @@ func (h *OfficeHoursHandler) Get(c *gin.Context) {
 // POST /api/office-hours/:dept — staff/admin only
 func (h *OfficeHoursHandler) Set(c *gin.Context) {
 	dept := c.Param("dept")
-	role, _ := c.Get(middleware.CtxKeyRole)
-	roleStr := role.(string)
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	roleStr, _ := roleVal.(string)
 
 	// Registrar can only update their own dept
 	if roleStr == "registrar" && dept != "Registrar" {

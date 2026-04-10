@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"idealink/internal/models"
@@ -41,9 +42,19 @@ func (r *OfficeHoursRepo) GetByDepartment(department string) (*models.OfficeHour
 func (r *OfficeHoursRepo) Update(department string, input models.SetOfficeHoursInput) (*models.OfficeHours, error) {
 	var closedUntil *time.Time
 	if input.ClosedUntil != nil {
-		t, err := time.Parse(time.RFC3339, *input.ClosedUntil)
-		if err == nil {
-			closedUntil = &t
+		// Accept RFC3339 (API clients) and "2006-01-02T15:04" (HTML datetime-local input)
+		pht := time.FixedZone("PHT", 8*3600)
+		parsed := false
+		for _, layout := range []string{time.RFC3339, "2006-01-02T15:04"} {
+			t, err := time.ParseInLocation(layout, *input.ClosedUntil, pht)
+			if err == nil {
+				closedUntil = &t
+				parsed = true
+				break
+			}
+		}
+		if !parsed {
+			return nil, fmt.Errorf("invalid closed_until format; use RFC3339 or YYYY-MM-DDTHH:MM")
 		}
 	}
 	var closureReason *string

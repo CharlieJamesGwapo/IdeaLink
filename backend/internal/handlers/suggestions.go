@@ -20,13 +20,14 @@ func NewSuggestionHandler(svc *services.SuggestionService) *SuggestionHandler {
 }
 
 func (h *SuggestionHandler) Submit(c *gin.Context) {
-	userID, _ := c.Get(middleware.CtxKeyUserID)
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
 	var input models.CreateSuggestionInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	suggestion, err := h.svc.Submit(userID.(int), input)
+	suggestion, err := h.svc.Submit(userID, input)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -35,9 +36,11 @@ func (h *SuggestionHandler) Submit(c *gin.Context) {
 }
 
 func (h *SuggestionHandler) List(c *gin.Context) {
-	userID, _ := c.Get(middleware.CtxKeyUserID)
-	role, _ := c.Get(middleware.CtxKeyRole)
-	list, err := h.svc.ListForRole(userID.(int), role.(string))
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	role, _ := roleVal.(string)
+	list, err := h.svc.ListForRole(userID, role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
