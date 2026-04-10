@@ -35,19 +35,22 @@ export function AdminSuggestions() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Suggestions</h1>
-          <p className="text-gray-500 text-sm mt-1">{suggestions.length} total submissions</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-1 h-8 bg-ascb-orange rounded-full" />
+            <h1 className="text-2xl font-bold text-white font-display">Suggestions</h1>
+          </div>
+          <p className="text-gray-500 text-sm mt-1 ml-3">{suggestions.length} total submissions</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => exportToCSV(filtered, 'suggestions')}
-            className="flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/30 rounded-xl text-sm font-medium transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-ascb-orange/10 hover:bg-ascb-orange/20 text-ascb-orange border border-ascb-orange/30 rounded-xl text-sm font-medium transition-all"
           >
             <Download size={15} />
             Export CSV
           </button>
           <select value={filter} onChange={(e) => setFilter(e.target.value as FilterOption)}
-            className="bg-navy-dark border border-navy-light rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-all">
+            className="bg-navy-dark border border-navy-light rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-ascb-orange transition-all">
             <option value="all">All</option>
             <option value="Pending">Pending</option>
             <option value="Under Review">Under Review</option>

@@ -40,8 +40,11 @@ export function AdminAnnouncements() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Announcements</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage school-wide announcements</p>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-1 h-8 bg-ascb-orange rounded-full" />
+            <h1 className="text-2xl font-bold text-white font-display">Announcements</h1>
+          </div>
+          <p className="text-gray-500 text-sm mt-1 ml-3">Manage school-wide announcements</p>
         </div>
         <Button onClick={openCreate}>
           <Plus size={16} /> New Announcement
@@ -59,11 +62,11 @@ export function AdminAnnouncements() {
       ) : (
         <div className="space-y-3">
           {announcements.map((a) => (
-            <div key={a.id} className="glass rounded-2xl p-5 hover:border-accent/20 transition-all duration-200 group">
+            <div key={a.id} className="glass rounded-2xl p-5 hover:border-ascb-orange/20 transition-all duration-200 group">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4 flex-1 min-w-0">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Megaphone size={18} className="text-accent" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-ascb-orange/10 flex items-center justify-center">
+                    <Megaphone size={18} className="text-ascb-orange" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-white text-sm">{a.title}</h3>

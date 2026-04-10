@@ -25,8 +25,11 @@ export function AdminTestimonials() {
   return (
     <div className="animate-fade-in space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Testimonials</h1>
-        <p className="text-gray-500 text-sm mt-1">Toggle visibility of featured suggestions</p>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-1 h-8 bg-ascb-orange rounded-full" />
+          <h1 className="text-2xl font-bold text-white font-display">Testimonials</h1>
+        </div>
+        <p className="text-gray-500 text-sm mt-1 ml-3">Toggle visibility of featured suggestions</p>
       </div>
 
       {isLoading ? (
