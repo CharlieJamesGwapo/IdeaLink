@@ -33,6 +33,7 @@ interface Props {
 export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
   const { suggestions, setSuggestions, isLoading, error, refetch } = useSuggestions()
   const [officeHours, setOfficeHoursState] = useState<OfficeHoursStatus | null>(null)
+  const [officeHoursLoading, setOfficeHoursLoading] = useState(true)
   const [closureReason, setClosureReason] = useState('')
   const [closedUntil, setClosedUntil] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
@@ -46,9 +47,11 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
   }, [])
 
   useEffect(() => {
+    setOfficeHoursLoading(true)
     getOfficeHours(dept)
       .then(res => { if (mountedRef.current) setOfficeHoursState(res.data) })
       .catch(() => { if (mountedRef.current) toast.error('Could not load office hours status') })
+      .finally(() => { if (mountedRef.current) setOfficeHoursLoading(false) })
   }, [dept])
 
   const total       = suggestions.length
@@ -98,7 +101,7 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
     .filter(s => !search.trim() || s.title.toLowerCase().includes(search.toLowerCase()) || (s.service_category ?? '').toLowerCase().includes(search.toLowerCase()) || (s.submitter_name ?? '').toLowerCase().includes(search.toLowerCase()))
     .slice(0, search.trim() ? 20 : 8)
 
-  const isOpen = officeHours?.is_open
+  const isOpen = officeHours?.is_open ?? false
 
   if (error && !isLoading && suggestions.length === 0) return (
     <div className="flex flex-col items-center justify-center py-20 gap-4 animate-fade-in">
@@ -139,7 +142,10 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
       </div>
 
       {/* Office Hours Banner */}
-      <div className={`rounded-2xl p-4 border transition-all ${isOpen ? 'border-green-500/25 bg-green-500/6' : 'border-red-500/25 bg-red-500/6'}`}>
+      {officeHoursLoading ? (
+        <Skeleton className="h-16 rounded-2xl" />
+      ) : null}
+      <div className={`rounded-2xl p-4 border transition-all ${officeHoursLoading ? 'hidden' : ''} ${isOpen ? 'border-green-500/25 bg-green-500/6' : 'border-red-500/25 bg-red-500/6'}`}>
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isOpen ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-red-400'} ${isOpen ? 'animate-pulse' : ''}`}/>

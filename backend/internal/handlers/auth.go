@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -33,7 +34,11 @@ func (h *AuthHandler) Signup(c *gin.Context) {
 	}
 	user, token, err := h.svc.SignupUser(input.Email, input.Password, input.Fullname)
 	if err != nil {
-		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		if errors.Is(err, services.ErrEmailTaken) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "registration failed"})
+		}
 		return
 	}
 	setTokenCookie(c, token)

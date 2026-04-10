@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
       <Toaster
         position="top-right"
         richColors
-toastOptions={{ duration: 3500 }}
+        toastOptions={{ duration: 3500 }}
         closeButton
       />
     </AuthProvider>

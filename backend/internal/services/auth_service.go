@@ -13,6 +13,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// ErrEmailTaken is returned by SignupUser when the email is already registered.
+var ErrEmailTaken = errors.New("email already registered")
+
 const (
 	RoleUser       = "user"
 	RoleAdmin      = "admin"
@@ -75,7 +78,7 @@ func (s *AuthService) SignupUser(email, password, fullname string) (*models.User
 		return nil, "", err
 	}
 	if existing != nil {
-		return nil, "", errors.New("email already registered")
+		return nil, "", ErrEmailTaken
 	}
 	hashed, err := s.HashPassword(password)
 	if err != nil {

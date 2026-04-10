@@ -32,13 +32,14 @@ func (h *AnnouncementHandler) List(c *gin.Context) {
 }
 
 func (h *AnnouncementHandler) Create(c *gin.Context) {
-	adminID, _ := c.Get(middleware.CtxKeyUserID)
+	adminIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	adminID, _ := adminIDVal.(int)
 	var input models.CreateAnnouncementInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ann, err := h.svc.Create(adminID.(int), input)
+	ann, err := h.svc.Create(adminID, input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -23,11 +23,12 @@ export function Header() {
   const handleLogout = async () => {
     try {
       await logout()
+    } catch {
+      // Cookie is cleared server-side; always clear local state
+    } finally {
       clearAuth()
       navigate('/')
       toast.success('Logged out successfully')
-    } catch {
-      toast.error('Logout failed')
     }
   }
 
