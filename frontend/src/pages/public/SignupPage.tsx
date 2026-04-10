@@ -30,8 +30,9 @@ export function SignupPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm animate-fade-in">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-12 hero-bg">
+      <div className="absolute inset-0 bg-ascb-navy-dark/80 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
           <img src="/school_logo.png" alt="ASCB" className="h-14 w-14 object-contain mx-auto mb-4"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -64,13 +65,13 @@ export function SignupPage() {
                 minLength={6} placeholder="At least 6 characters" className="input-field pl-10" />
             </div>
           </div>
-          <Button type="submit" isLoading={isLoading} size="lg" className="w-full mt-2">
+          <Button type="submit" isLoading={isLoading} size="lg" className="w-full mt-2 !bg-ascb-orange hover:!bg-ascb-orange-dark">
             Create Account <ArrowRight size={16} />
           </Button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-5">
-          Already have an account? <Link to="/login" className="text-accent hover:underline font-medium">Sign in</Link>
+          Already have an account? <Link to="/login" className="text-ascb-orange hover:underline font-medium">Sign in</Link>
         </p>
       </div>
     </div>
