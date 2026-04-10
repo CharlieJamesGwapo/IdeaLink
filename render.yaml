@@ -3,7 +3,7 @@ services:
     name: idealink-backend
     runtime: go
     plan: free
-    region: sgp
+    region: singapore
     rootDir: backend
     buildCommand: go build -o server ./cmd/
     startCommand: ./server
@@ -21,4 +21,4 @@ services:
 databases:
   - name: idealink-db
     plan: free
-    region: sgp
+    region: singapore
