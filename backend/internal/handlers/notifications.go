@@ -19,8 +19,8 @@ func NewNotificationsHandler(suggestionRepo repository.SuggestionRepository) *No
 
 // GET /api/notifications/unread-count
 func (h *NotificationsHandler) UnreadCount(c *gin.Context) {
-	role, _ := c.Get(middleware.CtxKeyRole)
-	roleStr := role.(string)
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	roleStr, _ := roleVal.(string)
 
 	var count int
 	var err error

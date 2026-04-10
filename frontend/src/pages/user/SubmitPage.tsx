@@ -93,7 +93,7 @@ export function SubmitPage() {
     setStep(next)
   }
 
-  const animClass = direction === 'forward' ? 'animate-slide-in-left' : 'animate-slide-in-right'
+  const animClass = direction === 'forward' ? 'animate-slide-in-right' : 'animate-slide-in-left'
 
   // ── Step 1: Department ──────────────────────────────────────────────────────
 

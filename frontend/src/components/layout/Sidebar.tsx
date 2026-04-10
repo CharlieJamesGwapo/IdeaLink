@@ -61,6 +61,12 @@ export function Sidebar() {
     }
   }
 
+  const feedbackPath =
+    role === 'admin'      ? '/admin/suggestions'
+    : role === 'registrar'  ? '/registrar/suggestions'
+    : role === 'accounting' ? '/accounting/suggestions'
+    : undefined
+
   const NavContent = ({ onNav, showBell }: { onNav?: () => void; showBell?: boolean }) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -87,7 +93,7 @@ export function Sidebar() {
               {config?.label ?? ''}
             </p>
           </div>
-          {showBell && <NotificationBell />}
+          {showBell && <NotificationBell onClick={feedbackPath ? () => navigate(feedbackPath) : undefined} />}
         </div>
         {config && (
           <div className="mt-3 h-px w-full rounded-full" style={{ background: `linear-gradient(to right, ${config.accent}40, transparent)` }} />
@@ -175,7 +181,7 @@ export function Sidebar() {
           )}
         </div>
         <div className="flex items-center gap-1">
-          <NotificationBell />
+          <NotificationBell onClick={feedbackPath ? () => navigate(feedbackPath) : undefined} />
           <button
             onClick={() => setMobileOpen(true)}
             className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/8"
