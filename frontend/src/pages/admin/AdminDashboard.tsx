@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Users, MessageSquare, TrendingUp, Bell, ArrowUpRight, Download } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -49,16 +50,32 @@ export function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
+  const mountedRef = useRef(true)
   useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  const loadData = () => {
+    setIsLoading(true)
+    setLoadError(false)
     Promise.all([
       client.get<Analytics>('/api/admin/analytics'),
       getSuggestions(),
     ]).then(([analyticsRes, suggestionsRes]) => {
+      if (!mountedRef.current) return
       setAnalytics(analyticsRes.data)
       setSuggestions(suggestionsRes.data)
-    }).finally(() => setIsLoading(false))
-  }, [])
+    }).catch(() => {
+      if (mountedRef.current) { setAnalytics(null); setLoadError(true) }
+    }).finally(() => {
+      if (mountedRef.current) setIsLoading(false)
+    })
+  }
+
+  useEffect(() => { loadData() }, [])
 
   const handleExport = () => {
     if (suggestions.length === 0) return
@@ -77,7 +94,21 @@ export function AdminDashboard() {
     </div>
   )
 
-  if (!analytics) return null
+  if (loadError || !analytics) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4 text-center animate-fade-in">
+      <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center">
+        <TrendingUp size={24} className="text-red-400" />
+      </div>
+      <div>
+        <p className="text-white font-semibold font-ui mb-1">Could not load analytics</p>
+        <p className="text-gray-500 text-sm font-ui">Check your connection or try again.</p>
+      </div>
+      <button onClick={loadData}
+        className="px-5 py-2.5 bg-ascb-orange/15 hover:bg-ascb-orange/25 border border-ascb-orange/30 text-ascb-orange rounded-xl text-sm font-ui transition-all">
+        Try Again
+      </button>
+    </div>
+  )
 
   const statusData = (analytics.by_status || []).map(s => ({ name: s.status, value: s.count }))
   const deptData = (analytics.by_department || []).map(d => ({ name: d.department, count: d.count }))
@@ -230,11 +261,11 @@ export function AdminDashboard() {
             { href: '/admin/announcements', label: 'Manage Announcements', icon: <Bell size={15} /> },
             { href: '/admin/testimonials', label: 'Toggle Testimonials', icon: <TrendingUp size={15} /> },
           ].map(a => (
-            <a key={a.href} href={a.href}
-              className="flex items-center justify-between p-3 rounded-xl bg-ascb-navy-dark hover:bg-ascb-navy-mid transition-colors cursor-pointer">
+            <Link key={a.href} to={a.href}
+              className="flex items-center justify-between p-3 rounded-xl bg-ascb-navy-dark hover:bg-ascb-navy-mid transition-colors">
               <span className="text-sm text-gray-300 font-ui">{a.label}</span>
               <span className="text-gray-500">{a.icon}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

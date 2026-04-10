@@ -32,8 +32,8 @@ export function AdminLoginPage() {
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center mx-auto mb-4 animate-glow">
-            <ShieldCheck size={28} className="text-accent" />
+          <div className="w-16 h-16 rounded-2xl bg-ascb-orange/10 border border-ascb-orange/20 flex items-center justify-center mx-auto mb-4 animate-glow">
+            <ShieldCheck size={28} className="text-ascb-orange" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Login</h1>
           <p className="text-gray-500 text-sm mt-1">IdeaLink Administration Portal</p>

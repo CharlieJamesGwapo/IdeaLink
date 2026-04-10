@@ -9,7 +9,12 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <AppRouter />
-      <Toaster position="top-right" richColors />
+      <Toaster
+        position="top-right"
+        richColors
+toastOptions={{ duration: 3500 }}
+        closeButton
+      />
     </AuthProvider>
   </StrictMode>
 )

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { LogOut, Menu, X, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { logout } from '../../api/auth'
 import { toast } from 'sonner'
-import { NotificationBell } from '../shared/NotificationBell'
 
 export function Header() {
   const { currentUser, role, clearAuth } = useAuth()
@@ -32,12 +31,6 @@ export function Header() {
     }
   }
 
-  const staffDashboard =
-    role === 'admin' ? '/admin/dashboard'
-    : role === 'registrar' ? '/registrar/dashboard'
-    : role === 'accounting' ? '/accounting/dashboard'
-    : null
-
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
       isScrolled
@@ -51,14 +44,14 @@ export function Header() {
             <img
               src="/school_logo.png"
               alt="ASCB"
-              className="h-10 w-10 object-contain rounded-lg"
+              className="h-12 w-12 sm:h-14 sm:w-14 object-contain drop-shadow-md flex-shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
             <div className="flex flex-col leading-tight">
-              <span className="text-[11px] text-ascb-gold font-semibold uppercase tracking-widest font-ui">
+              <span className="hidden sm:block text-[10px] text-ascb-gold font-semibold uppercase tracking-widest font-ui">
                 Andres Soriano Colleges of Bislig
               </span>
-              <span className="text-base font-bold text-white group-hover:text-ascb-orange transition-colors font-ui">
+              <span className="text-sm sm:text-base font-bold text-white group-hover:text-ascb-orange transition-colors font-ui">
                 Idea<span className="text-ascb-orange">Link</span>
               </span>
             </div>
@@ -78,29 +71,33 @@ export function Header() {
             )}
             {currentUser && role === 'user' && (
               <>
-                <Link to="/user/submit" className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-ui">Submit Feedback</Link>
-                <Link to="/user/submissions" className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-ui">My Submissions</Link>
-                <Link to="/user/announcements" className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-ui">Announcements</Link>
+                {[
+                  { to: '/user/submit', label: 'Submit Feedback' },
+                  { to: '/user/submissions', label: 'My Submissions' },
+                  { to: '/user/announcements', label: 'Announcements' },
+                ].map(({ to, label }) => (
+                  <NavLink key={to} to={to} className={({ isActive }) =>
+                    `px-4 py-2 text-sm transition-all rounded-lg font-ui relative ${
+                      isActive
+                        ? 'text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-ascb-orange after:rounded-full'
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    }`
+                  }>{label}</NavLink>
+                ))}
                 <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 font-ui">
                   <LogOut size={16} /> Logout
                 </button>
               </>
             )}
             {currentUser && role !== 'user' && (
-              <>
-                <NotificationBell onClick={() => staffDashboard && navigate(staffDashboard)} />
-                <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 font-ui">
-                  <LogOut size={16} /> Logout
-                </button>
-              </>
+              <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 font-ui">
+                <LogOut size={16} /> Logout
+              </button>
             )}
           </nav>
 
           {/* Mobile */}
           <div className="md:hidden flex items-center gap-2">
-            {currentUser && role !== 'user' && (
-              <NotificationBell onClick={() => staffDashboard && navigate(staffDashboard)} />
-            )}
             <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={() => setIsMobileOpen(!isMobileOpen)}>
               {isMobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -118,10 +115,20 @@ export function Header() {
             )}
             {currentUser && role === 'user' && (
               <>
-                <Link to="/user/submit" className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-ui">Submit Feedback</Link>
-                <Link to="/user/submissions" className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-ui">My Submissions</Link>
-                <Link to="/user/announcements" className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-ui">Announcements</Link>
-                <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-ui">Logout</button>
+                {[
+                  { to: '/user/submit', label: 'Submit Feedback' },
+                  { to: '/user/submissions', label: 'My Submissions' },
+                  { to: '/user/announcements', label: 'Announcements' },
+                ].map(({ to, label }) => (
+                  <NavLink key={to} to={to} className={({ isActive }) =>
+                    `flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg transition-colors font-ui ${
+                      isActive ? 'text-white bg-ascb-orange/15 font-semibold border-l-2 border-ascb-orange pl-3' : 'text-gray-300 hover:text-white hover:bg-white/10'
+                    }`
+                  }>{label}</NavLink>
+                ))}
+                <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-ui">
+                  <LogOut size={15} /> Logout
+                </button>
               </>
             )}
             {currentUser && role !== 'user' && (

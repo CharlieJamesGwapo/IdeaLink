@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Bell } from 'lucide-react'
 import { getUnreadCount } from '../../api/notifications'
 import { useAuth } from '../../hooks/useAuth'
@@ -10,30 +10,47 @@ interface Props {
 export function NotificationBell({ onClick }: Props) {
   const { role } = useAuth()
   const [count, setCount] = useState(0)
+  const mountedRef = useRef(true)
 
-  const fetchCount = useCallback(async () => {
-    try {
-      const res = await getUnreadCount()
-      setCount(res.data.count)
-    } catch {
-      // silently fail
-    }
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
   }, [])
 
   useEffect(() => {
     if (!role || role === 'user') return
-    fetchCount()
-    const interval = setInterval(fetchCount, 30000)
-    return () => clearInterval(interval)
-  }, [role, fetchCount])
+
+    let cancelled = false
+
+    const fetch = async () => {
+      try {
+        const res = await getUnreadCount()
+        if (!cancelled && mountedRef.current) setCount(res.data.count)
+      } catch {
+        // silently ignore — bell just shows no badge
+      }
+    }
+
+    fetch()
+    const interval = setInterval(fetch, 30_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [role])
 
   if (!role || role === 'user') return null
+
+  const label = count > 0
+    ? `${count > 99 ? '99+' : count} unread submission${count !== 1 ? 's' : ''}`
+    : 'No unread submissions'
 
   return (
     <button
       onClick={onClick}
       className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-      title={`${count} unread submission${count !== 1 ? 's' : ''}`}
+      aria-label={label}
+      title={label}
     >
       <Bell size={20} />
       {count > 0 && (

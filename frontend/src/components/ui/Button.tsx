@@ -20,7 +20,7 @@ export function Button({
   const base =
     'inline-flex items-center justify-center font-medium font-ui rounded-xl transition-all duration-200 ' +
     'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ascb-navy-dark ' +
-    'active:scale-95 disabled:pointer-events-none disabled:opacity-50'
+    'active:scale-95 disabled:pointer-events-none disabled:opacity-50 select-none'
 
   const variants = {
     primary:
@@ -28,11 +28,11 @@ export function Button({
       'shadow-sm hover:shadow-ascb-orange/30 hover:shadow-lg',
     secondary:
       'bg-ascb-navy-mid text-white hover:bg-ascb-navy-mid/80 focus:ring-ascb-navy-mid ' +
-      'border border-ascb-navy-mid',
+      'border border-white/10',
     danger:
       'bg-red-600 text-white hover:bg-red-700 focus:ring-red-600 shadow-sm',
     ghost:
-      'text-gray-400 hover:text-white hover:bg-ascb-navy-mid focus:ring-ascb-navy-mid',
+      'text-gray-400 hover:text-white hover:bg-white/10 focus:ring-white/20',
     outline:
       'border border-ascb-orange text-ascb-orange hover:bg-ascb-orange hover:text-white ' +
       'focus:ring-ascb-orange',
@@ -44,15 +44,17 @@ export function Button({
     lg: 'px-6 py-3 text-base gap-2',
   }
 
+  const loaderSize = size === 'lg' ? 18 : size === 'sm' ? 13 : 15
+
   return (
     <button
       className={cn(base, variants[variant], sizes[size], className)}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
+      aria-disabled={disabled || isLoading || undefined}
       {...props}
     >
-      {isLoading ? (
-        <Loader2 size={size === 'lg' ? 18 : 14} className="animate-spin" />
-      ) : null}
+      {isLoading && <Loader2 size={loaderSize} className="animate-spin shrink-0" />}
       {children}
     </button>
   )

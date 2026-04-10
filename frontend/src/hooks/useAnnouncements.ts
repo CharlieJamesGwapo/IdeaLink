@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { getAnnouncements } from '../api/announcements'
 import type { Announcement } from '../types'
 
@@ -6,18 +6,25 @@ export function useAnnouncements() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const mountedRef = useRef(true)
 
-  const fetchAnnouncements = () => {
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  const fetchAnnouncements = useCallback(() => {
     setIsLoading(true)
+    setError(null)
     getAnnouncements()
-      .then((res) => setAnnouncements(res.data))
-      .catch(() => setError('Failed to load announcements'))
-      .finally(() => setIsLoading(false))
-  }
+      .then(res => { if (mountedRef.current) setAnnouncements(res.data) })
+      .catch(() => { if (mountedRef.current) setError('Failed to load announcements') })
+      .finally(() => { if (mountedRef.current) setIsLoading(false) })
+  }, [])
 
   useEffect(() => {
     fetchAnnouncements()
-  }, [])
+  }, [fetchAnnouncements])
 
   return { announcements, isLoading, error, refetch: fetchAnnouncements }
 }

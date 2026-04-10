@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Quote } from 'lucide-react'
 import { getTestimonials, toggleTestimonial } from '../../api/testimonials'
@@ -9,10 +9,24 @@ import type { Testimonial } from '../../types'
 export function AdminTestimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    getTestimonials().then((res) => setTestimonials(res.data)).finally(() => setIsLoading(false))
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
   }, [])
+
+  const load = () => {
+    setIsLoading(true)
+    setLoadError(false)
+    getTestimonials()
+      .then((res) => { if (mountedRef.current) setTestimonials(res.data) })
+      .catch(() => { if (mountedRef.current) setLoadError(true) })
+      .finally(() => { if (mountedRef.current) setIsLoading(false) })
+  }
+
+  useEffect(() => { load() }, [])
 
   const handleToggle = async (id: number) => {
     try {
@@ -34,6 +48,14 @@ export function AdminTestimonials() {
 
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}</div>
+      ) : loadError ? (
+        <div className="text-center py-20 glass rounded-2xl">
+          <p className="text-red-400 font-semibold font-ui mb-2">Failed to load testimonials</p>
+          <p className="text-gray-500 text-sm font-ui mb-4">Check your connection and try again.</p>
+          <button onClick={load} className="px-4 py-2 bg-ascb-orange/15 border border-ascb-orange/30 text-ascb-orange rounded-xl text-sm font-ui hover:bg-ascb-orange/25 transition-all">
+            Try Again
+          </button>
+        </div>
       ) : testimonials.length === 0 ? (
         <div className="text-center py-20 glass rounded-2xl">
           <Quote size={36} className="text-gray-600 mx-auto mb-3" />
