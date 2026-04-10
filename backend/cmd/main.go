@@ -25,6 +25,7 @@ func main() {
 	suggestionRepo := repository.NewSuggestionRepo(db)
 	announcementRepo := repository.NewAnnouncementRepo(db)
 	testimonialRepo := repository.NewTestimonialRepo(db)
+	officeHoursRepo := repository.NewOfficeHoursRepo(db)
 
 	// Services
 	authSvc := services.NewAuthService(userRepo, cfg.JWTSecret)
@@ -38,6 +39,8 @@ func main() {
 	testimonialH := handlers.NewTestimonialHandler(testimonialSvc)
 	suggestionH := handlers.NewSuggestionHandler(suggestionSvc)
 	adminH := handlers.NewAdminHandler(suggestionRepo, userRepo)
+	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo)
+	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
 
 	// Router
 	r := gin.Default()
@@ -59,6 +62,7 @@ func main() {
 		// Public
 		api.GET("/announcements", announcementH.List)
 		api.GET("/testimonials", testimonialH.List)
+		api.GET("/office-hours/:dept", officeHoursH.Get)
 
 		// Admin only
 		admin := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "admin"))
@@ -77,16 +81,18 @@ func main() {
 			user.POST("/suggestions", suggestionH.Submit)
 		}
 
-		// Authenticated (all roles) — role-filtered inside handler
+		// Authenticated (all roles)
 		authenticated := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user", "admin", "registrar", "accounting"))
 		{
 			authenticated.GET("/suggestions", suggestionH.List)
+			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)
 		}
 
 		// Admin + registrar + accounting
 		staff := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "admin", "registrar", "accounting"))
 		{
 			staff.PATCH("/suggestions/:id/status", suggestionH.UpdateStatus)
+			staff.POST("/office-hours/:dept", officeHoursH.Set)
 		}
 	}
 

@@ -39,8 +39,8 @@ func (s *SuggestionService) ListForRole(userID int, role string) ([]*models.Sugg
 }
 
 func (s *SuggestionService) UpdateStatus(id int, status string) error {
-	if status != "Pending" && status != "Reviewed" {
-		return errors.New("status must be 'Pending' or 'Reviewed'")
+	if status != "Pending" && status != "Under Review" && status != "Resolved" {
+		return errors.New("status must be 'Pending', 'Under Review', or 'Resolved'")
 	}
 	if err := s.repo.UpdateStatus(id, status); err != nil {
 		return err

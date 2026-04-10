@@ -1,4 +1,3 @@
-// backend/internal/repository/interfaces.go
 package repository
 
 import "idealink/internal/models"
@@ -21,6 +20,8 @@ type SuggestionRepository interface {
 	FindByID(id int) (*models.Suggestion, error)
 	UpdateStatus(id int, status string) error
 	MarkAsRead(id int) error
+	CountUnread() (int, error)
+	CountUnreadByDepartment(department string) (int, error)
 	GetAnalytics() (*models.Analytics, error)
 }
 
@@ -35,4 +36,9 @@ type TestimonialRepository interface {
 	FindActive() ([]*models.Testimonial, error)
 	Create(suggestionID int, name, department, message string) (*models.Testimonial, error)
 	ToggleActive(id int) (*models.Testimonial, error)
+}
+
+type OfficeHoursRepository interface {
+	GetByDepartment(department string) (*models.OfficeHours, error)
+	Update(department string, input models.SetOfficeHoursInput) (*models.OfficeHours, error)
 }

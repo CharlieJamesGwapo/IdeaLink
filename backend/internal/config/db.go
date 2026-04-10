@@ -27,7 +27,10 @@ func ConnectDB(databaseURL string) *sql.DB {
 
 func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.InitialSQL); err != nil {
-		log.Fatalf("failed to run migrations: %v", err)
+		log.Fatalf("failed to run initial migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.AdditionsSQL); err != nil {
+		log.Fatalf("failed to run additions migration: %v", err)
 	}
 	log.Println("Migrations applied")
 }
