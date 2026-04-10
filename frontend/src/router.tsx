@@ -12,16 +12,13 @@ import { SubmitPage } from './pages/user/SubmitPage'
 import { SubmissionsPage } from './pages/user/SubmissionsPage'
 import { AnnouncementsPage } from './pages/user/AnnouncementsPage'
 
-import { AdminLoginPage } from './pages/admin/AdminLoginPage'
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminSuggestions } from './pages/admin/AdminSuggestions'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
 import { AdminTestimonials } from './pages/admin/AdminTestimonials'
 
-import { RegistrarLoginPage } from './pages/registrar/RegistrarLoginPage'
 import { RegistrarSuggestions } from './pages/registrar/RegistrarSuggestions'
 
-import { AccountingLoginPage } from './pages/accounting/AccountingLoginPage'
 import { AccountingSuggestions } from './pages/accounting/AccountingSuggestions'
 
 function PublicLayout() {
@@ -50,11 +47,7 @@ function RequireAuth({ role }: { role: string }) {
   const { currentUser, role: userRole, isLoading } = useAuth()
   if (isLoading) return <div className="min-h-screen bg-navy-dark flex items-center justify-center text-white">Loading…</div>
   if (!currentUser || userRole !== role) {
-    const loginPath = role === 'admin' ? '/admin/login'
-      : role === 'registrar' ? '/registrar/login'
-      : role === 'accounting' ? '/accounting/login'
-      : '/login'
-    return <Navigate to={loginPath} replace />
+    return <Navigate to="/login" replace />
   }
   return <Outlet />
 }
@@ -67,9 +60,9 @@ export function AppRouter() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/admin/login" element={<AdminLoginPage />} />
-          <Route path="/registrar/login" element={<RegistrarLoginPage />} />
-          <Route path="/accounting/login" element={<AccountingLoginPage />} />
+          <Route path="/admin/login" element={<Navigate to="/login" replace />} />
+          <Route path="/registrar/login" element={<Navigate to="/login" replace />} />
+          <Route path="/accounting/login" element={<Navigate to="/login" replace />} />
         </Route>
 
         <Route element={<RequireAuth role="user" />}>
