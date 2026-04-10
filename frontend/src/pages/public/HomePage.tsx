@@ -59,8 +59,16 @@ export function HomePage() {
   const announcementsRef = useScrollReveal<HTMLElement>()
   const testimonialsRef = useScrollReveal<HTMLElement>()
 
+  const mountedRef = useRef(true)
   useEffect(() => {
-    getTestimonials().then(res => setTestimonials(res.data)).catch(() => {})
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  useEffect(() => {
+    getTestimonials()
+      .then(res => { if (mountedRef.current) setTestimonials(res.data) })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -76,55 +84,76 @@ export function HomePage() {
     <div className="text-white">
       {/* ─── HERO ─── */}
       <section className="relative hero-bg min-h-screen flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-ascb-navy-dark/85 via-ascb-navy-dark/70 to-ascb-navy-dark/90" />
-        {/* Decorative orange stripe */}
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-ascb-orange via-ascb-gold to-ascb-orange opacity-80" />
+        {/* Layered dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-ascb-navy-dark/80 via-ascb-navy-dark/65 to-ascb-navy-dark/92" />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 py-24 text-center">
-          <img src="/school_logo.png" alt="ASCB Logo"
-            className="h-28 w-28 object-contain mx-auto mb-6 drop-shadow-2xl animate-float"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        {/* Decorative side accents */}
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-ascb-orange via-ascb-gold to-ascb-orange opacity-90" />
+        <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-ascb-orange/30 to-transparent" />
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ascb-orange/20 border border-ascb-orange/30 text-ascb-gold text-xs font-semibold uppercase tracking-widest mb-6 font-ui animate-fade-in">
+        {/* Radial ambient glow behind content */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[700px] h-[500px] rounded-full blur-[140px]" style={{ background: 'radial-gradient(ellipse, rgba(244,124,32,0.12) 0%, rgba(27,58,110,0.18) 60%, transparent 100%)' }} />
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto px-6 pt-20 pb-32 text-center">
+
+          {/* ── Logo ── */}
+          <div className="flex justify-center mb-8 animate-fade-in">
+            <img
+              src="/school_logo.png"
+              alt="ASCB Logo"
+              className="object-contain drop-shadow-2xl mx-auto"
+              style={{ height: '200px', width: '200px' }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-ascb-orange/20 border border-ascb-orange/35 text-ascb-gold text-xs font-semibold uppercase tracking-widest mb-6 font-ui animate-fade-in stagger-1">
             ASCB · Bislig's Pioneer in Private Education
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-display leading-tight mb-4 animate-fade-in stagger-1">
+          {/* School name */}
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold font-display leading-tight mb-4 animate-fade-in stagger-2">
             Andres Soriano<br />
             <span className="text-ascb-orange">Colleges</span> of Bislig
           </h1>
 
-          <p className="text-lg text-ascb-gold font-semibold tracking-wide font-display italic mb-2 animate-fade-in stagger-2">
+          <p className="text-lg text-ascb-gold font-semibold tracking-wide font-display italic mb-2 animate-fade-in stagger-3">
             "ASCB, Ascending!"
           </p>
-          <p className="text-sm text-gray-300 uppercase tracking-widest font-ui mb-6 animate-fade-in stagger-2">
+          <p className="text-xs text-gray-300 uppercase tracking-[0.25em] font-ui mb-8 animate-fade-in stagger-3">
             Accountability · Stewardship · Compassion · Brilliance
           </p>
 
-          <div className="section-divider w-32 mx-auto mb-8" />
+          <div className="section-divider w-40 mx-auto mb-8" />
 
-          <h2 className="text-xl sm:text-2xl font-semibold text-white font-ui mb-3 animate-fade-in stagger-3">
-            IdeaLink: Web-based Feedback Management System
+          {/* IdeaLink tagline */}
+          <h2 className="text-xl sm:text-2xl font-bold text-white font-ui mb-3 animate-fade-in stagger-4">
+            IdeaLink — Feedback Management System
           </h2>
-          <p className="text-gray-300 max-w-xl mx-auto text-sm leading-relaxed font-body animate-fade-in stagger-3">
+          <p className="text-gray-300 max-w-lg mx-auto text-sm leading-relaxed font-body animate-fade-in stagger-4">
             Your voice matters. Share feedback with the Registrar and Accounting Office —
             categorized, tracked, and acted upon.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8 animate-fade-in stagger-4">
-            <Link to="/login" className="btn-primary text-base px-8 py-3">
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8 animate-fade-in stagger-5">
+            <Link to="/login" className="btn-primary text-base px-8 py-3.5">
               Submit Feedback <ArrowRight size={18} />
             </Link>
-            <Link to="/login" className="inline-flex items-center gap-2 px-8 py-3 border border-white/20 text-white hover:bg-white/10 rounded-xl transition-all duration-200 text-base font-ui">
+            <Link to="/staff-login"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-white/20 text-white hover:bg-white/10 hover:border-white/35 rounded-xl transition-all duration-200 text-base font-ui font-medium">
               Staff Portal
             </Link>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60">
-          <span className="text-xs text-gray-400 font-ui uppercase tracking-widest">Scroll</span>
-          <div className="w-5 h-8 border border-gray-500 rounded-full flex items-start justify-center pt-1.5">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
+          <span className="text-[10px] text-gray-400 font-ui uppercase tracking-widest">Scroll</span>
+          <div className="w-5 h-8 border border-gray-500/60 rounded-full flex items-start justify-center pt-1.5">
             <div className="w-1 h-2 bg-ascb-orange rounded-full animate-bounce" />
           </div>
         </div>
@@ -298,17 +327,17 @@ export function HomePage() {
       {/* ─── FOOTER ─── */}
       <footer className="bg-ascb-navy-dark border-t border-white/10 py-10">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid sm:grid-cols-3 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-3">
-                <img src="/school_logo.png" alt="ASCB" className="h-10 w-10 object-contain"
+              <div className="flex items-center gap-4 mb-3">
+                <img src="/school_logo.png" alt="ASCB" className="h-20 w-20 object-contain drop-shadow-lg"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 <div>
                   <div className="text-ascb-gold text-[10px] uppercase tracking-widest font-ui">ASCB</div>
-                  <div className="text-white font-bold text-sm font-ui">Andres Soriano Colleges of Bislig</div>
+                  <div className="text-white font-bold text-base font-ui">Andres Soriano Colleges of Bislig</div>
                 </div>
               </div>
-              <p className="text-gray-500 text-xs font-body leading-relaxed">
+              <p className="text-gray-500 text-sm font-body leading-relaxed">
                 Bislig's Pioneer in Private Education · ASCB, Ascending!
               </p>
             </div>
@@ -316,16 +345,16 @@ export function HomePage() {
               <h4 className="text-white font-semibold text-sm font-ui mb-3">Quick Links</h4>
               <div className="space-y-1.5">
                 <Link to="/login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Submit Feedback</Link>
-                <Link to="/login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Registrar Portal</Link>
-                <Link to="/login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Accounting Portal</Link>
+                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Registrar Portal</Link>
+                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Accounting Portal</Link>
               </div>
             </div>
             <div>
-              <h4 className="text-white font-semibold text-sm font-ui mb-3">Contact</h4>
-              <div className="space-y-1 text-gray-400 text-xs font-body">
+              <h4 className="text-white font-semibold text-base font-ui mb-3">Contact</h4>
+              <div className="space-y-1.5 text-gray-300 text-sm font-body">
                 <p>Bislig City, Surigao del Sur</p>
                 <p>Philippines</p>
-                <p className="text-ascb-orange">info@ascb.edu.ph</p>
+                <p className="text-ascb-orange font-medium">info@ascb.edu.ph</p>
               </div>
             </div>
           </div>
