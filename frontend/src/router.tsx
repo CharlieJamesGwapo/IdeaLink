@@ -91,12 +91,14 @@ export function AppRouter() {
 
         <Route element={<RequireAuth role="registrar" />}>
           <Route element={<StaffLayout />}>
+            <Route path="/registrar/dashboard" element={<RegistrarSuggestions />} />
             <Route path="/registrar/suggestions" element={<RegistrarSuggestions />} />
           </Route>
         </Route>
 
         <Route element={<RequireAuth role="accounting" />}>
           <Route element={<StaffLayout />}>
+            <Route path="/accounting/dashboard" element={<AccountingSuggestions />} />
             <Route path="/accounting/suggestions" element={<AccountingSuggestions />} />
           </Route>
         </Route>
