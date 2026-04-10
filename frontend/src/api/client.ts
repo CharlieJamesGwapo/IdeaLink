@@ -8,12 +8,7 @@ const client = axios.create({
 
 client.interceptors.response.use(
   (res) => res,
-  (error) => {
-    if (error.response?.status === 401) {
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 export default client

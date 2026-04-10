@@ -27,10 +27,11 @@ export interface Suggestion {
   id: number
   user_id: number
   department: string
-  user_role: string
+  service_category: string
+  user_role?: string
   title: string
   description: string
-  status: 'Pending' | 'Reviewed'
+  status: 'Pending' | 'Under Review' | 'Resolved'
   anonymous: boolean
   is_read: boolean
   submitted_at: string
@@ -62,4 +63,17 @@ export interface Analytics {
   unread_suggestions: number
   student_count: number
   faculty_count: number
+  by_department: { department: string; count: number }[]
+  by_status: { status: string; count: number }[]
+  monthly_trend: { month: string; count: number }[]
+  by_category_registrar: { category: string; count: number }[]
+  by_category_accounting: { category: string; count: number }[]
+}
+
+export interface OfficeHoursStatus {
+  department: string
+  is_open: boolean
+  closure_reason?: string
+  closed_until?: string
+  updated_at?: string
 }

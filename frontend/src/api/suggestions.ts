@@ -3,6 +3,7 @@ import type { Suggestion } from '../types'
 
 export interface CreateSuggestionPayload {
   department: string
+  service_category: string
   user_role: string
   title: string
   description: string
