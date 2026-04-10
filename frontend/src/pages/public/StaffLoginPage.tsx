@@ -135,17 +135,17 @@ export function StaffLoginPage() {
       </div>
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center relative p-6 lg:p-10">
+      <div className="flex-1 flex items-center justify-center relative px-5 py-10 sm:px-8 lg:p-10">
         {/* Home button */}
-        <Link to="/" className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.10] hover:border-white/15 transition-all duration-200 text-xs font-ui z-10">
-          <Home size={13} /> Home
+        <Link to="/" className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.09] hover:border-white/14 transition-all duration-200 text-xs font-ui z-10">
+          <Home size={12} /> Home
         </Link>
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full transition-all duration-700"
             style={{ background: `radial-gradient(circle, ${current.accent}06 0%, transparent 70%)` }} />
         </div>
 
-        <div className="relative w-full max-w-[420px] animate-fade-in">
+        <div className="relative w-full max-w-sm animate-fade-in">
           {/* Mobile header */}
           <div className="lg:hidden text-center mb-8">
             <img src="/school_logo.png" alt="ASCB" className="h-14 w-14 object-contain mx-auto mb-3"
@@ -194,14 +194,14 @@ export function StaffLoginPage() {
                 {usesEmail ? 'Email Address' : 'Username'}
               </label>
               <div className="relative">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'id' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'id' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   {usesEmail ? <Mail size={15} /> : <User size={15} />}
                 </div>
                 <input key={selected + '-id'} type={usesEmail ? 'email' : 'text'} value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
                   onFocus={() => setFocused('id')} onBlur={() => setFocused(null)}
                   placeholder={current.placeholder}
-                  className="input-field pl-11 h-[50px] text-sm"
+                  className="input-field pl-10 h-12"
                   autoComplete={usesEmail ? 'email' : 'username'} />
               </div>
             </div>
@@ -209,24 +209,24 @@ export function StaffLoginPage() {
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
               <div className="relative">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'pw' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'pw' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Lock size={15} />
                 </div>
                 <input key={selected + '-pw'} type="password" value={password}
                   onChange={e => setPassword(e.target.value)}
                   onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)}
                   placeholder="••••••••"
-                  className="input-field pl-11 h-[50px] text-sm" autoComplete="current-password" />
+                  className="input-field pl-10 h-12" autoComplete="current-password" />
               </div>
             </div>
 
             <button type="submit" disabled={isLoading}
-              className="relative mt-2 w-full h-[50px] rounded-xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
-              style={{ background: current.accent, boxShadow: isLoading ? 'none' : `0 8px 32px ${current.accent}35` }}>
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              className="relative mt-2 w-full h-12 rounded-2xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
+              style={{ background: current.accent, boxShadow: isLoading ? 'none' : `0 8px 32px ${current.accent}38` }}>
+              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
               {isLoading
                 ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                : <><span>Sign In to {current.label}</span><ArrowRight size={15} /></>}
+                : <><span>Sign In to {current.label}</span><ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" /></>}
             </button>
           </form>
 

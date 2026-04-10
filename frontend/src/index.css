@@ -127,9 +127,19 @@ body {
 
 /* Input field */
 .input-field {
-  @apply w-full bg-ascb-navy-mid/60 border border-ascb-navy-mid rounded-xl px-4 py-3 text-white text-sm
-         placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-ascb-orange focus:border-transparent
-         transition-all duration-200 font-ui;
+  @apply w-full rounded-2xl px-4 text-white text-sm placeholder-gray-600
+         focus:outline-none transition-all duration-300 font-ui;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.input-field:focus {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(244, 124, 32, 0.55);
+  box-shadow: 0 0 0 4px rgba(244, 124, 32, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.input-field::placeholder {
+  color: rgba(156, 163, 175, 0.55);
 }
 
 /* Stat card */

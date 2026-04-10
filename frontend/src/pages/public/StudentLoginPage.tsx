@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, Home } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles, Home, ChevronRight } from 'lucide-react'
 import { login } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -17,10 +17,8 @@ export function StudentLoginPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) {
-      toast.error('Please fill in all fields')
-      return
-    }
+    if (!email.trim()) { toast.error('Please enter your email address'); return }
+    if (!password.trim()) { toast.error('Please enter your password'); return }
     setIsLoading(true)
     try {
       const res = await login(email, password)
@@ -92,77 +90,130 @@ export function StudentLoginPage() {
       </div>
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center relative p-6 lg:p-10">
+      <div className="flex-1 flex items-center justify-center relative px-5 py-10 sm:px-8 lg:p-10">
+
         {/* Home button */}
-        <Link to="/" className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.10] hover:border-white/15 transition-all duration-200 text-xs font-ui z-10">
-          <Home size={13} /> Home
+        <Link to="/" className="absolute top-4 right-4 sm:top-5 sm:right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.05] border border-white/8 text-gray-400 hover:text-white hover:bg-white/[0.09] hover:border-white/14 transition-all duration-200 text-xs font-ui z-10">
+          <Home size={12} /> Home
         </Link>
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 70%)' }} />
+
+        {/* Ambient glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(244,124,32,0.05) 0%, transparent 65%)' }} />
         </div>
 
-        <div className="relative w-full max-w-[400px] animate-fade-in">
+        <div className="relative w-full max-w-sm animate-fade-in">
+
           {/* Mobile header */}
-          <div className="lg:hidden text-center mb-10">
-            <img src="/school_logo.png" alt="ASCB" className="h-14 w-14 object-contain mx-auto mb-3 drop-shadow-xl"
+          <div className="lg:hidden text-center mb-8">
+            <img src="/school_logo.png" alt="ASCB" className="h-16 w-16 object-contain mx-auto mb-3 drop-shadow-xl"
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
             <h1 className="text-xl font-bold text-white font-display">Andres Soriano Colleges of Bislig</h1>
             <p className="text-gray-500 text-xs font-ui mt-1">IdeaLink — Student Portal</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Welcome back</h2>
-            <p className="text-gray-500 text-sm font-body mt-1.5">Sign in with your registered email address</p>
+          {/* Heading */}
+          <div className="mb-7">
+            <h2 className="text-3xl font-bold text-white font-display leading-tight">Welcome back</h2>
+            <p className="text-gray-500 text-sm font-body mt-1.5">Sign in with your registered email</p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-400 font-ui">Email Address</label>
+          <form onSubmit={handleSubmit} noValidate className="space-y-3">
+
+            {/* Email */}
+            <div>
+              <label className="block text-xs font-semibold text-gray-400 font-ui mb-1.5">Email Address</label>
               <div className="relative">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-500'}`}>
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Mail size={15} />
                 </div>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                  onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
-                  placeholder="Enter your email"
-                  className="input-field pl-11 h-[50px] text-sm" autoComplete="email" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onFocus={() => setFocused('email')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="Enter your email address"
+                  className="input-field pl-10 h-12"
+                  autoComplete="email"
+                />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
+            {/* Password */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
+                <span className="text-[11px] text-ascb-orange/70 hover:text-ascb-orange font-ui cursor-pointer transition-colors select-none">
+                  Forgot password?
+                </span>
+              </div>
               <div className="relative">
-                <div className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-600'}`}>
                   <Lock size={15} />
                 </div>
-                <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                  onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
-                  placeholder="••••••••"
-                  className="input-field pl-11 pr-12 h-[50px] text-sm" autoComplete="current-password" />
-                <button type="button" tabIndex={-1} onClick={() => setShowPw(v => !v)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors">
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onFocus={() => setFocused('password')}
+                  onBlur={() => setFocused(null)}
+                  placeholder="Enter your password"
+                  className="input-field pl-10 pr-11 h-12"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors p-0.5"
+                >
                   {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
-            <button type="submit" disabled={isLoading}
-              className="relative mt-2 w-full h-[50px] rounded-xl bg-ascb-orange text-white font-semibold font-ui text-sm transition-all duration-200 hover:bg-ascb-orange-dark hover:shadow-xl hover:shadow-ascb-orange/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group">
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-              {isLoading
-                ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                : <><span>Sign In</span><ArrowRight size={15} /></>}
-            </button>
+            {/* Submit */}
+            <div className="pt-1">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="relative w-full h-12 rounded-2xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
+                style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)', boxShadow: isLoading ? 'none' : '0 8px 32px rgba(244,124,32,0.30)' }}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                {isLoading
+                  ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  : <><span>Sign In</span><ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-200" /></>
+                }
+              </button>
+            </div>
           </form>
 
-          <p className="mt-7 text-center text-sm text-gray-600 font-ui">
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-white/6" />
+            <span className="text-[11px] text-gray-700 font-ui">or</span>
+            <div className="flex-1 h-px bg-white/6" />
+          </div>
+
+          {/* Staff portal link */}
+          <Link
+            to="/staff-login"
+            className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/6 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200 group"
+          >
+            <span className="text-xs text-gray-500 font-ui">Admin / Registrar / Accounting?</span>
+            <span className="text-xs text-ascb-orange font-semibold font-ui flex items-center gap-1">
+              Staff Portal <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </Link>
+
+          <p className="mt-5 text-center text-sm text-gray-600 font-ui">
             No account?{' '}
-            <Link to="/signup" className="text-ascb-orange hover:text-ascb-gold font-semibold transition-colors">Create one free</Link>
-          </p>
-          <p className="mt-3 text-center text-xs text-gray-700 font-ui">
-            Staff member?{' '}
-            <Link to="/staff-login" className="text-gray-500 hover:text-gray-300 transition-colors underline underline-offset-2">Access Staff Portal</Link>
+            <Link to="/signup" className="text-ascb-orange hover:text-ascb-gold font-semibold transition-colors">
+              Create one free
+            </Link>
           </p>
         </div>
       </div>
