@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Users, MessageSquare, TrendingUp, Bell, ArrowUpRight, Download } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend
+  PieChart, Pie, Cell, LineChart, Line
 } from 'recharts'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { exportToCSV } from '../../api/reports'
