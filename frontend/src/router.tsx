@@ -1,38 +1,48 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
 import { Sidebar } from './components/layout/Sidebar'
 
-import { HomePage } from './pages/public/HomePage'
-import { StudentLoginPage } from './pages/public/StudentLoginPage'
-import { StaffLoginPage } from './pages/public/StaffLoginPage'
-import { SignupPage } from './pages/public/SignupPage'
+// ── Lazy-loaded pages ──────────────────────────────────────────────────────
+const HomePage           = lazy(() => import('./pages/public/HomePage').then(m => ({ default: m.HomePage })))
+const StudentLoginPage   = lazy(() => import('./pages/public/StudentLoginPage').then(m => ({ default: m.StudentLoginPage })))
+const StaffLoginPage     = lazy(() => import('./pages/public/StaffLoginPage').then(m => ({ default: m.StaffLoginPage })))
+const SignupPage          = lazy(() => import('./pages/public/SignupPage').then(m => ({ default: m.SignupPage })))
 
-import { SubmitPage } from './pages/user/SubmitPage'
-import { SubmissionsPage } from './pages/user/SubmissionsPage'
-import { AnnouncementsPage } from './pages/user/AnnouncementsPage'
+const SubmitPage         = lazy(() => import('./pages/user/SubmitPage').then(m => ({ default: m.SubmitPage })))
+const SubmissionsPage    = lazy(() => import('./pages/user/SubmissionsPage').then(m => ({ default: m.SubmissionsPage })))
+const AnnouncementsPage  = lazy(() => import('./pages/user/AnnouncementsPage').then(m => ({ default: m.AnnouncementsPage })))
 
-import { AdminDashboard } from './pages/admin/AdminDashboard'
-import { AdminSuggestions } from './pages/admin/AdminSuggestions'
-import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
-import { AdminTestimonials } from './pages/admin/AdminTestimonials'
+const AdminDashboard     = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const AdminSuggestions   = lazy(() => import('./pages/admin/AdminSuggestions').then(m => ({ default: m.AdminSuggestions })))
+const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements').then(m => ({ default: m.AdminAnnouncements })))
+const AdminTestimonials  = lazy(() => import('./pages/admin/AdminTestimonials').then(m => ({ default: m.AdminTestimonials })))
 
-import { RegistrarSuggestions } from './pages/registrar/RegistrarSuggestions'
-import { RegistrarDashboard } from './pages/registrar/RegistrarDashboard'
+const RegistrarDashboard   = lazy(() => import('./pages/registrar/RegistrarDashboard').then(m => ({ default: m.RegistrarDashboard })))
+const RegistrarSuggestions = lazy(() => import('./pages/registrar/RegistrarSuggestions').then(m => ({ default: m.RegistrarSuggestions })))
 
-import { AccountingSuggestions } from './pages/accounting/AccountingSuggestions'
-import { AccountingDashboard } from './pages/accounting/AccountingDashboard'
+const AccountingDashboard   = lazy(() => import('./pages/accounting/AccountingDashboard').then(m => ({ default: m.AccountingDashboard })))
+const AccountingSuggestions = lazy(() => import('./pages/accounting/AccountingSuggestions').then(m => ({ default: m.AccountingSuggestions })))
 
-// Scroll to top on every route change
+// ── Page loading fallback ──────────────────────────────────────────────────
+function PageSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-[40vh]">
+      <div className="w-8 h-8 rounded-full border-2 border-ascb-orange border-t-transparent animate-spin" />
+    </div>
+  )
+}
+
+// ── Scroll to top on every route change ───────────────────────────────────
 function ScrollToTop() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
   return null
 }
 
-// Fade-in wrapper — remounts on route change to replay animation
+// ── Fade-in wrapper — remounts on route change to replay animation ─────────
 function PageTransition({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   return (
@@ -47,7 +57,11 @@ function PublicLayout() {
     <div className="min-h-screen bg-ascb-navy-dark flex flex-col">
       <Header />
       <main className="flex-1">
-        <PageTransition><Outlet /></PageTransition>
+        <PageTransition>
+          <Suspense fallback={<PageSpinner />}>
+            <Outlet />
+          </Suspense>
+        </PageTransition>
       </main>
       <Footer />
     </div>
@@ -64,7 +78,11 @@ function StaffLayout() {
           <Header />
         </div>
         <main className="flex-1 p-4 md:p-6 pt-[72px] md:pt-6 pb-28 md:pb-6 overflow-auto">
-          <PageTransition><Outlet /></PageTransition>
+          <PageTransition>
+            <Suspense fallback={<PageSpinner />}>
+              <Outlet />
+            </Suspense>
+          </PageTransition>
         </main>
       </div>
     </div>
