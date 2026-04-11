@@ -28,30 +28,38 @@ function writeCache(user: { id: number } | null, role: string | null) {
   } catch { /* storage unavailable */ }
 }
 
+const TIMEOUT_MS = 10_000 // bail out after 10 s if backend is still cold
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const cached = readCache()
 
-  // Initialise from cache → no blank-screen flash while me() is in-flight
   const [currentUser, setCurrentUser] = useState<{ id: number } | null>(cached?.user ?? null)
-  const [role, setRole] = useState<string | null>(cached?.role ?? null)
-  // Only show a loading state when there is no cached session to display
-  const [isLoading, setIsLoading] = useState(!cached)
+  const [role, setRole]               = useState<string | null>(cached?.role ?? null)
+  // Skip loading state if we have a cached session — render immediately
+  const [isLoading, setIsLoading]     = useState(!cached)
 
   useEffect(() => {
+    let cancelled = false
+    let timerId: ReturnType<typeof setTimeout>
+
+    const finish = (user: { id: number } | null, roleVal: string | null) => {
+      if (cancelled) return
+      cancelled = true
+      clearTimeout(timerId)
+      setCurrentUser(user)
+      setRole(roleVal)
+      writeCache(user, roleVal)
+      setIsLoading(false)
+    }
+
+    // If the backend never responds, give up after TIMEOUT_MS
+    timerId = setTimeout(() => finish(null, null), TIMEOUT_MS)
+
     me()
-      .then((res) => {
-        const user = { id: res.data.user_id }
-        setCurrentUser(user)
-        setRole(res.data.role)
-        writeCache(user, res.data.role)
-      })
-      .catch(() => {
-        // Session expired / invalid — clear everything
-        setCurrentUser(null)
-        setRole(null)
-        writeCache(null, null)
-      })
-      .finally(() => setIsLoading(false))
+      .then(res => finish({ id: res.data.user_id }, res.data.role))
+      .catch(()  => finish(null, null))
+
+    return () => { cancelled = true; clearTimeout(timerId) }
   }, [])
 
   const setAuth = (user: { id: number } | null, newRole: string | null) => {

@@ -27,7 +27,29 @@ const RegistrarSuggestions = lazy(() => import('./pages/registrar/RegistrarSugge
 const AccountingDashboard   = lazy(() => import('./pages/accounting/AccountingDashboard').then(m => ({ default: m.AccountingDashboard })))
 const AccountingSuggestions = lazy(() => import('./pages/accounting/AccountingSuggestions').then(m => ({ default: m.AccountingSuggestions })))
 
-// ── Page loading fallback ──────────────────────────────────────────────────
+// ── Full-screen auth loading screen ───────────────────────────────────────
+function AuthLoader() {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setSlow(true), 3000); return () => clearTimeout(t) }, [])
+  return (
+    <div className="min-h-screen bg-ascb-navy-dark flex flex-col items-center justify-center gap-5 px-4">
+      <img src="/school_logo.png" alt="ASCB" className="w-16 h-16 object-contain opacity-80" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+      <div className="w-12 h-12 rounded-full border-[3px] border-ascb-orange border-t-transparent animate-spin" />
+      <div className="text-center">
+        <p className="text-white font-semibold font-ui text-base">
+          {slow ? 'Waking up the server…' : 'Loading IdeaLink'}
+        </p>
+        {slow && (
+          <p className="text-gray-400 text-sm font-ui mt-1">
+            The server takes a moment on first load. Please wait.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── In-page spinner (inside layouts) ──────────────────────────────────────
 function PageSpinner() {
   return (
     <div className="flex items-center justify-center min-h-[40vh]">
@@ -96,16 +118,8 @@ function StaffLayout() {
 
 function RequireAuth({ role }: { role: string }) {
   const { currentUser, role: userRole, isLoading } = useAuth()
-  if (isLoading) return (
-    <div className="min-h-screen bg-ascb-navy-dark flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 rounded-full border-2 border-ascb-orange border-t-transparent animate-spin" />
-        <p className="text-gray-400 text-sm font-ui">Loading…</p>
-      </div>
-    </div>
-  )
+  if (isLoading) return <AuthLoader />
   if (!currentUser || userRole !== role) {
-    // Staff roles get sent to the staff portal, not the student login
     const target = role === 'user' ? '/login' : '/staff-login'
     return <Navigate to={target} replace />
   }
@@ -128,8 +142,8 @@ function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
     }
   }, [isLoading, currentUser, role, navigate])
 
-  // Show spinner while auth is resolving OR while redirect is about to fire
-  if (isLoading || currentUser) return <PageSpinner />
+  // Show loader while auth is resolving OR while redirect is about to fire
+  if (isLoading || currentUser) return <AuthLoader />
   return <>{children}</>
 }
 
