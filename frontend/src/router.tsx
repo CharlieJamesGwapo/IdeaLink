@@ -151,18 +151,15 @@ export function AppRouter() {
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
-        {/* Public pages visible to everyone */}
-        <Route element={<PublicLayout />}>
-          <Route path="/" element={<HomePage />} />
-          {/* Legacy login URLs → staff portal */}
-          <Route path="/admin/login"      element={<Navigate to="/staff-login" replace />} />
-          <Route path="/registrar/login"  element={<Navigate to="/staff-login" replace />} />
-          <Route path="/accounting/login" element={<Navigate to="/staff-login" replace />} />
-        </Route>
+        {/* Legacy login URLs → staff portal (no auth check needed) */}
+        <Route path="/admin/login"      element={<Navigate to="/staff-login" replace />} />
+        <Route path="/registrar/login"  element={<Navigate to="/staff-login" replace />} />
+        <Route path="/accounting/login" element={<Navigate to="/staff-login" replace />} />
 
-        {/* Auth pages — redirect away if already logged in */}
+        {/* Home + auth pages — redirect to dashboard if already logged in */}
         <Route element={<AuthPageGuard />}>
           <Route element={<PublicLayout />}>
+            <Route path="/"            element={<HomePage />} />
             <Route path="/login"       element={<StudentLoginPage />} />
             <Route path="/staff-login" element={<StaffLoginPage />} />
             <Route path="/signup"      element={<SignupPage />} />
