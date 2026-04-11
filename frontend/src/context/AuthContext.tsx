@@ -56,7 +56,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     timerId = setTimeout(() => finish(null, null), TIMEOUT_MS)
 
     me()
-      .then(res => finish({ id: res.data.user_id }, res.data.role))
+      .then(res => {
+        const userId = res.data?.user_id
+        const role   = res.data?.role
+        // Guard against garbage responses (e.g. HTML from Vercel catch-all rewrite)
+        if (typeof userId === 'number' && typeof role === 'string') {
+          finish({ id: userId }, role)
+        } else {
+          finish(null, null)
+        }
+      })
       .catch(()  => finish(null, null))
 
     return () => { cancelled = true; clearTimeout(timerId) }

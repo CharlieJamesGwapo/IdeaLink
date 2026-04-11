@@ -132,7 +132,8 @@ function RequireAuth({ role }: { role: string }) {
 function useRedirectIfAuthed() {
   const { currentUser, role, isLoading } = useAuth()
   useEffect(() => {
-    if (!isLoading && currentUser) {
+    // Only redirect when both currentUser AND role are valid (guard against garbage API responses)
+    if (!isLoading && currentUser && role) {
       const dest =
         role === 'admin'      ? '/admin/dashboard'
         : role === 'registrar'  ? '/registrar/dashboard'
@@ -141,12 +142,13 @@ function useRedirectIfAuthed() {
       window.location.replace(dest)
     }
   }, [isLoading, currentUser, role])
-  return { isLoading, currentUser }
+  return { isLoading, currentUser, role }
 }
 
 function AuthGatedPage({ children }: { children: React.ReactNode }) {
-  const { isLoading, currentUser } = useRedirectIfAuthed()
-  if (isLoading || currentUser) return <AuthLoader />
+  const { isLoading, currentUser, role } = useRedirectIfAuthed()
+  // Show loader only while auth is resolving OR while a valid session is being redirected
+  if (isLoading || (currentUser && role)) return <AuthLoader />
   return <>{children}</>
 }
 
