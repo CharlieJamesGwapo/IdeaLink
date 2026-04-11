@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
@@ -129,21 +129,20 @@ function RequireAuth({ role }: { role: string }) {
 // Redirect already-authenticated users away from auth pages
 function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const { currentUser, role, isLoading } = useAuth()
-  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (!isLoading && currentUser) {
-      const dest =
-        role === 'admin'      ? '/admin/dashboard'
-        : role === 'registrar'  ? '/registrar/dashboard'
-        : role === 'accounting' ? '/accounting/dashboard'
-        : '/user/submit'
-      navigate(dest, { replace: true })
-    }
-  }, [isLoading, currentUser, role, navigate])
+  // Still checking auth — show loader (never blank)
+  if (isLoading) return <AuthLoader />
 
-  // Show loader while auth is resolving OR while redirect is about to fire
-  if (isLoading || currentUser) return <AuthLoader />
+  // Auth resolved and user is logged in — redirect immediately (same render)
+  if (currentUser) {
+    const dest =
+      role === 'admin'      ? '/admin/dashboard'
+      : role === 'registrar'  ? '/registrar/dashboard'
+      : role === 'accounting' ? '/accounting/dashboard'
+      : '/user/submit'
+    return <Navigate to={dest} replace />
+  }
+
   return <>{children}</>
 }
 
