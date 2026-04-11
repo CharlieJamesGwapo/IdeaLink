@@ -126,24 +126,28 @@ function RequireAuth({ role }: { role: string }) {
   return <Outlet />
 }
 
-// Redirect authenticated users away from auth pages.
-// Must be a ROUTE wrapper (like RequireAuth) — NOT inside <Suspense>.
-// <Navigate> inside <Suspense> gets swallowed by React 18 concurrent mode.
-function AuthPageGuard() {
+// Redirect authenticated users away from public-only pages.
+// Uses window.location.replace() — bypasses React Router to guarantee the
+// redirect always fires regardless of Suspense/concurrent-mode quirks.
+function useRedirectIfAuthed() {
   const { currentUser, role, isLoading } = useAuth()
+  useEffect(() => {
+    if (!isLoading && currentUser) {
+      const dest =
+        role === 'admin'      ? '/admin/dashboard'
+        : role === 'registrar'  ? '/registrar/dashboard'
+        : role === 'accounting' ? '/accounting/dashboard'
+        : '/user/submit'
+      window.location.replace(dest)
+    }
+  }, [isLoading, currentUser, role])
+  return { isLoading, currentUser }
+}
 
-  if (isLoading) return <AuthLoader />
-
-  if (currentUser) {
-    const dest =
-      role === 'admin'      ? '/admin/dashboard'
-      : role === 'registrar'  ? '/registrar/dashboard'
-      : role === 'accounting' ? '/accounting/dashboard'
-      : '/user/submit'
-    return <Navigate to={dest} replace />
-  }
-
-  return <Outlet />
+function AuthGatedPage({ children }: { children: React.ReactNode }) {
+  const { isLoading, currentUser } = useRedirectIfAuthed()
+  if (isLoading || currentUser) return <AuthLoader />
+  return <>{children}</>
 }
 
 export function AppRouter() {
@@ -151,19 +155,17 @@ export function AppRouter() {
     <BrowserRouter>
       <ScrollToTop />
       <Routes>
-        {/* Legacy login URLs → staff portal (no auth check needed) */}
+        {/* Legacy login URLs → staff portal */}
         <Route path="/admin/login"      element={<Navigate to="/staff-login" replace />} />
         <Route path="/registrar/login"  element={<Navigate to="/staff-login" replace />} />
         <Route path="/accounting/login" element={<Navigate to="/staff-login" replace />} />
 
-        {/* Home + auth pages — redirect to dashboard if already logged in */}
-        <Route element={<AuthPageGuard />}>
-          <Route element={<PublicLayout />}>
-            <Route path="/"            element={<HomePage />} />
-            <Route path="/login"       element={<StudentLoginPage />} />
-            <Route path="/staff-login" element={<StaffLoginPage />} />
-            <Route path="/signup"      element={<SignupPage />} />
-          </Route>
+        {/* Public pages — auth users get redirected to their dashboard */}
+        <Route element={<PublicLayout />}>
+          <Route path="/"            element={<AuthGatedPage><HomePage /></AuthGatedPage>} />
+          <Route path="/login"       element={<AuthGatedPage><StudentLoginPage /></AuthGatedPage>} />
+          <Route path="/staff-login" element={<AuthGatedPage><StaffLoginPage /></AuthGatedPage>} />
+          <Route path="/signup"      element={<AuthGatedPage><SignupPage /></AuthGatedPage>} />
         </Route>
 
         <Route element={<RequireAuth role="user" />}>
