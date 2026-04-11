@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
@@ -115,15 +115,21 @@ function RequireAuth({ role }: { role: string }) {
 // Redirect already-authenticated users away from auth pages
 function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const { currentUser, role, isLoading } = useAuth()
-  if (isLoading) return <PageSpinner />
-  if (currentUser) {
-    const dest =
-      role === 'admin'      ? '/admin/dashboard'
-      : role === 'registrar'  ? '/registrar/dashboard'
-      : role === 'accounting' ? '/accounting/dashboard'
-      : '/user/submit'
-    return <Navigate to={dest} replace />
-  }
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!isLoading && currentUser) {
+      const dest =
+        role === 'admin'      ? '/admin/dashboard'
+        : role === 'registrar'  ? '/registrar/dashboard'
+        : role === 'accounting' ? '/accounting/dashboard'
+        : '/user/submit'
+      navigate(dest, { replace: true })
+    }
+  }, [isLoading, currentUser, role, navigate])
+
+  // Show spinner while auth is resolving OR while redirect is about to fire
+  if (isLoading || currentUser) return <PageSpinner />
   return <>{children}</>
 }
 
