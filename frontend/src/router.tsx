@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth'
 import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
 import { Sidebar } from './components/layout/Sidebar'
+import { ErrorBoundary } from './components/shared/ErrorBoundary'
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────
 const HomePage           = lazy(() => import('./pages/public/HomePage').then(m => ({ default: m.HomePage })))
@@ -57,11 +58,13 @@ function PublicLayout() {
     <div className="min-h-screen bg-ascb-navy-dark flex flex-col">
       <Header />
       <main className="flex-1">
-        <PageTransition>
-          <Suspense fallback={<PageSpinner />}>
-            <Outlet />
-          </Suspense>
-        </PageTransition>
+        <ErrorBoundary>
+          <PageTransition>
+            <Suspense fallback={<PageSpinner />}>
+              <Outlet />
+            </Suspense>
+          </PageTransition>
+        </ErrorBoundary>
       </main>
       <Footer />
     </div>
@@ -78,11 +81,13 @@ function StaffLayout() {
           <Header />
         </div>
         <main className="flex-1 p-4 md:p-6 pt-[72px] md:pt-6 pb-28 md:pb-6 overflow-auto">
-          <PageTransition>
-            <Suspense fallback={<PageSpinner />}>
-              <Outlet />
-            </Suspense>
-          </PageTransition>
+          <ErrorBoundary>
+            <PageTransition>
+              <Suspense fallback={<PageSpinner />}>
+                <Outlet />
+              </Suspense>
+            </PageTransition>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

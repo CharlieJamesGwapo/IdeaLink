@@ -12,8 +12,10 @@ const ANNOUNCEMENTS_PER_PAGE = 5
 
 function useScrollReveal<T extends HTMLElement = HTMLElement>() {
   const ref = useRef<T>(null)
-  const [visible, setVisible] = useState(false)
+  // Default to visible if IntersectionObserver is unavailable (old WebViews, Facebook Lite)
+  const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
   useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') { setVisible(true); return }
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setVisible(true) },
       { threshold: 0.08 }
@@ -83,7 +85,7 @@ export function HomePage() {
   return (
     <div className="text-white">
       {/* ─── HERO ─── */}
-      <section className="relative hero-bg min-h-screen flex items-center overflow-hidden">
+      <section className="relative hero-bg min-h-[100svh] min-h-screen flex items-center overflow-hidden">
         {/* Layered dark overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-ascb-navy-dark/80 via-ascb-navy-dark/65 to-ascb-navy-dark/92" />
 
@@ -91,20 +93,19 @@ export function HomePage() {
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-ascb-orange via-ascb-gold to-ascb-orange opacity-90" />
         <div className="absolute right-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-transparent via-ascb-orange/30 to-transparent" />
 
-        {/* Radial ambient glow behind content */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[700px] h-[500px] rounded-full blur-[140px]" style={{ background: 'radial-gradient(ellipse, rgba(244,124,32,0.12) 0%, rgba(27,58,110,0.18) 60%, transparent 100%)' }} />
+        {/* Radial ambient glow behind content (hidden on mobile for performance) */}
+        <div className="absolute inset-0 hidden sm:flex items-center justify-center pointer-events-none">
+          <div className="w-[700px] h-[500px] rounded-full blur-[100px]" style={{ background: 'radial-gradient(ellipse, rgba(244,124,32,0.10) 0%, rgba(27,58,110,0.15) 60%, transparent 100%)' }} />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 pt-20 pb-32 text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-16 sm:pt-20 pb-24 sm:pb-32 text-center">
 
           {/* ── Logo ── */}
-          <div className="flex justify-center mb-8 animate-fade-in">
+          <div className="flex justify-center mb-6 animate-fade-in">
             <img
               src="/school_logo.png"
               alt="ASCB Logo"
-              className="object-contain drop-shadow-2xl mx-auto"
-              style={{ height: '200px', width: '200px' }}
+              className="object-contain drop-shadow-2xl mx-auto w-28 h-28 sm:w-44 sm:h-44 md:w-52 md:h-52"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
