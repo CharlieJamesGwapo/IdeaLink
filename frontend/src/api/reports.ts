@@ -17,7 +17,7 @@ export function exportToCSV(suggestions: Suggestion[], filename: string) {
     csvCell(s.description),
     csvCell(s.status),
     s.anonymous ? csvCell('Anonymous') : csvCell(s.submitter_name || 'Unknown'),
-    s.anonymous ? 'Yes' : 'No',
+    csvCell(s.anonymous ? 'Yes' : 'No'),
     csvCell(new Date(s.submitted_at).toLocaleDateString('en-PH')),
   ])
 

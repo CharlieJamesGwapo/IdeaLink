@@ -55,6 +55,7 @@ export function AdminSuggestions() {
     try {
       await featureSuggestion(id)
       toast.success('Featured as testimonial!')
+      refetch()
     } catch { toast.error('Failed to feature') }
   }
 

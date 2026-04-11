@@ -311,7 +311,7 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge status={s.status}/>
-                  <select value={s.status} onChange={e => handleStatusChange(s.id, e.target.value)}
+                  <select value={s.status} onChange={e => { if (e.target.value !== s.status) handleStatusChange(s.id, e.target.value) }}
                     className="text-xs rounded-lg px-2 py-1 text-white font-ui focus:outline-none focus:ring-1 focus:ring-ascb-orange cursor-pointer"
                     style={{ background: 'rgba(13,31,60,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
                     <option>Pending</option>

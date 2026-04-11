@@ -115,7 +115,7 @@ export function RegistrarSuggestions() {
         </div>
       </div>
 
-      {search && !isLoading && (
+      {(search || filter !== 'all') && !isLoading && (
         <p className="text-xs text-gray-500 font-ui">{filtered.length} of {suggestions.length} results</p>
       )}
 
@@ -133,7 +133,7 @@ export function RegistrarSuggestions() {
           <MessageSquare size={36} className="text-gray-600 mx-auto mb-3"/>
           <p className="text-gray-400 font-medium font-ui">No feedback found</p>
           <p className="text-gray-600 text-sm mt-1 font-ui">
-            {search ? 'Try a different search.' : 'Registrar feedback will appear here.'}
+            {search ? 'Try a different search.' : filter !== 'all' ? `No ${filter.toLowerCase()} submissions.` : 'Registrar feedback will appear here.'}
           </p>
         </div>
       ) : (
