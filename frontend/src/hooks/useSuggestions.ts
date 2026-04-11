@@ -17,7 +17,7 @@ export function useSuggestions() {
     setIsLoading(true)
     setError(null)
     getSuggestions()
-      .then(res => { if (mountedRef.current) setSuggestions(res.data) })
+      .then(res => { if (mountedRef.current) setSuggestions(Array.isArray(res.data) ? res.data : []) })
       .catch(() => { if (mountedRef.current) setError('Failed to load feedback. Please try again.') })
       .finally(() => { if (mountedRef.current) setIsLoading(false) })
   }, [])

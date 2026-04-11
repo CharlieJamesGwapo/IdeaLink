@@ -67,7 +67,7 @@ export function HomePage() {
 
   useEffect(() => {
     getTestimonials()
-      .then(res => { if (mountedRef.current) setTestimonials(res.data) })
+      .then(res => { if (mountedRef.current) setTestimonials(Array.isArray(res.data) ? res.data : []) })
       .catch(() => {})
   }, [])
 

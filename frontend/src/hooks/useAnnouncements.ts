@@ -17,7 +17,7 @@ export function useAnnouncements() {
     setIsLoading(true)
     setError(null)
     getAnnouncements()
-      .then(res => { if (mountedRef.current) setAnnouncements(res.data) })
+      .then(res => { if (mountedRef.current) setAnnouncements(Array.isArray(res.data) ? res.data : []) })
       .catch(() => { if (mountedRef.current) setError('Failed to load announcements') })
       .finally(() => { if (mountedRef.current) setIsLoading(false) })
   }, [])
