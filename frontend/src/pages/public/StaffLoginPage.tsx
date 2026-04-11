@@ -201,7 +201,7 @@ export function StaffLoginPage() {
                   onChange={e => setIdentifier(e.target.value)}
                   onFocus={() => setFocused('id')} onBlur={() => setFocused(null)}
                   placeholder={current.placeholder}
-                  className="input-field pl-10 h-12"
+                  className="input-field pl-10 h-11"
                   autoComplete={usesEmail ? 'email' : 'username'} />
               </div>
             </div>
@@ -216,13 +216,13 @@ export function StaffLoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)}
                   placeholder="••••••••"
-                  className="input-field pl-10 h-12" autoComplete="current-password" />
+                  className="input-field pl-10 h-11" autoComplete="current-password" />
               </div>
             </div>
 
             <button type="submit" disabled={isLoading}
-              className="relative mt-2 w-full h-12 rounded-2xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
-              style={{ background: current.accent, boxShadow: isLoading ? 'none' : `0 8px 32px ${current.accent}38` }}>
+              className="relative mt-2 w-full h-11 rounded-xl text-white font-semibold font-ui text-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group hover:brightness-110"
+              style={{ background: current.accent, boxShadow: isLoading ? 'none' : `0 4px 20px ${current.accent}55` }}>
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
               {isLoading
                 ? <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />

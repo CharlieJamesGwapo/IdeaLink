@@ -187,7 +187,7 @@ export function SignupPage() {
                   onFocus={() => setFocused('name')}
                   onBlur={() => setFocused(null)}
                   placeholder="Juan dela Cruz"
-                  className="input-field pl-10 h-12"
+                  className="input-field pl-10 h-11"
                   autoComplete="name"
                 />
               </div>
@@ -207,7 +207,7 @@ export function SignupPage() {
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
                   placeholder="you@ascb.edu.ph"
-                  className="input-field pl-10 h-12"
+                  className="input-field pl-10 h-11"
                   autoComplete="email"
                 />
               </div>
@@ -227,7 +227,7 @@ export function SignupPage() {
                   onFocus={() => setFocused('pw')}
                   onBlur={() => setFocused(null)}
                   placeholder="At least 6 characters"
-                  className="input-field pl-10 pr-11 h-12"
+                  className="input-field pl-10 pr-11 h-11"
                   autoComplete="new-password"
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPassword(v => !v)}
@@ -261,8 +261,8 @@ export function SignupPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="relative mt-2 w-full h-12 rounded-2xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
-              style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)', boxShadow: isLoading ? 'none' : '0 8px 32px rgba(244,124,32,0.30)' }}
+              className="relative mt-2 w-full h-11 rounded-xl text-white font-semibold font-ui text-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group hover:brightness-110"
+              style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)', boxShadow: isLoading ? 'none' : '0 4px 20px rgba(244,124,32,0.40)' }}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
               {isLoading

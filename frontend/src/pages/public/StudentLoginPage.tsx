@@ -119,14 +119,14 @@ export function StudentLoginPage() {
             <p className="text-gray-500 text-sm font-body mt-1.5">Sign in with your registered email</p>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-3">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
             {/* Email */}
-            <div>
-              <label className="block text-xs font-semibold text-gray-400 font-ui mb-1.5">Email Address</label>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-gray-400 font-ui tracking-wide">Email Address</label>
               <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-600'}`}>
-                  <Mail size={15} />
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'email' ? 'text-ascb-orange' : 'text-gray-500'}`}>
+                  <Mail size={16} />
                 </div>
                 <input
                   type="email"
@@ -134,24 +134,24 @@ export function StudentLoginPage() {
                   onChange={e => setEmail(e.target.value)}
                   onFocus={() => setFocused('email')}
                   onBlur={() => setFocused(null)}
-                  placeholder="Enter your email address"
-                  className="input-field pl-10 h-12"
+                  placeholder="you@ascb.edu.ph"
+                  className="input-field pl-10 h-11"
                   autoComplete="email"
                 />
               </div>
             </div>
 
             {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
-                <span className="text-[11px] text-ascb-orange/70 hover:text-ascb-orange font-ui cursor-pointer transition-colors select-none">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-medium text-gray-400 font-ui tracking-wide">Password</label>
+                <span className="text-[11px] text-ascb-orange hover:text-ascb-gold font-ui cursor-pointer transition-colors select-none">
                   Forgot password?
                 </span>
               </div>
               <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-600'}`}>
-                  <Lock size={15} />
+                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-500'}`}>
+                  <Lock size={16} />
                 </div>
                 <input
                   type={showPw ? 'text' : 'password'}
@@ -160,16 +160,16 @@ export function StudentLoginPage() {
                   onFocus={() => setFocused('password')}
                   onBlur={() => setFocused(null)}
                   placeholder="Enter your password"
-                  className="input-field pl-10 pr-11 h-12"
+                  className="input-field pl-10 pr-11 h-11"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPw(v => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors p-0.5"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200 transition-colors p-1"
                 >
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
@@ -179,8 +179,8 @@ export function StudentLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="relative w-full h-12 rounded-2xl text-white font-semibold font-ui text-sm transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group"
-                style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)', boxShadow: isLoading ? 'none' : '0 8px 32px rgba(244,124,32,0.30)' }}
+                className="relative w-full h-11 rounded-xl text-white font-semibold font-ui text-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 overflow-hidden group hover:brightness-110"
+                style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)', boxShadow: isLoading ? 'none' : '0 4px 20px rgba(244,124,32,0.40)' }}
               >
                 <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                 {isLoading
@@ -201,7 +201,7 @@ export function StudentLoginPage() {
           {/* Staff portal link */}
           <Link
             to="/staff-login"
-            className="flex items-center justify-between w-full px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/6 hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200 group"
+            className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] hover:border-white/15 transition-all duration-200 group"
           >
             <span className="text-xs text-gray-500 font-ui">Admin / Registrar / Accounting?</span>
             <span className="text-xs text-ascb-orange font-semibold font-ui flex items-center gap-1">
