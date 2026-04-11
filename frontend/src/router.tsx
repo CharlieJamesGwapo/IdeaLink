@@ -115,7 +115,7 @@ function RequireAuth({ role }: { role: string }) {
 // Redirect already-authenticated users away from auth pages
 function RedirectIfAuthed({ children }: { children: React.ReactNode }) {
   const { currentUser, role, isLoading } = useAuth()
-  if (isLoading) return null
+  if (isLoading) return <PageSpinner />
   if (currentUser) {
     const dest =
       role === 'admin'      ? '/admin/dashboard'
