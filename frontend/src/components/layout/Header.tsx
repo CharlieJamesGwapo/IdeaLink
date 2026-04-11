@@ -6,7 +6,7 @@ import { logout } from '../../api/auth'
 import { toast } from 'sonner'
 
 export function Header() {
-  const { currentUser, role, clearAuth } = useAuth()
+  const { currentUser, role, isLoading, clearAuth } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [isScrolled, setIsScrolled] = useState(false)
@@ -60,7 +60,7 @@ export function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-2">
-            {!currentUser && (
+            {!isLoading && !currentUser && (
               <>
                 <Link to="/login" className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-ui">
                   Sign In
@@ -70,7 +70,7 @@ export function Header() {
                 </Link>
               </>
             )}
-            {currentUser && role === 'user' && (
+            {!isLoading && currentUser && role === 'user' && (
               <>
                 {[
                   { to: '/user/submit', label: 'Submit Feedback' },
@@ -90,7 +90,7 @@ export function Header() {
                 </button>
               </>
             )}
-            {currentUser && role !== 'user' && (
+            {!isLoading && currentUser && role !== 'user' && (
               <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 font-ui">
                 <LogOut size={16} /> Logout
               </button>
@@ -108,13 +108,13 @@ export function Header() {
         {/* Mobile menu */}
         {isMobileOpen && (
           <div className="md:hidden border-t border-white/10 py-3 space-y-1 animate-fade-in">
-            {!currentUser && (
+            {!isLoading && !currentUser && (
               <>
                 <Link to="/login" className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-ui">Sign In</Link>
                 <Link to="/signup" className="block px-4 py-2.5 text-sm text-white bg-ascb-orange hover:bg-ascb-orange-dark rounded-lg transition-colors font-ui">Register</Link>
               </>
             )}
-            {currentUser && role === 'user' && (
+            {!isLoading && currentUser && role === 'user' && (
               <>
                 {[
                   { to: '/user/submit', label: 'Submit Feedback' },
@@ -132,7 +132,7 @@ export function Header() {
                 </button>
               </>
             )}
-            {currentUser && role !== 'user' && (
+            {!isLoading && currentUser && role !== 'user' && (
               <button onClick={handleLogout} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-ui">Logout</button>
             )}
           </div>
