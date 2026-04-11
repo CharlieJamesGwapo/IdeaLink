@@ -20,16 +20,12 @@ export function Header() {
 
   useEffect(() => setIsMobileOpen(false), [location])
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-    } catch {
-      // Cookie is cleared server-side; always clear local state
-    } finally {
-      clearAuth()
-      navigate('/')
-      toast.success('Logged out successfully')
-    }
+  const handleLogout = () => {
+    // Clear local state immediately — don't wait for the API (backend cold start)
+    clearAuth()
+    navigate('/')
+    toast.success('Logged out successfully')
+    logout().catch(() => {}) // fire-and-forget server-side cookie clear
   }
 
   return (
