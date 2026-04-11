@@ -99,7 +99,12 @@ export function Header() {
 
           {/* Mobile */}
           <div className="md:hidden flex items-center gap-2">
-            <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={() => setIsMobileOpen(!isMobileOpen)}>
+            <button
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+              onClick={() => setIsMobileOpen(!isMobileOpen)}
+              aria-expanded={isMobileOpen}
+              aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
+            >
               {isMobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>

@@ -194,7 +194,10 @@ export function StaffLoginPage() {
                 {usesEmail ? 'Email Address' : 'Username'}
               </label>
               <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'id' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div
+                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'id' ? '' : 'text-gray-600'}`}
+                  style={{ color: focused === 'id' ? current.accent : undefined }}
+                >
                   {usesEmail ? <Mail size={15} /> : <User size={15} />}
                 </div>
                 <input key={selected + '-id'} type={usesEmail ? 'email' : 'text'} value={identifier}
@@ -209,7 +212,10 @@ export function StaffLoginPage() {
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-gray-400 font-ui">Password</label>
               <div className="relative">
-                <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'pw' ? 'text-ascb-orange' : 'text-gray-600'}`}>
+                <div
+                  className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300 ${focused === 'pw' ? '' : 'text-gray-600'}`}
+                  style={{ color: focused === 'pw' ? current.accent : undefined }}
+                >
                   <Lock size={15} />
                 </div>
                 <input key={selected + '-pw'} type="password" value={password}

@@ -246,6 +246,7 @@ export function Sidebar() {
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute top-4 right-4 p-1.5 text-gray-500 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Close menu"
             >
               <X size={18} />
             </button>

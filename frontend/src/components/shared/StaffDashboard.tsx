@@ -144,69 +144,70 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
       {/* Office Hours Banner */}
       {officeHoursLoading ? (
         <Skeleton className="h-16 rounded-2xl" />
-      ) : null}
-      <div className={`rounded-2xl p-4 border transition-all ${officeHoursLoading ? 'hidden' : ''} ${isOpen ? 'border-green-500/25 bg-green-500/6' : 'border-red-500/25 bg-red-500/6'}`}>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${isOpen ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-red-400'} ${isOpen ? 'animate-pulse' : ''}`}/>
-            <div>
-              <p className={`text-sm font-bold font-ui ${isOpen ? 'text-green-300' : 'text-red-300'}`}>
-                Office is {isOpen ? 'OPEN' : 'CLOSED'}
-              </p>
-              {!isOpen && officeHours?.closure_reason && (
-                <p className="text-xs text-gray-400 font-body mt-0.5">{officeHours.closure_reason}</p>
-              )}
-              {!isOpen && officeHours?.closed_until && (
-                <p className="text-xs text-gray-500 font-ui mt-0.5">
-                  Reopens: {new Date(officeHours.closed_until).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+      ) : officeHours && (
+        <div className={`rounded-2xl p-4 border transition-all ${isOpen ? 'border-green-500/25 bg-green-500/6' : 'border-red-500/25 bg-red-500/6'}`}>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${isOpen ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-red-400'} ${isOpen ? 'animate-pulse' : ''}`}/>
+              <div>
+                <p className={`text-sm font-bold font-ui ${isOpen ? 'text-green-300' : 'text-red-300'}`}>
+                  Office is {isOpen ? 'OPEN' : 'CLOSED'}
                 </p>
+                {!isOpen && officeHours?.closure_reason && (
+                  <p className="text-xs text-gray-400 font-body mt-0.5">{officeHours.closure_reason}</p>
+                )}
+                {!isOpen && officeHours?.closed_until && (
+                  <p className="text-xs text-gray-500 font-ui mt-0.5">
+                    Reopens: {new Date(officeHours.closed_until).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {isOpen ? (
+                <button onClick={() => setShowCloseForm(v => !v)} disabled={isUpdating}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold font-ui hover:bg-red-500/25 transition-all disabled:opacity-50">
+                  <ToggleRight size={15}/> Close Office
+                </button>
+              ) : (
+                <button onClick={handleToggleOpen} disabled={isUpdating}
+                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold font-ui hover:bg-green-500/25 transition-all disabled:opacity-50">
+                  <ToggleLeft size={15}/> Mark Open
+                </button>
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {isOpen ? (
-              <button onClick={() => setShowCloseForm(v => !v)} disabled={isUpdating}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold font-ui hover:bg-red-500/25 transition-all disabled:opacity-50">
-                <ToggleRight size={15}/> Close Office
-              </button>
-            ) : (
-              <button onClick={handleToggleOpen} disabled={isUpdating}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold font-ui hover:bg-green-500/25 transition-all disabled:opacity-50">
-                <ToggleLeft size={15}/> Mark Open
-              </button>
-            )}
-          </div>
-        </div>
 
-        {/* Closure form */}
-        {showCloseForm && isOpen && (
-          <div className="mt-4 pt-4 border-t border-white/8 space-y-3 animate-fade-in">
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reason *</label>
-                <input type="text" value={closureReason} onChange={e => setClosureReason(e.target.value)}
-                  placeholder="e.g. Staff meeting, holiday, etc."
-                  className="input-field text-sm" style={{ height: '38px' }}/>
+          {/* Closure form */}
+          {showCloseForm && isOpen && (
+            <div className="mt-4 pt-4 border-t border-white/8 space-y-3 animate-fade-in">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reason *</label>
+                  <input type="text" value={closureReason} onChange={e => setClosureReason(e.target.value)}
+                    placeholder="e.g. Staff meeting, holiday, etc."
+                    className="input-field text-sm" style={{ height: '38px' }}/>
+                </div>
+                <div>
+                  <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reopen at (optional)</label>
+                  <input type="datetime-local" value={closedUntil} onChange={e => setClosedUntil(e.target.value)}
+                    className="input-field text-sm" style={{ height: '38px' }}/>
+                </div>
               </div>
-              <div>
-                <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reopen at (optional)</label>
-                <input type="datetime-local" value={closedUntil} onChange={e => setClosedUntil(e.target.value)}
-                  className="input-field text-sm" style={{ height: '38px' }}/>
+              <div className="flex gap-2">
+                <button onClick={handleToggleOpen} disabled={isUpdating || !closureReason.trim()}
+                  className="flex-1 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-ui hover:bg-red-500/30 transition-all disabled:opacity-40">
+                  Post Closure Notice
+                </button>
+                <button onClick={() => { setShowCloseForm(false); setClosureReason(''); setClosedUntil('') }}
+                  className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 text-sm font-ui hover:text-white transition-all">
+                  Cancel
+                </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button onClick={handleToggleOpen} disabled={isUpdating || !closureReason.trim()}
-                className="flex-1 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-ui hover:bg-red-500/30 transition-all disabled:opacity-40">
-                Post Closure Notice
-              </button>
-              <button onClick={() => { setShowCloseForm(false); setClosureReason(''); setClosedUntil('') }}
-                className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 text-sm font-ui hover:text-white transition-all">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
