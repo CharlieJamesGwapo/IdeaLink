@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { Mail, Lock, User, ArrowRight, ShieldCheck, BookOpen, Calculator, Home } from 'lucide-react'
+import { Mail, Lock, User, ArrowRight, ShieldCheck, BookOpen, Calculator, Home, Eye, EyeOff } from 'lucide-react'
 import { adminLogin, registrarLogin, accountingLogin } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -23,6 +23,7 @@ export function StaffLoginPage() {
   const [selected, setSelected]     = useState<StaffRole>('admin')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword]     = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading]   = useState(false)
   const [focused, setFocused]       = useState<string | null>(null)
 
@@ -66,7 +67,7 @@ export function StaffLoginPage() {
       {/* ── LEFT PANEL ─────────────────────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[44%] xl:w-[40%] relative flex-col shrink-0 overflow-hidden transition-all duration-700">
         <div className="absolute inset-0 hero-bg" />
-        <div className="absolute inset-0 bg-[#060e1e]/94" />
+        <div className="absolute inset-0 bg-[#060e1e]/60" />
         <div className="absolute inset-0 transition-opacity duration-700"
           style={{ background: `radial-gradient(ellipse at 30% 60%, ${current.accent}12 0%, transparent 65%)` }} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#060e1e] via-transparent to-transparent" />
@@ -77,41 +78,42 @@ export function StaffLoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col h-full px-10 xl:px-14 py-12">
-          <div className="flex-1 flex flex-col justify-center">
+          <div className="flex-1 flex flex-col justify-start pt-6">
             <div className="mb-5">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest font-ui transition-all duration-500"
                 style={{ background: `${current.accent}18`, color: current.accent, border: `1px solid ${current.accent}35` }}>
                 {current.icon} {current.label} Access
               </span>
             </div>
-            <h1 className="font-display text-white leading-[1.05]">
+            <h1 className="font-display text-white leading-[1.05]" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.55)' }}>
               <span className="block text-5xl xl:text-6xl font-bold">Staff</span>
-              <span className="block text-5xl xl:text-6xl font-bold transition-colors duration-500" style={{ color: current.accent }}>Portal</span>
+              <span className="block text-5xl xl:text-6xl font-bold transition-colors duration-500" style={{ color: current.accent, textShadow: '0 2px 20px rgba(0,0,0,0.55)' }}>Portal</span>
             </h1>
             <div className="flex items-center gap-3 mt-6 mb-5">
               <div className="h-px w-8 transition-colors duration-500" style={{ background: current.accent }} />
               <div className="h-px flex-1 bg-white/8" />
             </div>
-            <p className="text-gray-400 text-sm font-body leading-relaxed max-w-[260px]">
+            <p className="text-gray-100 text-sm font-body leading-relaxed max-w-[260px]"
+              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
               {current.desc} — manage feedback and service requests from students.
             </p>
 
             <div className="mt-10 space-y-2">
               {ROLES.map(r => (
                 <button key={r.id} type="button" onClick={() => handleSelect(r.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-300"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-300 backdrop-blur-sm"
                   style={{
-                    background: selected === r.id ? `${r.accent}14` : 'transparent',
-                    border: `1px solid ${selected === r.id ? r.accent + '35' : 'rgba(255,255,255,0.05)'}`,
+                    background: selected === r.id ? `${r.accent}22` : 'rgba(10,22,40,0.55)',
+                    border: `1px solid ${selected === r.id ? r.accent + '55' : 'rgba(255,255,255,0.12)'}`,
                   }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300"
-                    style={{ background: selected === r.id ? `${r.accent}20` : 'rgba(255,255,255,0.04)', color: selected === r.id ? r.accent : 'rgba(107,114,128,0.8)' }}>
+                    style={{ background: selected === r.id ? `${r.accent}30` : 'rgba(255,255,255,0.08)', color: selected === r.id ? r.accent : 'rgba(229,231,235,0.9)' }}>
                     {r.icon}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold font-ui transition-colors duration-300"
-                      style={{ color: selected === r.id ? '#fff' : 'rgba(107,114,128,0.8)' }}>{r.label}</p>
-                    <p className="text-[10px] text-gray-600 font-ui">{r.desc}</p>
+                      style={{ color: selected === r.id ? '#fff' : 'rgba(243,244,246,0.95)', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>{r.label}</p>
+                    <p className="text-[10px] font-ui" style={{ color: 'rgba(209,213,219,0.8)', textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{r.desc}</p>
                   </div>
                   {selected === r.id && <div className="ml-auto w-1.5 h-1.5 rounded-full shrink-0" style={{ background: r.accent }} />}
                 </button>
@@ -119,7 +121,7 @@ export function StaffLoginPage() {
             </div>
           </div>
 
-          <p className="text-gray-700 text-[10px] font-ui uppercase tracking-widest">ASCB · Bislig's Pioneer in Private Education</p>
+          <p className="text-gray-300 text-[10px] font-ui uppercase tracking-widest" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>ASCB · Bislig's Pioneer in Private Education</p>
         </div>
       </div>
 
@@ -156,8 +158,8 @@ export function StaffLoginPage() {
             </div>
           </div>
 
-          <div className="mb-7">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="mb-7 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-500"
                 style={{ background: `${current.accent}18`, color: current.accent, border: `1px solid ${current.accent}30` }}>
                 {current.icon}
@@ -167,7 +169,7 @@ export function StaffLoginPage() {
               </span>
             </div>
             <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Staff Access</h2>
-            <p className="text-gray-500 text-sm font-body mt-1.5">{current.desc} — authorised personnel only</p>
+            <p className="text-gray-300 text-sm font-ui font-medium mt-2 tracking-wide">{current.desc} — authorised personnel only</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -200,11 +202,15 @@ export function StaffLoginPage() {
                 >
                   <Lock size={15} />
                 </div>
-                <input key={selected + '-pw'} type="password" value={password}
+                <input key={selected + '-pw'} type={showPassword ? 'text' : 'password'} value={password}
                   onChange={e => setPassword(e.target.value)}
                   onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)}
                   placeholder="••••••••"
-                  className="input-field pl-10 h-11" autoComplete="current-password" />
+                  className="input-field pl-10 pr-11 h-11" autoComplete="current-password" />
+                <button type="button" tabIndex={-1} onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-gray-500 hover:text-gray-200 transition-colors leading-none">
+                  {showPassword ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
               </div>
             </div>
 

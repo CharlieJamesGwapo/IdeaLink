@@ -32,10 +32,12 @@ export function ForgotPasswordPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-5 py-10">
       <div className="w-full max-w-sm">
-        <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Forgot password</h2>
-        <p className="text-gray-500 text-sm font-body mt-1.5">
-          Enter your email and we'll send you a reset link.
-        </p>
+        <div className="text-center">
+          <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Forgot password</h2>
+          <p className="text-gray-300 text-sm font-ui font-medium mt-2 tracking-wide">
+            Enter your email and we'll send you a reset link.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4 mt-7">
           <div className="space-y-1.5">

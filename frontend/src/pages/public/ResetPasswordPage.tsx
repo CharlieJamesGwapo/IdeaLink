@@ -39,8 +39,10 @@ export function ResetPasswordPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-5 py-10">
       <div className="w-full max-w-sm">
-        <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Reset password</h2>
-        <p className="text-gray-500 text-sm font-body mt-1.5">Choose a new password for your account.</p>
+        <div className="text-center">
+          <h2 className="text-[2rem] font-bold text-white font-display leading-tight">Reset password</h2>
+          <p className="text-gray-300 text-sm font-ui font-medium mt-2 tracking-wide">Choose a new password for your account.</p>
+        </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4 mt-7">
           {/* New password */}
@@ -60,7 +62,7 @@ export function ResetPasswordPage() {
               />
               <button type="button" tabIndex={-1} onClick={() => setShowPassword(v => !v)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors p-0.5">
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                {showPassword ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
             </div>
           </div>
