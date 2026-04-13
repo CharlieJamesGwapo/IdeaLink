@@ -1,7 +1,29 @@
 import client from './client'
 
-export const signup = (email: string, password: string, fullname: string) =>
-  client.post('/api/auth/signup', { email, password, fullname })
+export type EducationLevel = 'HS' | 'SHS' | 'College'
+export type CollegeDepartment = 'CCE' | 'CTE' | 'CABE' | 'CCJE' | 'TVET'
+
+export interface MeResponse {
+  user_id: number
+  role: string
+  education_level?: string | null
+  college_department?: string | null
+}
+
+export const signup = (
+  email: string,
+  password: string,
+  fullname: string,
+  educationLevel: EducationLevel,
+  collegeDepartment: CollegeDepartment | null,
+) =>
+  client.post('/api/auth/signup', {
+    email,
+    password,
+    fullname,
+    education_level: educationLevel,
+    college_department: collegeDepartment,
+  })
 
 export const login = (email: string, password: string) =>
   client.post('/api/auth/login', { email, password })
@@ -17,4 +39,19 @@ export const accountingLogin = (username: string, password: string) =>
 
 export const logout = () => client.post('/api/auth/logout')
 
-export const me = () => client.get<{ user_id: number; role: string }>('/api/auth/me')
+export const me = () => client.get<MeResponse>('/api/auth/me')
+
+export const forgotPassword = (email: string) =>
+  client.post('/api/auth/forgot-password', { email })
+
+export const resetPassword = (token: string, newPassword: string) =>
+  client.post('/api/auth/reset-password', { token, new_password: newPassword })
+
+export const completeProfile = (
+  educationLevel: EducationLevel,
+  collegeDepartment: CollegeDepartment | null,
+) =>
+  client.post('/api/auth/complete-profile', {
+    education_level: educationLevel,
+    college_department: collegeDepartment,
+  })

@@ -9,9 +9,14 @@ type AuthServicer interface {
 	ParseToken(tokenStr string) (*Claims, error)
 	HashPassword(password string) (string, error)
 	CheckPassword(hash, password string) bool
-	SignupUser(email, password, fullname string) (*models.User, string, error)
+	SignupUser(email, password, fullname, educationLevel string, collegeDepartment *string) (*models.User, string, error)
 	LoginUser(email, password string) (*models.User, string, error)
 	LoginAdmin(email, password string) (*models.AdminAccount, string, error)
 	LoginRegistrar(username, password string) (*models.RegistrarAccount, string, error)
 	LoginAccounting(username, password string) (*models.AccountingAccount, string, error)
+
+	GetUserByID(userID int) (*models.User, error)
+	RequestPasswordReset(email string) error
+	ResetPassword(rawToken, newPassword string) error
+	CompleteProfile(userID int, educationLevel string, collegeDepartment *string) (*models.User, error)
 }

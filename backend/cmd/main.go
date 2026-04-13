@@ -8,6 +8,7 @@ import (
 	"idealink/internal/middleware"
 	"idealink/internal/repository"
 	"idealink/internal/services"
+	"idealink/internal/services/mail"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,13 +23,21 @@ func main() {
 
 	// Repositories
 	userRepo := repository.NewUserRepo(db)
+	passwordResetRepo := repository.NewPasswordResetRepo(db)
 	suggestionRepo := repository.NewSuggestionRepo(db)
 	announcementRepo := repository.NewAnnouncementRepo(db)
 	testimonialRepo := repository.NewTestimonialRepo(db)
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
 
 	// Services
-	authSvc := services.NewAuthService(userRepo, cfg.JWTSecret)
+	mailer := mail.NewSender(mail.Config{
+		Host: cfg.SMTPHost,
+		Port: cfg.SMTPPort,
+		User: cfg.SMTPUser,
+		Pass: cfg.SMTPPass,
+		From: cfg.SMTPFrom,
+	})
+	authSvc := services.NewAuthService(userRepo, passwordResetRepo, mailer, cfg.JWTSecret, cfg.FrontendURL)
 	announcementSvc := services.NewAnnouncementService(announcementRepo)
 	testimonialSvc := services.NewTestimonialService(testimonialRepo)
 	suggestionSvc := services.NewSuggestionService(suggestionRepo, testimonialRepo)
@@ -54,7 +63,10 @@ func main() {
 		auth.POST("/registrar/login", authH.RegistrarLogin)
 		auth.POST("/accounting/login", authH.AccountingLogin)
 		auth.POST("/logout", authH.Logout)
+		auth.POST("/forgot-password", authH.ForgotPassword)
+		auth.POST("/reset-password", authH.ResetPassword)
 		auth.GET("/me", middleware.AuthRequired(cfg.JWTSecret), authH.Me)
+		auth.POST("/complete-profile", middleware.AuthRequired(cfg.JWTSecret, "user"), authH.CompleteProfile)
 	}
 
 	api := r.Group("/api")

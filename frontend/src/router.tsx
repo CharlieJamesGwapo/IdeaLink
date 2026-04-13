@@ -11,6 +11,9 @@ const HomePage           = lazy(() => import('./pages/public/HomePage').then(m =
 const StudentLoginPage   = lazy(() => import('./pages/public/StudentLoginPage').then(m => ({ default: m.StudentLoginPage })))
 const StaffLoginPage     = lazy(() => import('./pages/public/StaffLoginPage').then(m => ({ default: m.StaffLoginPage })))
 const SignupPage          = lazy(() => import('./pages/public/SignupPage').then(m => ({ default: m.SignupPage })))
+const ForgotPasswordPage  = lazy(() => import('./pages/public/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
+const ResetPasswordPage   = lazy(() => import('./pages/public/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
+const CompleteProfilePage = lazy(() => import('./pages/user/CompleteProfilePage').then(m => ({ default: m.CompleteProfilePage })))
 
 const SubmitPage         = lazy(() => import('./pages/user/SubmitPage').then(m => ({ default: m.SubmitPage })))
 const SubmissionsPage    = lazy(() => import('./pages/user/SubmissionsPage').then(m => ({ default: m.SubmissionsPage })))
@@ -118,10 +121,18 @@ function StaffLayout() {
 
 function RequireAuth({ role }: { role: string }) {
   const { currentUser, role: userRole, isLoading } = useAuth()
+  const location = useLocation()
   if (isLoading) return <AuthLoader />
   if (!currentUser || userRole !== role) {
     const target = role === 'user' ? '/login' : '/staff-login'
     return <Navigate to={target} replace />
+  }
+  if (
+    role === 'user'
+    && currentUser.education_level == null
+    && location.pathname !== '/user/complete-profile'
+  ) {
+    return <Navigate to="/user/complete-profile" replace />
   }
   return <Outlet />
 }
@@ -164,17 +175,20 @@ export function AppRouter() {
 
         {/* Public pages — auth users get redirected to their dashboard */}
         <Route element={<PublicLayout />}>
-          <Route path="/"            element={<AuthGatedPage><HomePage /></AuthGatedPage>} />
-          <Route path="/login"       element={<AuthGatedPage><StudentLoginPage /></AuthGatedPage>} />
-          <Route path="/staff-login" element={<AuthGatedPage><StaffLoginPage /></AuthGatedPage>} />
-          <Route path="/signup"      element={<AuthGatedPage><SignupPage /></AuthGatedPage>} />
+          <Route path="/"                 element={<AuthGatedPage><HomePage /></AuthGatedPage>} />
+          <Route path="/login"            element={<AuthGatedPage><StudentLoginPage /></AuthGatedPage>} />
+          <Route path="/staff-login"      element={<AuthGatedPage><StaffLoginPage /></AuthGatedPage>} />
+          <Route path="/signup"           element={<AuthGatedPage><SignupPage /></AuthGatedPage>} />
+          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"   element={<ResetPasswordPage />} />
         </Route>
 
         <Route element={<RequireAuth role="user" />}>
           <Route element={<PublicLayout />}>
-            <Route path="/user/submit"        element={<SubmitPage />} />
-            <Route path="/user/submissions"   element={<SubmissionsPage />} />
-            <Route path="/user/announcements" element={<AnnouncementsPage />} />
+            <Route path="/user/complete-profile" element={<CompleteProfilePage />} />
+            <Route path="/user/submit"           element={<SubmitPage />} />
+            <Route path="/user/submissions"      element={<SubmissionsPage />} />
+            <Route path="/user/announcements"    element={<AnnouncementsPage />} />
           </Route>
         </Route>
 

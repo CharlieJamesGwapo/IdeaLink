@@ -22,7 +22,11 @@ export function StudentLoginPage() {
     setIsLoading(true)
     try {
       const res = await login(email, password)
-      setAuth({ id: res.data.id }, 'user')
+      setAuth({
+        id: (res.data as any).id,
+        education_level: (res.data as any).education_level ?? null,
+        college_department: (res.data as any).college_department ?? null,
+      }, 'user')
       toast.success('Welcome back!')
       navigate('/user/submit')
     } catch (err) {
@@ -38,7 +42,7 @@ export function StudentLoginPage() {
       {/* ── LEFT PANEL ─────────────────────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[44%] xl:w-[40%] relative flex-col shrink-0 overflow-hidden">
         <div className="absolute inset-0 hero-bg" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#060e1e]/97 via-[#0d1f3c]/88 to-[#0a1628]/95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#060e1e]/70 via-[#0d1f3c]/55 to-[#0a1628]/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#060e1e] via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-ascb-orange/8 to-transparent" />
         <div className="absolute right-0 inset-y-0 w-px bg-gradient-to-b from-transparent via-ascb-orange/25 to-transparent" />
@@ -48,11 +52,9 @@ export function StudentLoginPage() {
 
         <div className="relative z-10 flex flex-col h-full px-10 xl:px-14 py-12">
           <div className="flex items-center gap-3">
-            <img src="/school_logo.png" alt="ASCB" className="h-10 w-10 object-contain drop-shadow-lg"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
             <div>
-              <span className="text-white font-bold text-base font-ui">Idea<span className="text-ascb-orange">Link</span></span>
-              <p className="text-gray-600 text-[10px] font-ui uppercase tracking-widest leading-none mt-0.5">Student Portal</p>
+              <span className="text-white font-bold text-3xl xl:text-4xl font-ui" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>Idea<span className="text-ascb-orange">Link</span></span>
+              <p className="text-gray-200 text-sm font-ui uppercase tracking-widest leading-none mt-1.5 font-semibold" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>Student Portal</p>
             </div>
           </div>
 
@@ -62,30 +64,31 @@ export function StudentLoginPage() {
                 <Sparkles size={10} /> Your Voice Matters
               </span>
             </div>
-            <h1 className="font-display text-white leading-[1.05]">
+            <h1 className="font-display text-white leading-[1.05]" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
               <span className="block text-5xl xl:text-6xl font-bold">Andres</span>
               <span className="block text-5xl xl:text-6xl font-bold">Soriano</span>
               <span className="block text-5xl xl:text-6xl font-bold text-ascb-orange">Colleges</span>
-              <span className="block text-2xl xl:text-3xl font-normal text-gray-400 mt-1">of Bislig</span>
+              <span className="block text-2xl xl:text-3xl font-normal text-gray-200 mt-1">of Bislig</span>
             </h1>
             <div className="flex items-center gap-3 mt-7 mb-6">
               <div className="h-px w-10 bg-ascb-gold" />
               <div className="h-px flex-1 bg-white/8" />
             </div>
-            <p className="text-gray-300 text-sm font-body leading-relaxed max-w-[260px]">
+            <p className="text-gray-100 text-sm font-body leading-relaxed max-w-[260px]"
+              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
               Submit feedback, track your submissions, and help improve ASCB services through IdeaLink.
             </p>
             <div className="grid grid-cols-3 gap-0 mt-10 divide-x divide-white/8">
               {[{ v: '500+', l: 'Students' }, { v: '2', l: 'Offices' }, { v: '100%', l: 'Reviewed' }].map(({ v, l }) => (
                 <div key={l} className="px-4 first:pl-0 last:pr-0">
-                  <p className="text-ascb-orange text-2xl font-bold font-display leading-none">{v}</p>
-                  <p className="text-gray-600 text-xs font-ui mt-1">{l}</p>
+                  <p className="text-ascb-orange text-2xl font-bold font-display leading-none" style={{ textShadow: '0 1px 10px rgba(0,0,0,0.6)' }}>{v}</p>
+                  <p className="text-gray-200 text-xs font-ui mt-1" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{l}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="text-gray-700 text-[10px] font-ui uppercase tracking-widest">ASCB · Bislig's Pioneer in Private Education</p>
+          <p className="text-gray-300 text-[10px] font-ui uppercase tracking-widest" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>ASCB · Bislig's Pioneer in Private Education</p>
         </div>
       </div>
 
@@ -114,9 +117,9 @@ export function StudentLoginPage() {
           </div>
 
           {/* Heading */}
-          <div className="mb-7">
+          <div className="mb-7 text-center">
             <h2 className="text-3xl font-bold text-white font-display leading-tight">Welcome back</h2>
-            <p className="text-gray-500 text-sm font-body mt-1.5">Sign in with your registered email</p>
+            <p className="text-gray-300 text-sm font-ui font-medium mt-2 tracking-wide">Sign in with your registered email</p>
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -145,13 +148,12 @@ export function StudentLoginPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-medium text-gray-400 font-ui tracking-wide">Password</label>
-                <button
-                  type="button"
-                  onClick={() => toast.info('Password reset is not yet available. Please contact the administration office.')}
+                <Link
+                  to="/forgot-password"
                   className="text-[11px] text-ascb-orange hover:text-ascb-gold font-ui transition-colors"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-500'}`}>
@@ -173,7 +175,7 @@ export function StudentLoginPage() {
                   onClick={() => setShowPw(v => !v)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-200 transition-colors p-1"
                 >
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPw ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </div>
             </div>
@@ -216,7 +218,7 @@ export function StudentLoginPage() {
           <p className="mt-5 text-center text-sm text-gray-600 font-ui">
             No account?{' '}
             <Link to="/signup" className="text-ascb-orange hover:text-ascb-gold font-semibold transition-colors">
-              Create one free
+              Create New Account
             </Link>
           </p>
         </div>

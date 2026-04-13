@@ -8,6 +8,8 @@ type User struct {
 	Email                string    `json:"email"`
 	Password             string    `json:"-"`
 	Fullname             string    `json:"fullname"`
+	EducationLevel       *string   `json:"education_level"`
+	CollegeDepartment    *string   `json:"college_department"`
 	LastAnnouncementView time.Time `json:"last_announcement_view"`
 	CreatedAt            time.Time `json:"created_at"`
 }

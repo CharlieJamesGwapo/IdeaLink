@@ -32,5 +32,11 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.AdditionsSQL); err != nil {
 		log.Fatalf("failed to run additions migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.UserEducationSQL); err != nil {
+		log.Fatalf("failed to run user education migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.PasswordResetTokensSQL); err != nil {
+		log.Fatalf("failed to run password_reset_tokens migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }

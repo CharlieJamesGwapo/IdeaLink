@@ -27,6 +27,13 @@ type mockAuthSvc struct {
 	signedUser  *models.User
 	signedAdmin *models.AdminAccount
 	token       string
+	// added for forgot/reset/complete-profile tests
+	getUserErr     error
+	getUserResult  *models.User
+	forgotErr      error
+	resetErr       error
+	completeErr    error
+	completeResult *models.User
 }
 
 func (m *mockAuthSvc) SignToken(userID int, role string) (string, error) {
@@ -37,7 +44,7 @@ func (m *mockAuthSvc) ParseToken(tokenStr string) (*services.Claims, error) {
 }
 func (m *mockAuthSvc) HashPassword(password string) (string, error) { return "hashed", nil }
 func (m *mockAuthSvc) CheckPassword(hash, password string) bool      { return true }
-func (m *mockAuthSvc) SignupUser(email, password, fullname string) (*models.User, string, error) {
+func (m *mockAuthSvc) SignupUser(email, password, fullname, educationLevel string, collegeDepartment *string) (*models.User, string, error) {
 	if m.signupErr != nil {
 		return nil, "", m.signupErr
 	}
@@ -68,6 +75,18 @@ func (m *mockAuthSvc) LoginAccounting(username, password string) (*models.Accoun
 	return &models.AccountingAccount{ID: 1, Username: username}, m.token, nil
 }
 
+func (m *mockAuthSvc) GetUserByID(userID int) (*models.User, error) {
+	return m.getUserResult, m.getUserErr
+}
+func (m *mockAuthSvc) RequestPasswordReset(email string) error { return m.forgotErr }
+func (m *mockAuthSvc) ResetPassword(tok, newPw string) error   { return m.resetErr }
+func (m *mockAuthSvc) CompleteProfile(userID int, level string, dept *string) (*models.User, error) {
+	if m.completeErr != nil {
+		return nil, m.completeErr
+	}
+	return m.completeResult, nil
+}
+
 func setupAuthRouter(svc services.AuthServicer) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	h := handlers.NewAuthHandler(svc)
@@ -84,6 +103,13 @@ func setupAuthRouter(svc services.AuthServicer) *gin.Engine {
 		c.Set(middleware.CtxKeyRole, services.RoleUser)
 		h.Me(c)
 	})
+	r.POST("/api/auth/forgot-password", h.ForgotPassword)
+	r.POST("/api/auth/reset-password", h.ResetPassword)
+	r.POST("/api/auth/complete-profile", func(c *gin.Context) {
+		c.Set(middleware.CtxKeyUserID, 1)
+		c.Set(middleware.CtxKeyRole, services.RoleUser)
+		h.CompleteProfile(c)
+	})
 	return r
 }
 
@@ -94,7 +120,7 @@ func TestAuthHandler_Signup_Success(t *testing.T) {
 	}
 	r := setupAuthRouter(svc)
 
-	body := `{"email":"alice@test.com","password":"pass123","fullname":"Alice"}`
+	body := `{"email":"alice@test.com","password":"pass123","fullname":"Alice","education_level":"HS"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/signup", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -127,10 +153,10 @@ func TestAuthHandler_Signup_MissingFields(t *testing.T) {
 }
 
 func TestAuthHandler_Signup_DuplicateEmail(t *testing.T) {
-	svc := &mockAuthSvc{signupErr: errors.New("email already registered")}
+	svc := &mockAuthSvc{signupErr: services.ErrEmailTaken}
 	r := setupAuthRouter(svc)
 
-	body := `{"email":"dup@test.com","password":"pass123","fullname":"Dup"}`
+	body := `{"email":"dup@test.com","password":"pass123","fullname":"Dup","education_level":"HS"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/signup", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -282,4 +308,64 @@ func TestAuthHandler_AccountingLogin_InvalidCredentials(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	r.ServeHTTP(w, req)
 	assert.Equal(t, 401, w.Code)
+}
+
+func TestAuthHandler_ForgotPassword_AlwaysNeutral(t *testing.T) {
+	r := setupAuthRouter(&mockAuthSvc{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/forgot-password", bytes.NewBufferString(`{"email":"x@y.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "If that email exists")
+}
+
+func TestAuthHandler_ForgotPassword_RateLimited(t *testing.T) {
+	r := setupAuthRouter(&mockAuthSvc{forgotErr: services.ErrRateLimited})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/forgot-password", bytes.NewBufferString(`{"email":"x@y.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusTooManyRequests, w.Code)
+}
+
+func TestAuthHandler_ResetPassword_Success(t *testing.T) {
+	r := setupAuthRouter(&mockAuthSvc{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/reset-password", bytes.NewBufferString(`{"token":"t","new_password":"pass1234"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestAuthHandler_ResetPassword_InvalidToken(t *testing.T) {
+	r := setupAuthRouter(&mockAuthSvc{resetErr: services.ErrInvalidResetToken})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/reset-password", bytes.NewBufferString(`{"token":"bad","new_password":"pass1234"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "invalid or expired")
+}
+
+func TestAuthHandler_CompleteProfile_Success(t *testing.T) {
+	level := "College"
+	dept := "CCE"
+	svc := &mockAuthSvc{completeResult: &models.User{ID: 1, Email: "u@e.com", EducationLevel: &level, CollegeDepartment: &dept}}
+	r := setupAuthRouter(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/complete-profile", bytes.NewBufferString(`{"education_level":"College","college_department":"CCE"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "CCE")
+}
+
+func TestAuthHandler_CompleteProfile_Invalid(t *testing.T) {
+	r := setupAuthRouter(&mockAuthSvc{completeErr: services.ErrInvalidEducation})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/complete-profile", bytes.NewBufferString(`{"education_level":"Bogus"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }

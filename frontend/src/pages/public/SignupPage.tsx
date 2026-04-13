@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import axios from 'axios'
 import { User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2, Sparkles, Home } from 'lucide-react'
 import { signup } from '../../api/auth'
+import { EducationFields } from '../../components/auth/EducationFields'
+import type { EducationLevel, CollegeDepartment } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
 // ── Password strength calculator ─────────────────────────────────────────────
@@ -33,6 +35,8 @@ export function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading]     = useState(false)
   const [focused, setFocused]         = useState<string | null>(null)
+  const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>('')
+  const [collegeDepartment, setCollegeDepartment] = useState<CollegeDepartment | ''>('')
 
   const strength = calcStrength(password)
 
@@ -42,10 +46,22 @@ export function SignupPage() {
     if (!email.trim()) { toast.error('Please enter your email address'); return }
     if (!password.trim()) { toast.error('Please enter a password'); return }
     if (password.length < 6) { toast.error('Password must be at least 6 characters'); return }
+    if (!educationLevel) { toast.error('Please select your education level'); return }
+    if (educationLevel === 'College' && !collegeDepartment) { toast.error('Please select your department'); return }
     setIsLoading(true)
     try {
-      const res = await signup(email, password, fullname)
-      setAuth({ id: res.data.id }, 'user')
+      const res = await signup(
+        email,
+        password,
+        fullname,
+        educationLevel as EducationLevel,
+        educationLevel === 'College' ? (collegeDepartment as CollegeDepartment) : null,
+      )
+      setAuth({
+        id: res.data.id,
+        education_level: (res.data as { education_level?: string | null }).education_level ?? educationLevel,
+        college_department: (res.data as { college_department?: string | null }).college_department ?? (educationLevel === 'College' ? collegeDepartment : null),
+      }, 'user')
       toast.success('Account created! Welcome to IdeaLink.')
       navigate('/user/submit')
     } catch (err) {
@@ -63,7 +79,7 @@ export function SignupPage() {
         {/* School photo */}
         <div className="absolute inset-0 hero-bg" />
         {/* Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#060e1e]/97 via-[#0d1f3c]/88 to-[#0a1628]/95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#060e1e]/70 via-[#0d1f3c]/55 to-[#0a1628]/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#060e1e] via-transparent to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-ascb-orange/6 to-transparent" />
         {/* Right edge separator */}
@@ -80,14 +96,11 @@ export function SignupPage() {
         <div className="relative z-10 flex flex-col h-full px-10 xl:px-14 py-12">
           {/* Top: IdeaLink mark */}
           <div className="flex items-center gap-3">
-            <img src="/school_logo.png" alt="ASCB"
-              className="h-10 w-10 object-contain drop-shadow-lg"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
             <div>
-              <span className="text-white font-bold text-base font-ui">
+              <span className="text-white font-bold text-3xl xl:text-4xl font-ui" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
                 Idea<span className="text-ascb-orange">Link</span>
               </span>
-              <p className="text-gray-600 text-[10px] font-ui uppercase tracking-widest leading-none mt-0.5">Student Portal</p>
+              <p className="text-gray-200 text-sm font-ui uppercase tracking-widest leading-none mt-1.5 font-semibold" style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>Student Portal</p>
             </div>
           </div>
 
@@ -99,7 +112,7 @@ export function SignupPage() {
                 Join the Community
               </span>
             </div>
-            <h1 className="font-display text-white leading-[1.05]">
+            <h1 className="font-display text-white leading-[1.05]" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.6)' }}>
               <span className="block text-5xl xl:text-6xl font-bold">Create</span>
               <span className="block text-5xl xl:text-6xl font-bold">your</span>
               <span className="block text-5xl xl:text-6xl font-bold text-ascb-orange">account</span>
@@ -110,7 +123,8 @@ export function SignupPage() {
               <div className="h-px flex-1 bg-white/8" />
             </div>
 
-            <p className="text-gray-300 text-sm font-body leading-relaxed max-w-[260px]">
+            <p className="text-gray-100 text-sm font-body leading-relaxed max-w-[260px]"
+              style={{ textShadow: '0 1px 8px rgba(0,0,0,0.7)' }}>
               Join the ASCB IdeaLink community. Submit feedback and make your voice heard.
             </p>
 
@@ -122,16 +136,16 @@ export function SignupPage() {
                 'Receive updates on your concerns',
               ].map(benefit => (
                 <div key={benefit} className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-ascb-orange/15 border border-ascb-orange/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-5 h-5 rounded-full bg-ascb-orange/20 border border-ascb-orange/40 flex items-center justify-center shrink-0 mt-0.5">
                     <CheckCircle2 size={11} className="text-ascb-orange" />
                   </div>
-                  <p className="text-gray-400 text-xs font-body leading-relaxed">{benefit}</p>
+                  <p className="text-gray-100 text-xs font-body leading-relaxed" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>{benefit}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <p className="text-gray-700 text-[10px] font-ui uppercase tracking-widest">
+          <p className="text-gray-300 text-[10px] font-ui uppercase tracking-widest" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
             ASCB · Bislig's Pioneer in Private Education
           </p>
         </div>
@@ -163,12 +177,12 @@ export function SignupPage() {
           </div>
 
           {/* Page heading */}
-          <div className="mb-7">
+          <div className="mb-7 text-center">
             <h2 className="text-[2rem] font-bold text-white font-display leading-tight">
               Create account
             </h2>
-            <p className="text-gray-500 text-sm font-body mt-1.5">
-              Free student account · No credit card needed
+            <p className="text-gray-300 text-sm font-ui font-medium mt-2 tracking-wide">
+              Free Student Account
             </p>
           </div>
 
@@ -232,7 +246,7 @@ export function SignupPage() {
                 />
                 <button type="button" tabIndex={-1} onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 transition-colors p-0.5">
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  {showPassword ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
 
@@ -256,6 +270,13 @@ export function SignupPage() {
                 </div>
               )}
             </div>
+
+            <EducationFields
+              level={educationLevel}
+              department={collegeDepartment}
+              onLevelChange={setEducationLevel}
+              onDepartmentChange={setCollegeDepartment}
+            />
 
             {/* CTA */}
             <button

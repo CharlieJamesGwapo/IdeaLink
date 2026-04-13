@@ -18,7 +18,7 @@ export function RegistrarLoginPage() {
     setIsLoading(true)
     try {
       const res = await registrarLogin(username, password)
-      setAuth({ id: (res.data as any).id }, 'registrar')
+      setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'registrar')
       toast.success('Welcome, Registrar!')
       navigate('/registrar/suggestions')
     } catch (err: any) {

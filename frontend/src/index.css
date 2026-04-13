@@ -127,11 +127,15 @@ body {
 
 /* Input field */
 .input-field {
-  @apply w-full rounded-xl px-4 text-white text-sm
+  @apply w-full rounded-xl pl-4 pr-4 text-white text-sm
          focus:outline-none transition-all duration-200 font-ui;
   background: rgba(255, 255, 255, 0.06);
   border: 1.5px solid rgba(255, 255, 255, 0.13);
 }
+/* When an icon sits at the left, callers add pl-8/pl-9/pl-10 — those win over pl-4 via source order */
+.input-field.pl-8  { padding-left: 2rem; }
+.input-field.pl-9  { padding-left: 2.25rem; }
+.input-field.pl-10 { padding-left: 2.5rem; }
 .input-field:focus {
   background: rgba(255, 255, 255, 0.09);
   border-color: #F47C20;
