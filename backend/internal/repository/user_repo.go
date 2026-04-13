@@ -15,24 +15,24 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-func (r *UserRepo) CreateUser(email, hashedPassword, fullname string) (*models.User, error) {
+func (r *UserRepo) CreateUser(email, hashedPassword, fullname, educationLevel string, collegeDepartment *string) (*models.User, error) {
 	var u models.User
 	err := r.db.QueryRow(
-		`INSERT INTO users (email, password, fullname)
-		 VALUES ($1, $2, $3)
-		 RETURNING id, email, fullname, last_announcement_view, created_at`,
-		email, hashedPassword, fullname,
-	).Scan(&u.ID, &u.Email, &u.Fullname, &u.LastAnnouncementView, &u.CreatedAt)
+		`INSERT INTO users (email, password, fullname, education_level, college_department)
+		 VALUES ($1, $2, $3, $4, $5)
+		 RETURNING id, email, fullname, education_level, college_department, last_announcement_view, created_at`,
+		email, hashedPassword, fullname, educationLevel, collegeDepartment,
+	).Scan(&u.ID, &u.Email, &u.Fullname, &u.EducationLevel, &u.CollegeDepartment, &u.LastAnnouncementView, &u.CreatedAt)
 	return &u, err
 }
 
 func (r *UserRepo) FindUserByEmail(email string) (*models.User, error) {
 	var u models.User
 	err := r.db.QueryRow(
-		`SELECT id, email, password, fullname, last_announcement_view, created_at
+		`SELECT id, email, password, fullname, education_level, college_department, last_announcement_view, created_at
 		 FROM users WHERE email = $1`,
 		email,
-	).Scan(&u.ID, &u.Email, &u.Password, &u.Fullname, &u.LastAnnouncementView, &u.CreatedAt)
+	).Scan(&u.ID, &u.Email, &u.Password, &u.Fullname, &u.EducationLevel, &u.CollegeDepartment, &u.LastAnnouncementView, &u.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -87,4 +87,30 @@ func (r *UserRepo) CountUsers() (int, error) {
 	var count int
 	err := r.db.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&count)
 	return count, err
+}
+
+func (r *UserRepo) FindUserByID(id int) (*models.User, error) {
+	var u models.User
+	err := r.db.QueryRow(
+		`SELECT id, email, password, fullname, education_level, college_department, last_announcement_view, created_at
+		 FROM users WHERE id = $1`,
+		id,
+	).Scan(&u.ID, &u.Email, &u.Password, &u.Fullname, &u.EducationLevel, &u.CollegeDepartment, &u.LastAnnouncementView, &u.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &u, err
+}
+
+func (r *UserRepo) UpdatePassword(userID int, hashedPassword string) error {
+	_, err := r.db.Exec(`UPDATE users SET password = $1 WHERE id = $2`, hashedPassword, userID)
+	return err
+}
+
+func (r *UserRepo) UpdateEducation(userID int, educationLevel string, collegeDepartment *string) error {
+	_, err := r.db.Exec(
+		`UPDATE users SET education_level = $1, college_department = $2 WHERE id = $3`,
+		educationLevel, collegeDepartment, userID,
+	)
+	return err
 }

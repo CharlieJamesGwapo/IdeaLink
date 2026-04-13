@@ -3,8 +3,11 @@ package repository
 import "idealink/internal/models"
 
 type UserRepository interface {
-	CreateUser(email, hashedPassword, fullname string) (*models.User, error)
+	CreateUser(email, hashedPassword, fullname, educationLevel string, collegeDepartment *string) (*models.User, error)
 	FindUserByEmail(email string) (*models.User, error)
+	FindUserByID(id int) (*models.User, error)
+	UpdatePassword(userID int, hashedPassword string) error
+	UpdateEducation(userID int, educationLevel string, collegeDepartment *string) error
 	FindAdminByEmail(email string) (*models.AdminAccount, error)
 	FindRegistrarByUsername(username string) (*models.RegistrarAccount, error)
 	FindAccountingByUsername(username string) (*models.AccountingAccount, error)
