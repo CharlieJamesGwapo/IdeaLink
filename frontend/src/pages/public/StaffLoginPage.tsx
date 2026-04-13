@@ -77,17 +77,6 @@ export function StaffLoginPage() {
         </div>
 
         <div className="relative z-10 flex flex-col h-full px-10 xl:px-14 py-12">
-          <div className="flex items-center gap-3">
-            <img src="/school_logo.png" alt="ASCB" className="h-10 w-10 object-contain"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <div>
-              <span className="text-white font-bold text-base font-ui">
-                Idea<span style={{ color: current.accent }} className="transition-colors duration-500">Link</span>
-              </span>
-              <p className="text-gray-600 text-[10px] font-ui uppercase tracking-widest leading-none mt-0.5">Staff Portal</p>
-            </div>
-          </div>
-
           <div className="flex-1 flex flex-col justify-center">
             <div className="mb-5">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest font-ui transition-all duration-500"
@@ -146,13 +135,6 @@ export function StaffLoginPage() {
         </div>
 
         <div className="relative w-full max-w-sm animate-fade-in">
-          {/* Mobile header */}
-          <div className="lg:hidden text-center mb-8">
-            <img src="/school_logo.png" alt="ASCB" className="h-14 w-14 object-contain mx-auto mb-3"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <h1 className="text-xl font-bold text-white font-display">IdeaLink — Staff Portal</h1>
-          </div>
-
           {/* Mobile role tabs */}
           <div className="lg:hidden relative mb-6">
             <div className="grid grid-cols-3 gap-1.5 p-1.5 rounded-xl bg-white/[0.04] border border-white/8">
