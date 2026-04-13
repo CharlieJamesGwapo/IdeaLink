@@ -73,7 +73,11 @@ export function RoleSwitcher() {
     try {
       await logout().catch(() => {})
       const res = await target.loginFn()
-      setAuth({ id: (res.data as any).id }, target.id)
+      setAuth({
+        id: (res.data as any).id,
+        education_level: (res.data as any).education_level ?? null,
+        college_department: (res.data as any).college_department ?? null,
+      }, target.id)
       toast.success(`Switched to ${target.label}`, {
         description: `Now viewing as ${target.label} Portal`,
         duration: 2000,

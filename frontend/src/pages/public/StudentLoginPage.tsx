@@ -22,7 +22,11 @@ export function StudentLoginPage() {
     setIsLoading(true)
     try {
       const res = await login(email, password)
-      setAuth({ id: res.data.id }, 'user')
+      setAuth({
+        id: (res.data as any).id,
+        education_level: (res.data as any).education_level ?? null,
+        college_department: (res.data as any).college_department ?? null,
+      }, 'user')
       toast.success('Welcome back!')
       navigate('/user/submit')
     } catch (err) {

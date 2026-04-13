@@ -42,7 +42,11 @@ export function LoginPage() {
     setStudentLoading(true)
     try {
       const res = await login(studentEmail, studentPassword)
-      setAuth({ id: (res.data as any).id }, 'user')
+      setAuth({
+        id: (res.data as any).id,
+        education_level: (res.data as any).education_level ?? null,
+        college_department: (res.data as any).college_department ?? null,
+      }, 'user')
       toast.success('Welcome back!')
       navigate('/user/submit')
     } catch (err: any) {
@@ -58,17 +62,17 @@ export function LoginPage() {
     try {
       if (selectedStaff === 'admin') {
         const res = await adminLogin(staffIdentifier, staffPassword)
-        setAuth({ id: (res.data as any).id }, 'admin')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'admin')
         toast.success('Welcome, Admin!')
         navigate('/admin/dashboard')
       } else if (selectedStaff === 'registrar') {
         const res = await registrarLogin(staffIdentifier, staffPassword)
-        setAuth({ id: (res.data as any).id }, 'registrar')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'registrar')
         toast.success('Welcome, Registrar!')
         navigate('/registrar/dashboard')
       } else {
         const res = await accountingLogin(staffIdentifier, staffPassword)
-        setAuth({ id: (res.data as any).id }, 'accounting')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'accounting')
         toast.success('Welcome, Accounting!')
         navigate('/accounting/dashboard')
       }

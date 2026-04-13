@@ -39,17 +39,17 @@ export function StaffLoginPage() {
     try {
       if (selected === 'admin') {
         const res = await adminLogin(identifier, password)
-        setAuth({ id: res.data.id }, 'admin')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'admin')
         toast.success('Welcome, Admin!')
         navigate('/admin/dashboard')
       } else if (selected === 'registrar') {
         const res = await registrarLogin(identifier, password)
-        setAuth({ id: res.data.id }, 'registrar')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'registrar')
         toast.success('Welcome, Registrar!')
         navigate('/registrar/dashboard')
       } else {
         const res = await accountingLogin(identifier, password)
-        setAuth({ id: res.data.id }, 'accounting')
+        setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'accounting')
         toast.success('Welcome, Accounting!')
         navigate('/accounting/dashboard')
       }
