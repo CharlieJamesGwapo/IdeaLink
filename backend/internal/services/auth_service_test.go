@@ -4,8 +4,10 @@ package services_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"idealink/internal/models"
+	"idealink/internal/repository"
 	"idealink/internal/services"
 
 	"github.com/stretchr/testify/assert"
@@ -30,11 +32,18 @@ func newMockUserRepo() *mockUserRepo {
 	}
 }
 
-func (m *mockUserRepo) CreateUser(email, hashedPassword, fullname string) (*models.User, error) {
+func (m *mockUserRepo) CreateUser(email, hashedPassword, fullname, educationLevel string, collegeDepartment *string) (*models.User, error) {
 	if _, exists := m.users[email]; exists {
 		return nil, errors.New("duplicate email")
 	}
-	u := &models.User{ID: len(m.users) + 1, Email: email, Password: hashedPassword, Fullname: fullname}
+	u := &models.User{
+		ID:                len(m.users) + 1,
+		Email:             email,
+		Password:          hashedPassword,
+		Fullname:          fullname,
+		EducationLevel:    &educationLevel,
+		CollegeDepartment: collegeDepartment,
+	}
 	m.users[email] = u
 	return u, nil
 }
@@ -69,6 +78,34 @@ func (m *mockUserRepo) FindAccountingByUsername(username string) (*models.Accoun
 func (m *mockUserRepo) UpdateLastAnnouncementView(userID int) error { return nil }
 func (m *mockUserRepo) CountUsers() (int, error)                    { return len(m.users), nil }
 
+func (m *mockUserRepo) FindUserByID(id int) (*models.User, error) {
+	for _, u := range m.users {
+		if u.ID == id {
+			return u, nil
+		}
+	}
+	return nil, nil
+}
+func (m *mockUserRepo) UpdatePassword(userID int, hashedPassword string) error {
+	for _, u := range m.users {
+		if u.ID == userID {
+			u.Password = hashedPassword
+			return nil
+		}
+	}
+	return nil
+}
+func (m *mockUserRepo) UpdateEducation(userID int, level string, dept *string) error {
+	for _, u := range m.users {
+		if u.ID == userID {
+			u.EducationLevel = &level
+			u.CollegeDepartment = dept
+			return nil
+		}
+	}
+	return nil
+}
+
 func (m *mockUserRepo) seedAdmin(email, hashedPw, fullname string) {
 	m.admins[email] = &models.AdminAccount{ID: 1, Email: email, Password: hashedPw, Fullname: fullname}
 }
@@ -79,10 +116,48 @@ func (m *mockUserRepo) seedAccounting(username, hashedPw string) {
 	m.accts[username] = &models.AccountingAccount{ID: 1, Username: username, Password: hashedPw}
 }
 
+// --- Mock PasswordResetRepository ---
+
+type mockResetRepo struct {
+	created   []string // captured token_hashes (in order)
+	validHash string
+	validUser int
+	validID   int
+	used      []int
+}
+
+func (m *mockResetRepo) Create(userID int, tokenHash string, expiresAt time.Time) error {
+	m.created = append(m.created, tokenHash)
+	return nil
+}
+func (m *mockResetRepo) FindValidByHash(tokenHash string) (int, int, error) {
+	if tokenHash == m.validHash {
+		return m.validUser, m.validID, nil
+	}
+	return 0, 0, repository.ErrResetTokenNotFound
+}
+func (m *mockResetRepo) MarkUsed(id int) error {
+	m.used = append(m.used, id)
+	return nil
+}
+
+// --- Mock mailer ---
+
+type sentMail struct{ To, Link string }
+
+type mockMailer struct {
+	sent []sentMail
+}
+
+func (m *mockMailer) SendPasswordReset(to, link string) error {
+	m.sent = append(m.sent, sentMail{to, link})
+	return nil
+}
+
 // --- Tests ---
 
 func TestAuthService_SignAndParseToken(t *testing.T) {
-	svc := services.NewAuthService(newMockUserRepo(), "test-secret")
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 
 	token, err := svc.SignToken(42, "admin")
 	require.NoError(t, err)
@@ -95,13 +170,13 @@ func TestAuthService_SignAndParseToken(t *testing.T) {
 }
 
 func TestAuthService_ParseToken_Invalid(t *testing.T) {
-	svc := services.NewAuthService(newMockUserRepo(), "test-secret")
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	_, err := svc.ParseToken("not.a.token")
 	assert.Error(t, err)
 }
 
 func TestAuthService_HashAndCheckPassword(t *testing.T) {
-	svc := services.NewAuthService(newMockUserRepo(), "test-secret")
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("mypassword")
 	require.NoError(t, err)
 	assert.True(t, svc.CheckPassword(hashed, "mypassword"))
@@ -110,22 +185,22 @@ func TestAuthService_HashAndCheckPassword(t *testing.T) {
 
 func TestAuthService_SignupUser(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 
-	user, token, err := svc.SignupUser("jane@test.com", "pass123", "Jane Doe")
+	user, token, err := svc.SignupUser("jane@test.com", "pass123", "Jane Doe", "HS", nil)
 	require.NoError(t, err)
 	assert.Equal(t, "jane@test.com", user.Email)
 	assert.NotEmpty(t, token)
 
 	// Duplicate signup
-	_, _, err = svc.SignupUser("jane@test.com", "pass123", "Jane Doe")
+	_, _, err = svc.SignupUser("jane@test.com", "pass123", "Jane Doe", "HS", nil)
 	assert.EqualError(t, err, "email already registered")
 }
 
 func TestAuthService_LoginUser_Success(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
-	_, _, err := svc.SignupUser("john@test.com", "pass123", "John")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
+	_, _, err := svc.SignupUser("john@test.com", "pass123", "John", "HS", nil)
 	require.NoError(t, err)
 
 	user, token, err := svc.LoginUser("john@test.com", "pass123")
@@ -136,8 +211,8 @@ func TestAuthService_LoginUser_Success(t *testing.T) {
 
 func TestAuthService_LoginUser_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
-	_, _, err := svc.SignupUser("john@test.com", "pass123", "John")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
+	_, _, err := svc.SignupUser("john@test.com", "pass123", "John", "HS", nil)
 	require.NoError(t, err)
 
 	_, _, err = svc.LoginUser("john@test.com", "wrongpass")
@@ -145,14 +220,14 @@ func TestAuthService_LoginUser_WrongPassword(t *testing.T) {
 }
 
 func TestAuthService_LoginUser_NotFound(t *testing.T) {
-	svc := services.NewAuthService(newMockUserRepo(), "test-secret")
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	_, _, err := svc.LoginUser("nobody@test.com", "pass")
 	assert.EqualError(t, err, "invalid credentials")
 }
 
 func TestAuthService_LoginAdmin_Success(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("adminpass")
 	require.NoError(t, err)
 	repo.seedAdmin("admin@test.com", hashed, "Admin")
@@ -165,7 +240,7 @@ func TestAuthService_LoginAdmin_Success(t *testing.T) {
 
 func TestAuthService_LoginAdmin_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, _ := svc.HashPassword("adminpass")
 	repo.seedAdmin("admin@test.com", hashed, "Admin")
 
@@ -174,14 +249,14 @@ func TestAuthService_LoginAdmin_WrongPassword(t *testing.T) {
 }
 
 func TestAuthService_LoginAdmin_NotFound(t *testing.T) {
-	svc := services.NewAuthService(newMockUserRepo(), "test-secret")
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	_, _, err := svc.LoginAdmin("nobody@test.com", "pass")
 	assert.EqualError(t, err, "invalid credentials")
 }
 
 func TestAuthService_LoginRegistrar_Success(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("regpass")
 	require.NoError(t, err)
 	repo.seedRegistrar("registrar", hashed)
@@ -194,7 +269,7 @@ func TestAuthService_LoginRegistrar_Success(t *testing.T) {
 
 func TestAuthService_LoginRegistrar_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, _ := svc.HashPassword("regpass")
 	repo.seedRegistrar("registrar", hashed)
 
@@ -204,7 +279,7 @@ func TestAuthService_LoginRegistrar_WrongPassword(t *testing.T) {
 
 func TestAuthService_LoginAccounting_Success(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("acctpass")
 	require.NoError(t, err)
 	repo.seedAccounting("accounting", hashed)
@@ -217,10 +292,154 @@ func TestAuthService_LoginAccounting_Success(t *testing.T) {
 
 func TestAuthService_LoginAccounting_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
-	svc := services.NewAuthService(repo, "test-secret")
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, _ := svc.HashPassword("acctpass")
 	repo.seedAccounting("accounting", hashed)
 
 	_, _, err := svc.LoginAccounting("accounting", "wrong")
 	assert.EqualError(t, err, "invalid credentials")
+}
+
+// --- Education validation ---
+
+func TestAuthService_SignupUser_RejectsMissingEducation(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, _, err := svc.SignupUser("a@b.com", "pass123", "Alice", "", nil)
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func TestAuthService_SignupUser_RejectsCollegeWithoutDept(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, _, err := svc.SignupUser("a@b.com", "pass123", "Alice", "College", nil)
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func TestAuthService_SignupUser_RejectsNonCollegeWithDept(t *testing.T) {
+	dept := "CCE"
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, _, err := svc.SignupUser("a@b.com", "pass123", "Alice", "HS", &dept)
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func TestAuthService_SignupUser_AcceptsHS(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, tok, err := svc.SignupUser("a@b.com", "pass123", "Alice", "HS", nil)
+	require.NoError(t, err)
+	assert.NotEmpty(t, tok)
+	assert.NotNil(t, u)
+}
+
+func TestAuthService_SignupUser_AcceptsCollegeWithDept(t *testing.T) {
+	dept := "CTE"
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, _, err := svc.SignupUser("a@b.com", "pass123", "Alice", "College", &dept)
+	require.NoError(t, err)
+	assert.NotNil(t, u)
+}
+
+// --- Password reset ---
+
+func TestAuthService_RequestPasswordReset_UnknownEmailSucceedsSilently(t *testing.T) {
+	resetRepo := &mockResetRepo{}
+	mailer := &mockMailer{}
+	svc := services.NewAuthService(newMockUserRepo(), resetRepo, mailer, "s", "https://f")
+	err := svc.RequestPasswordReset("nobody@example.com")
+	assert.NoError(t, err)
+	assert.Empty(t, resetRepo.created)
+	assert.Empty(t, mailer.sent)
+}
+
+func TestAuthService_RequestPasswordReset_KnownEmailSendsMail(t *testing.T) {
+	repo := newMockUserRepo()
+	resetRepo := &mockResetRepo{}
+	mailer := &mockMailer{}
+	svc := services.NewAuthService(repo, resetRepo, mailer, "s", "https://f.test")
+	// Seed a user
+	_, _, err := svc.SignupUser("u@e.com", "pass123", "U", "HS", nil)
+	require.NoError(t, err)
+
+	err = svc.RequestPasswordReset("u@e.com")
+	require.NoError(t, err)
+	assert.Len(t, resetRepo.created, 1)
+	assert.Len(t, mailer.sent, 1)
+	assert.Contains(t, mailer.sent[0].Link, "https://f.test/reset-password?token=")
+}
+
+func TestAuthService_RequestPasswordReset_RateLimits(t *testing.T) {
+	repo := newMockUserRepo()
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, _, err := svc.SignupUser("u@e.com", "pass123", "U", "HS", nil)
+	require.NoError(t, err)
+
+	var lastErr error
+	for i := 0; i < 10; i++ {
+		lastErr = svc.RequestPasswordReset("u@e.com")
+		if lastErr != nil {
+			break
+		}
+	}
+	assert.ErrorIs(t, lastErr, services.ErrRateLimited)
+}
+
+func TestAuthService_ResetPassword_InvalidToken(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	err := svc.ResetPassword("bogus", "newpass123")
+	assert.ErrorIs(t, err, services.ErrInvalidResetToken)
+}
+
+func TestAuthService_ResetPassword_ShortPassword(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	err := svc.ResetPassword("anytoken", "short")
+	assert.ErrorIs(t, err, services.ErrPasswordTooShort)
+}
+
+func TestAuthService_ResetPassword_ValidFlow(t *testing.T) {
+	repo := newMockUserRepo()
+	resetRepo := &mockResetRepo{}
+	mailer := &mockMailer{}
+	svc := services.NewAuthService(repo, resetRepo, mailer, "s", "https://f")
+	_, _, err := svc.SignupUser("u@e.com", "pass123", "U", "HS", nil)
+	require.NoError(t, err)
+
+	// Request a reset so the service creates and hashes a token.
+	err = svc.RequestPasswordReset("u@e.com")
+	require.NoError(t, err)
+	require.Len(t, resetRepo.created, 1)
+	require.Len(t, mailer.sent, 1)
+
+	// Extract raw token from the emailed link.
+	link := mailer.sent[0].Link
+	const prefix = "https://f/reset-password?token="
+	require.Contains(t, link, prefix)
+	rawToken := link[len(prefix):]
+
+	// Seed the mock to return success for this token's hash.
+	resetRepo.validHash = resetRepo.created[0]
+	resetRepo.validUser = 1
+	resetRepo.validID = 7
+
+	err = svc.ResetPassword(rawToken, "newpass123")
+	require.NoError(t, err)
+	assert.Equal(t, []int{7}, resetRepo.used)
+}
+
+// --- Complete profile ---
+
+func TestAuthService_CompleteProfile_ValidatesAndPersists(t *testing.T) {
+	repo := newMockUserRepo()
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, _, err := svc.SignupUser("u@e.com", "pass123", "U", "HS", nil)
+	require.NoError(t, err)
+
+	dept := "CCE"
+	updated, err := svc.CompleteProfile(u.ID, "College", &dept)
+	require.NoError(t, err)
+	require.NotNil(t, updated)
+	require.NotNil(t, updated.EducationLevel)
+	assert.Equal(t, "College", *updated.EducationLevel)
+	require.NotNil(t, updated.CollegeDepartment)
+	assert.Equal(t, "CCE", *updated.CollegeDepartment)
+
+	_, err = svc.CompleteProfile(u.ID, "Bogus", nil)
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
 }
