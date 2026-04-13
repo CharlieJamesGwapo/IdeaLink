@@ -13,6 +13,12 @@ type Config struct {
 	JWTSecret   string
 	Port        string
 	FrontendURL string
+
+	SMTPHost string
+	SMTPPort string
+	SMTPUser string
+	SMTPPass string
+	SMTPFrom string
 }
 
 func Load() (*Config, error) {
@@ -32,6 +38,11 @@ func Load() (*Config, error) {
 		JWTSecret:   jwtSecret,
 		Port:        getOr("PORT", "8080"),
 		FrontendURL: getOr("FRONTEND_URL", "http://localhost:5173"),
+		SMTPHost:    os.Getenv("SMTP_HOST"),
+		SMTPPort:    getOr("SMTP_PORT", "587"),
+		SMTPUser:    os.Getenv("SMTP_USER"),
+		SMTPPass:    os.Getenv("SMTP_PASS"),
+		SMTPFrom:    os.Getenv("SMTP_FROM"),
 	}, nil
 }
 
