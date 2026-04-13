@@ -1,6 +1,10 @@
 package repository
 
-import "idealink/internal/models"
+import (
+	"time"
+
+	"idealink/internal/models"
+)
 
 type UserRepository interface {
 	CreateUser(email, hashedPassword, fullname, educationLevel string, collegeDepartment *string) (*models.User, error)
@@ -44,4 +48,10 @@ type TestimonialRepository interface {
 type OfficeHoursRepository interface {
 	GetByDepartment(department string) (*models.OfficeHours, error)
 	Update(department string, input models.SetOfficeHoursInput) (*models.OfficeHours, error)
+}
+
+type PasswordResetRepository interface {
+	Create(userID int, tokenHash string, expiresAt time.Time) error
+	FindValidByHash(tokenHash string) (userID int, id int, err error)
+	MarkUsed(id int) error
 }
