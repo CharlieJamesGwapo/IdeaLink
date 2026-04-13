@@ -8,6 +8,7 @@ import (
 	"idealink/internal/config"
 	"idealink/internal/repository"
 	"idealink/internal/services"
+	"idealink/internal/services/mail"
 )
 
 func main() {
@@ -19,7 +20,15 @@ func main() {
 	defer db.Close()
 
 	userRepo := repository.NewUserRepo(db)
-	svc := services.NewAuthService(userRepo, cfg.JWTSecret)
+	passwordResetRepo := repository.NewPasswordResetRepo(db)
+	mailer := mail.NewSender(mail.Config{
+		Host: cfg.SMTPHost,
+		Port: cfg.SMTPPort,
+		User: cfg.SMTPUser,
+		Pass: cfg.SMTPPass,
+		From: cfg.SMTPFrom,
+	})
+	svc := services.NewAuthService(userRepo, passwordResetRepo, mailer, cfg.JWTSecret, cfg.FrontendURL)
 
 	adminPass, _ := svc.HashPassword("Admin@123")
 	studentPass, _ := svc.HashPassword("Student@123")
