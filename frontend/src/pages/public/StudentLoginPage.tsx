@@ -149,13 +149,12 @@ export function StudentLoginPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-medium text-gray-400 font-ui tracking-wide">Password</label>
-                <button
-                  type="button"
-                  onClick={() => toast.info('Password reset is not yet available. Please contact the administration office.')}
+                <Link
+                  to="/forgot-password"
                   className="text-[11px] text-ascb-orange hover:text-ascb-gold font-ui transition-colors"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <div className={`absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 ${focused === 'password' ? 'text-ascb-orange' : 'text-gray-500'}`}>
