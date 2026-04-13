@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import axios from 'axios'
 import { User, Mail, Lock, ArrowRight, Eye, EyeOff, CheckCircle2, Sparkles, Home } from 'lucide-react'
 import { signup } from '../../api/auth'
+import { EducationFields } from '../../components/auth/EducationFields'
+import type { EducationLevel, CollegeDepartment } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 
 // ── Password strength calculator ─────────────────────────────────────────────
@@ -33,6 +35,8 @@ export function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading]     = useState(false)
   const [focused, setFocused]         = useState<string | null>(null)
+  const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>('')
+  const [collegeDepartment, setCollegeDepartment] = useState<CollegeDepartment | ''>('')
 
   const strength = calcStrength(password)
 
@@ -42,10 +46,22 @@ export function SignupPage() {
     if (!email.trim()) { toast.error('Please enter your email address'); return }
     if (!password.trim()) { toast.error('Please enter a password'); return }
     if (password.length < 6) { toast.error('Password must be at least 6 characters'); return }
+    if (!educationLevel) { toast.error('Please select your education level'); return }
+    if (educationLevel === 'College' && !collegeDepartment) { toast.error('Please select your department'); return }
     setIsLoading(true)
     try {
-      const res = await signup(email, password, fullname)
-      setAuth({ id: res.data.id }, 'user')
+      const res = await signup(
+        email,
+        password,
+        fullname,
+        educationLevel as EducationLevel,
+        educationLevel === 'College' ? (collegeDepartment as CollegeDepartment) : null,
+      )
+      setAuth({
+        id: res.data.id,
+        education_level: (res.data as { education_level?: string | null }).education_level ?? educationLevel,
+        college_department: (res.data as { college_department?: string | null }).college_department ?? (educationLevel === 'College' ? collegeDepartment : null),
+      }, 'user')
       toast.success('Account created! Welcome to IdeaLink.')
       navigate('/user/submit')
     } catch (err) {
@@ -256,6 +272,13 @@ export function SignupPage() {
                 </div>
               )}
             </div>
+
+            <EducationFields
+              level={educationLevel}
+              department={collegeDepartment}
+              onLevelChange={setEducationLevel}
+              onDepartmentChange={setCollegeDepartment}
+            />
 
             {/* CTA */}
             <button
