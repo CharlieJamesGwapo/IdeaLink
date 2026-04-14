@@ -277,7 +277,14 @@ func (s *AuthService) RequestPasswordReset(email string) error {
 	if err := s.resetRepo.Create(user.ID, tokenHash, expiresAt); err != nil {
 		return err
 	}
-	link := strings.TrimRight(s.frontendURL, "/") + "/reset-password?token=" + rawToken
+	// FRONTEND_URL may be a comma-separated list (CORS allows multiple origins).
+	// Use the first entry as the canonical base for the reset link.
+	primaryURL := s.frontendURL
+	if idx := strings.Index(primaryURL, ","); idx >= 0 {
+		primaryURL = primaryURL[:idx]
+	}
+	primaryURL = strings.TrimSpace(primaryURL)
+	link := strings.TrimRight(primaryURL, "/") + "/reset-password?token=" + rawToken
 	if err := s.mailer.SendPasswordReset(user.Email, link); err != nil {
 		fmt.Printf("[auth] password-reset mail send failed for %s: %v\n", user.Email, err)
 	}
