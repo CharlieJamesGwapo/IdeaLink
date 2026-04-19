@@ -32,6 +32,7 @@ export interface Suggestion {
   title: string
   description: string
   status: 'Delivered' | 'Reviewed'
+  rating?: number | null
   anonymous: boolean
   is_read: boolean
   status_seen_by_user?: boolean

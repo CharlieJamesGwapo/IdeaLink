@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Eye, Sparkles, Building2, Tag, User as UserIcon, Calendar } from 'lucide-react'
+import { Eye, Sparkles, Building2, Tag, User as UserIcon, Calendar, Star } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
@@ -205,6 +205,23 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showHighli
             )}
             <Badge status={suggestion.status} viewer="staff" />
           </div>
+
+          {suggestion.rating != null && (
+            <div className="flex items-center gap-2 text-xs font-ui">
+              <span className="text-gray-500 uppercase tracking-wider text-[11px]">Rating</span>
+              <span className="inline-flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map(n => (
+                  <Star
+                    key={n}
+                    size={13}
+                    className={n <= (suggestion.rating ?? 0) ? 'text-ascb-gold' : 'text-gray-700'}
+                    fill={n <= (suggestion.rating ?? 0) ? 'currentColor' : 'none'}
+                  />
+                ))}
+              </span>
+              <span className="text-ascb-gold font-semibold">{suggestion.rating}/5</span>
+            </div>
+          )}
 
           <div>
             <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5">Message</p>

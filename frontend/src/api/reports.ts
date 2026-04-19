@@ -7,7 +7,7 @@ function csvCell(value: string | number | null | undefined): string {
 }
 
 export function exportToCSV(suggestions: Suggestion[], filename: string) {
-  const headers = ['ID', 'Department', 'Service Category', 'Title', 'Description', 'Status', 'Submitter', 'Anonymous', 'Date']
+  const headers = ['ID', 'Department', 'Service Category', 'Title', 'Description', 'Status', 'Rating', 'Submitter', 'Anonymous', 'Date']
 
   const rows = suggestions.map(s => [
     s.id,
@@ -16,6 +16,7 @@ export function exportToCSV(suggestions: Suggestion[], filename: string) {
     csvCell(s.title),
     csvCell(s.description),
     csvCell(s.status),
+    csvCell(s.rating ?? ''),
     s.anonymous ? csvCell('Anonymous') : csvCell(s.submitter_name || 'Unknown'),
     csvCell(s.anonymous ? 'Yes' : 'No'),
     csvCell(new Date(s.submitted_at).toLocaleDateString('en-PH')),
