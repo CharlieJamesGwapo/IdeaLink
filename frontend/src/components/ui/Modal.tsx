@@ -11,6 +11,7 @@ interface ModalProps {
 
 export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }: ModalProps) {
   const closeBtnRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   // Body scroll lock + ESC key
   useEffect(() => {
@@ -19,8 +20,14 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
     document.body.style.overflow = 'hidden'
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
-    // Small delay so the animation starts before focus moves
-    const t = setTimeout(() => closeBtnRef.current?.focus(), 60)
+    // Focus the close button only if nothing inside the modal grabbed focus first
+    // (e.g. an input with autoFocus). Otherwise we'd steal focus mid-typing.
+    const t = setTimeout(() => {
+      const active = document.activeElement as HTMLElement | null
+      if (!panelRef.current?.contains(active)) {
+        closeBtnRef.current?.focus()
+      }
+    }, 60)
     return () => {
       document.body.style.overflow = prev
       document.removeEventListener('keydown', handler)
@@ -44,6 +51,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
       />
       {/* Panel — slides up from bottom on mobile, scales in on desktop */}
       <div
+        ref={panelRef}
         className={`relative w-full ${maxWidth} animate-scale-in border border-ascb-orange/15 max-h-[92vh] overflow-y-auto
           rounded-t-2xl sm:rounded-2xl shadow-2xl p-6`}
         style={{

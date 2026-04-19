@@ -86,7 +86,7 @@ func (h *AuthHandler) AdminLogin(c *gin.Context) {
 }
 
 type staffLoginInput struct {
-	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
@@ -96,7 +96,7 @@ func (h *AuthHandler) RegistrarLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	reg, token, err := h.svc.LoginRegistrar(input.Username, input.Password)
+	reg, token, err := h.svc.LoginRegistrar(input.Email, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
@@ -111,7 +111,7 @@ func (h *AuthHandler) AccountingLogin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	acc, token, err := h.svc.LoginAccounting(input.Username, input.Password)
+	acc, token, err := h.svc.LoginAccounting(input.Email, input.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return

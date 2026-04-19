@@ -161,13 +161,14 @@ func (s *AuthService) LoginAdmin(email, password string) (*models.AdminAccount, 
 	return admin, token, err
 }
 
-func (s *AuthService) LoginRegistrar(username, password string) (*models.RegistrarAccount, string, error) {
-	reg, err := s.userRepo.FindRegistrarByUsername(username)
+func (s *AuthService) LoginRegistrar(email, password string) (*models.RegistrarAccount, string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	reg, err := s.userRepo.FindRegistrarByEmail(email)
 	if err != nil {
 		return nil, "", err
 	}
 	if reg == nil {
-		// Dummy comparison to prevent timing-based username enumeration
+		// Dummy comparison to prevent timing-based email enumeration
 		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}
@@ -178,13 +179,14 @@ func (s *AuthService) LoginRegistrar(username, password string) (*models.Registr
 	return reg, token, err
 }
 
-func (s *AuthService) LoginAccounting(username, password string) (*models.AccountingAccount, string, error) {
-	acc, err := s.userRepo.FindAccountingByUsername(username)
+func (s *AuthService) LoginAccounting(email, password string) (*models.AccountingAccount, string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	acc, err := s.userRepo.FindAccountingByEmail(email)
 	if err != nil {
 		return nil, "", err
 	}
 	if acc == nil {
-		// Dummy comparison to prevent timing-based username enumeration
+		// Dummy comparison to prevent timing-based email enumeration
 		bcrypt.CompareHashAndPassword([]byte("$2a$10$dummy.hash.for.timing.protection"), []byte(password))
 		return nil, "", errors.New("invalid credentials")
 	}

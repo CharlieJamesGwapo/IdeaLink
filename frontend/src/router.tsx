@@ -23,6 +23,7 @@ const AdminDashboard     = lazy(() => import('./pages/admin/AdminDashboard').the
 const AdminSuggestions   = lazy(() => import('./pages/admin/AdminSuggestions').then(m => ({ default: m.AdminSuggestions })))
 const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements').then(m => ({ default: m.AdminAnnouncements })))
 const AdminTestimonials  = lazy(() => import('./pages/admin/AdminTestimonials').then(m => ({ default: m.AdminTestimonials })))
+const AdminUsers         = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })))
 
 const RegistrarDashboard   = lazy(() => import('./pages/registrar/RegistrarDashboard').then(m => ({ default: m.RegistrarDashboard })))
 const RegistrarSuggestions = lazy(() => import('./pages/registrar/RegistrarSuggestions').then(m => ({ default: m.RegistrarSuggestions })))
@@ -198,6 +199,7 @@ export function AppRouter() {
             <Route path="/admin/suggestions"  element={<AdminSuggestions />} />
             <Route path="/admin/announcements"element={<AdminAnnouncements />} />
             <Route path="/admin/testimonials" element={<AdminTestimonials />} />
+            <Route path="/admin/users"        element={<AdminUsers />} />
           </Route>
         </Route>
 
@@ -205,6 +207,7 @@ export function AppRouter() {
           <Route element={<StaffLayout />}>
             <Route path="/registrar/dashboard"   element={<RegistrarDashboard />} />
             <Route path="/registrar/suggestions" element={<RegistrarSuggestions />} />
+            <Route path="/registrar/users"       element={<AdminUsers />} />
           </Route>
         </Route>
 

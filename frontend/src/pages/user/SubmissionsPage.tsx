@@ -1,19 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, Clock, CheckCircle, AlertCircle, Search, Filter, ChevronDown, ChevronUp, Plus, Calendar, Tag, EyeOff } from 'lucide-react'
+import { MessageSquare, Clock, CheckCircle, Search, Filter, ChevronDown, ChevronUp, Plus, Calendar, Tag, EyeOff } from 'lucide-react'
 import { useSuggestions } from '../../hooks/useSuggestions'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { markSubmissionsSeen } from '../../api/suggestions'
 import type { Suggestion } from '../../types'
 
-type StatusFilter = 'all' | 'Pending' | 'Under Review' | 'Resolved'
-type DeptFilter   = 'all' | 'Registrar' | 'Accounting Office'
+type StatusFilter = 'all' | 'Delivered' | 'Reviewed'
+type DeptFilter   = 'all' | 'Registrar Office' | 'Finance Office'
 type SortOption   = 'newest' | 'oldest' | 'status'
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { icon: React.ReactNode; cls: string }> = {
-    Pending:        { icon: <Clock size={11} />,       cls: 'bg-yellow-500/12 text-yellow-400 border-yellow-500/25' },
-    'Under Review': { icon: <AlertCircle size={11} />, cls: 'bg-blue-500/12 text-blue-400 border-blue-500/25' },
-    Resolved:       { icon: <CheckCircle size={11} />, cls: 'bg-green-500/12 text-green-400 border-green-500/25' },
+    Delivered: { icon: <Clock size={11} />,        cls: 'bg-yellow-500/12 text-yellow-400 border-yellow-500/25' },
+    Reviewed:  { icon: <CheckCircle size={11} />,  cls: 'bg-green-500/12 text-green-400 border-green-500/25' },
   }
   const { icon, cls } = map[status] ?? { icon: null, cls: 'bg-gray-500/12 text-gray-400 border-gray-500/25' }
   return (
@@ -54,10 +54,8 @@ function SubmissionCard({ s }: { s: Suggestion }) {
       )}
       <div className="flex items-center justify-between pt-2.5 border-t border-white/6">
         <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 font-ui"><Calendar size={11}/>{date}</span>
-        <span className={`text-xs font-ui font-medium ${
-          s.status === 'Resolved' ? 'text-green-400' : s.status === 'Under Review' ? 'text-blue-400' : 'text-yellow-500/60'
-        }`}>
-          {s.status === 'Resolved' ? '✓ Addressed' : s.status === 'Under Review' ? 'Being reviewed…' : 'Awaiting review'}
+        <span className={`text-xs font-ui font-medium ${s.status === 'Reviewed' ? 'text-green-400' : 'text-yellow-500/60'}`}>
+          {s.status === 'Reviewed' ? '✓ Reviewed by staff' : 'Delivered · awaiting review'}
         </span>
       </div>
     </div>
@@ -72,10 +70,14 @@ export function SubmissionsPage() {
   const [sort, setSort]             = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
 
-  const pending     = suggestions.filter(s => s.status === 'Pending').length
-  const underReview = suggestions.filter(s => s.status === 'Under Review').length
-  const resolved    = suggestions.filter(s => s.status === 'Resolved').length
-  const total       = suggestions.length
+  const delivered = suggestions.filter(s => s.status === 'Delivered').length
+  const reviewed  = suggestions.filter(s => s.status === 'Reviewed').length
+  const total     = suggestions.length
+
+  // Opening this page = user has seen any pending status changes.
+  useEffect(() => {
+    markSubmissionsSeen().catch(() => {})
+  }, [])
 
   const filtered = suggestions
     .filter(s => {
@@ -90,7 +92,7 @@ export function SubmissionsPage() {
     .sort((a, b) => {
       if (sort === 'newest') return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
       if (sort === 'oldest') return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-      const o: Record<string, number> = { Pending: 0, 'Under Review': 1, Resolved: 2 }
+      const o: Record<string, number> = { Delivered: 0, Reviewed: 1 }
       return (o[a.status] ?? 0) - (o[b.status] ?? 0)
     })
 
@@ -104,7 +106,7 @@ export function SubmissionsPage() {
             <div className="w-1 h-8 bg-ascb-orange rounded-full" />
             <h1 className="text-2xl sm:text-3xl font-bold text-white font-display">My Submissions</h1>
           </div>
-          <p className="text-gray-400 text-sm font-body ml-3">{total} total · {resolved} resolved</p>
+          <p className="text-gray-400 text-sm font-body ml-3">{total} total · {reviewed} reviewed</p>
         </div>
         <Link to="/user/submit" className="flex items-center gap-2 px-4 py-2.5 bg-ascb-orange hover:bg-ascb-orange-dark text-white rounded-xl text-sm font-semibold font-ui transition-all hover:shadow-lg hover:shadow-ascb-orange/25 active:scale-95 shrink-0">
           <Plus size={16}/> New Feedback
@@ -114,15 +116,13 @@ export function SubmissionsPage() {
       {total > 0 && (
         <div className="glass rounded-2xl p-4 mb-5">
           <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5 mb-3">
-            <div className="bg-yellow-400 transition-all duration-700" style={{ width: `${(pending/total)*100}%` }}/>
-            <div className="bg-blue-400 transition-all duration-700"   style={{ width: `${(underReview/total)*100}%` }}/>
-            <div className="bg-green-400 transition-all duration-700"  style={{ width: `${(resolved/total)*100}%` }}/>
+            <div className="bg-yellow-400 transition-all duration-700" style={{ width: `${(delivered/total)*100}%` }}/>
+            <div className="bg-green-400 transition-all duration-700"  style={{ width: `${(reviewed/total)*100}%` }}/>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {[
-              { label: 'Pending',    count: pending,     color: 'text-yellow-400', fn: () => setStatus('Pending') },
-              { label: 'In Review',  count: underReview, color: 'text-blue-400',   fn: () => setStatus('Under Review') },
-              { label: 'Resolved',   count: resolved,    color: 'text-green-400',  fn: () => setStatus('Resolved') },
+              { label: 'Delivered', count: delivered, color: 'text-yellow-400', fn: () => setStatus('Delivered') },
+              { label: 'Reviewed',  count: reviewed,  color: 'text-green-400',  fn: () => setStatus('Reviewed')  },
             ].map(s => (
               <button key={s.label} onClick={s.fn} className="text-center p-2 rounded-xl hover:bg-white/5 transition-colors">
                 <div className={`text-xl font-bold font-ui ${s.color}`}>{s.count}</div>
@@ -154,7 +154,7 @@ export function SubmissionsPage() {
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500 font-ui mb-2">Status</p>
               <div className="flex flex-wrap gap-2">
-                {(['all','Pending','Under Review','Resolved'] as StatusFilter[]).map(f => (
+                {(['all','Delivered','Reviewed'] as StatusFilter[]).map(f => (
                   <button key={f} onClick={() => setStatus(f)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-ui transition-all ${status === f ? 'bg-ascb-orange text-white' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'}`}>{f === 'all' ? 'All' : f}</button>
                 ))}
               </div>
@@ -162,7 +162,7 @@ export function SubmissionsPage() {
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500 font-ui mb-2">Office</p>
               <div className="flex flex-wrap gap-2">
-                {(['all','Registrar','Accounting Office'] as DeptFilter[]).map(d => (
+                {(['all','Registrar Office','Finance Office'] as DeptFilter[]).map(d => (
                   <button key={d} onClick={() => setDept(d)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-ui transition-all ${dept === d ? 'bg-white/15 text-white border border-ascb-orange/40' : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'}`}>{d === 'all' ? 'All Offices' : d}</button>
                 ))}
               </div>

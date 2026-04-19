@@ -12,3 +12,9 @@ export const updateAnnouncement = (id: number, title: string, message: string) =
 
 export const deleteAnnouncement = (id: number) =>
   client.delete<void>(`/api/announcements/${id}`)
+
+export const getUnreadAnnouncementCount = () =>
+  client.get<{ count: number }>('/api/announcements/unread-count')
+
+export const markAnnouncementsSeen = () =>
+  client.post<void>('/api/announcements/mark-seen')

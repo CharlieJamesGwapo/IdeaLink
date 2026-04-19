@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, Clock, CheckCircle, AlertCircle, Download, ToggleLeft, ToggleRight, Search, ArrowRight, TrendingUp } from 'lucide-react'
+import { MessageSquare, Clock, CheckCircle, Download, ToggleLeft, ToggleRight, Search, ArrowRight, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { toast } from 'sonner'
 import { useSuggestions } from '../../hooks/useSuggestions'
@@ -9,9 +9,10 @@ import { getOfficeHours, setOfficeHours } from '../../api/officeHours'
 import { exportToCSV } from '../../api/reports'
 import { Skeleton } from '../ui/Skeleton'
 import { Badge } from '../ui/Badge'
+import { RatingsPanel } from './RatingsPanel'
 import type { OfficeHoursStatus, Suggestion } from '../../types'
 
-const STATUS_COLORS: Record<string, string> = { Pending: '#F59E0B', 'Under Review': '#3B82F6', Resolved: '#22C55E' }
+const STATUS_COLORS: Record<string, string> = { Delivered: '#F59E0B', Unreviewed: '#F59E0B', Reviewed: '#22C55E' }
 const BAR_COLOR = '#F47C20'
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -25,7 +26,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 }
 
 interface Props {
-  dept: 'Registrar' | 'Accounting Office'
+  dept: 'Registrar Office' | 'Finance Office'
   accent: string
   feedbackPath: string
 }
@@ -55,15 +56,13 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
   }, [dept])
 
   const total       = suggestions.length
-  const pending     = suggestions.filter(s => s.status === 'Pending').length
-  const underReview = suggestions.filter(s => s.status === 'Under Review').length
-  const resolved    = suggestions.filter(s => s.status === 'Resolved').length
-  const resolveRate = total > 0 ? Math.round((resolved / total) * 100) : 0
+  const unreviewed  = suggestions.filter(s => s.status === 'Delivered').length
+  const reviewed    = suggestions.filter(s => s.status === 'Reviewed').length
+  const resolveRate = total > 0 ? Math.round((reviewed / total) * 100) : 0
 
   const statusData = [
-    { name: 'Pending', value: pending },
-    { name: 'Under Review', value: underReview },
-    { name: 'Resolved', value: resolved },
+    { name: 'Unreviewed', value: unreviewed },
+    { name: 'Reviewed',   value: reviewed   },
   ].filter(s => s.value > 0)
 
   const categoryMap = new Map<string, number>()
@@ -131,7 +130,7 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1 h-7 rounded-full" style={{ background: accent }}/>
-            <h1 className="text-2xl font-bold text-white font-display">{dept === 'Registrar' ? 'Registrar' : 'Accounting'} Dashboard</h1>
+            <h1 className="text-2xl font-bold text-white font-display">{dept === 'Registrar Office' ? 'Registrar Office' : 'Finance Office'} Dashboard</h1>
           </div>
           <p className="text-gray-500 text-sm font-ui ml-3">{dept} · {total} total feedback</p>
         </div>
@@ -210,12 +209,11 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
       )}
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {[
-          { label: 'Total',      value: total,       icon: <MessageSquare size={17}/>, color: 'text-ascb-orange', bg: 'bg-ascb-orange/10' },
-          { label: 'Pending',    value: pending,     icon: <Clock size={17}/>,         color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
-          { label: 'In Review',  value: underReview, icon: <AlertCircle size={17}/>,   color: 'text-blue-400',   bg: 'bg-blue-500/10' },
-          { label: 'Resolved',   value: resolved,    icon: <CheckCircle size={17}/>,   color: 'text-green-400',  bg: 'bg-green-500/10' },
+          { label: 'Total',      value: total,      icon: <MessageSquare size={17}/>, color: 'text-ascb-orange', bg: 'bg-ascb-orange/10' },
+          { label: 'Unreviewed', value: unreviewed, icon: <Clock size={17}/>,         color: 'text-yellow-400',  bg: 'bg-yellow-500/10' },
+          { label: 'Reviewed',   value: reviewed,   icon: <CheckCircle size={17}/>,   color: 'text-green-400',   bg: 'bg-green-500/10' },
         ].map(c => (
           <div key={c.label} className="stat-card">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.bg} ${c.color}`}>{c.icon}</div>
@@ -284,6 +282,9 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
         </div>
       </div>
 
+      {/* Ratings */}
+      <RatingsPanel department={dept} />
+
       {/* Recent Feedback */}
       <div className="bg-ascb-navy rounded-2xl border border-ascb-navy-mid overflow-hidden">
         <div className="px-4 py-3.5 border-b border-ascb-navy-mid flex items-center justify-between gap-3 flex-wrap">
@@ -310,13 +311,12 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
                   <p className="text-xs text-gray-500 font-ui truncate mt-0.5">{s.service_category || s.department}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge status={s.status}/>
+                  <Badge status={s.status} viewer="staff"/>
                   <select value={s.status} onChange={e => { if (e.target.value !== s.status) handleStatusChange(s.id, e.target.value) }}
                     className="text-xs rounded-lg px-2 py-1 text-white font-ui focus:outline-none focus:ring-1 focus:ring-ascb-orange cursor-pointer"
                     style={{ background: 'rgba(13,31,60,0.8)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <option>Pending</option>
-                    <option>Under Review</option>
-                    <option>Resolved</option>
+                    <option value="Delivered">Unreviewed</option>
+                    <option value="Reviewed">Reviewed</option>
                   </select>
                 </div>
               </div>

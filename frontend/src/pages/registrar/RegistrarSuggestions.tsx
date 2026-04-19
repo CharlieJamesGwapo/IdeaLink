@@ -1,23 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Download, MessageSquare, Search, ArrowUpDown } from 'lucide-react'
 import { useSuggestions } from '../../hooks/useSuggestions'
 import { SuggestionRow } from '../../components/shared/SuggestionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { updateSuggestionStatus } from '../../api/suggestions'
+import { Pagination } from '../../components/ui/Pagination'
+import { updateSuggestionStatus, markSuggestionReviewed } from '../../api/suggestions'
 import { exportToCSV } from '../../api/reports'
 import type { Suggestion } from '../../types'
 
-type FilterOption = 'all' | 'Pending' | 'Under Review' | 'Resolved'
+type FilterOption = 'all' | 'Delivered' | 'Reviewed'
 type SortOption   = 'newest' | 'oldest' | 'status'
 
 const selectStyle = { height: '40px', background: 'rgba(13,31,60,0.85)' } as const
+const PAGE_SIZE = 10
 
 export function RegistrarSuggestions() {
   const { suggestions, setSuggestions, isLoading, error, refetch } = useSuggestions()
   const [filter, setFilter] = useState<FilterOption>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort]     = useState<SortOption>('newest')
+  const [page, setPage]     = useState(1)
 
   const filtered = suggestions
     .filter(s => {
@@ -36,7 +39,7 @@ export function RegistrarSuggestions() {
     .sort((a, b) => {
       if (sort === 'newest') return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
       if (sort === 'oldest') return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-      const o: Record<string, number> = { Pending: 0, 'Under Review': 1, Resolved: 2 }
+      const o: Record<string, number> = { Delivered: 0, Reviewed: 1 }
       return (o[a.status] ?? 0) - (o[b.status] ?? 0)
     })
 
@@ -48,9 +51,28 @@ export function RegistrarSuggestions() {
     } catch { toast.error('Failed to update status') }
   }
 
-  const pending     = suggestions.filter(s => s.status === 'Pending').length
-  const underReview = suggestions.filter(s => s.status === 'Under Review').length
-  const resolved    = suggestions.filter(s => s.status === 'Resolved').length
+  // Auto-mark as Reviewed when staff opens the feedback detail.
+  const handleOpen = async (id: number) => {
+    const target = suggestions.find(s => s.id === id)
+    if (!target || target.status === 'Reviewed') return
+    try {
+      await markSuggestionReviewed(id)
+      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'Reviewed', is_read: true } : s))
+    } catch {
+      // Silent — opening should never block reading the content.
+    }
+  }
+
+  const unreviewed = suggestions.filter(s => s.status === 'Delivered').length
+  const reviewed   = suggestions.filter(s => s.status === 'Reviewed').length
+
+  useEffect(() => { setPage(1) }, [filter, search, sort])
+  const totalPages  = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paged       = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  )
 
   return (
     <div className="animate-fade-in space-y-5 pb-6">
@@ -58,10 +80,10 @@ export function RegistrarSuggestions() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <div className="w-1 h-8 bg-green-400 rounded-full"/>
-            <h1 className="text-2xl font-bold text-white font-display">Registrar Feedback</h1>
+            <h1 className="text-2xl font-bold text-white font-display">Registrar Office Feedback</h1>
           </div>
           <p className="text-gray-500 text-sm font-ui ml-3">
-            {suggestions.length} total · {pending} pending · {underReview} in review · {resolved} resolved
+            {suggestions.length} total · {unreviewed} unreviewed · {reviewed} reviewed
           </p>
         </div>
         <button
@@ -76,17 +98,15 @@ export function RegistrarSuggestions() {
       {/* Status pills */}
       <div className="flex flex-wrap gap-2">
         {([
-          { val: 'all',          label: `All (${suggestions.length})` },
-          { val: 'Pending',      label: `Pending (${pending})` },
-          { val: 'Under Review', label: `In Review (${underReview})` },
-          { val: 'Resolved',     label: `Resolved (${resolved})` },
+          { val: 'all',       label: `All (${suggestions.length})` },
+          { val: 'Delivered', label: `Unreviewed (${unreviewed})` },
+          { val: 'Reviewed',  label: `Reviewed (${reviewed})` },
         ] as { val: FilterOption; label: string }[]).map(f => (
           <button key={f.val} onClick={() => setFilter(f.val)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 font-ui ${
               filter === f.val
-                ? f.val === 'all'          ? 'bg-green-400/20 text-green-300 border-green-400/40'
-                : f.val === 'Pending'      ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
-                : f.val === 'Under Review' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                ? f.val === 'all'       ? 'bg-green-400/20 text-green-300 border-green-400/40'
+                : f.val === 'Delivered' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'
                 : 'bg-green-500/20 text-green-300 border-green-500/40'
                 : 'border-white/10 text-gray-500 hover:text-white hover:border-white/20'
             }`}>
@@ -133,7 +153,7 @@ export function RegistrarSuggestions() {
           <MessageSquare size={36} className="text-gray-600 mx-auto mb-3"/>
           <p className="text-gray-400 font-medium font-ui">No feedback found</p>
           <p className="text-gray-600 text-sm mt-1 font-ui">
-            {search ? 'Try a different search.' : filter !== 'all' ? `No ${filter.toLowerCase()} submissions.` : 'Registrar feedback will appear here.'}
+            {search ? 'Try a different search.' : filter !== 'all' ? `No ${filter.toLowerCase()} submissions.` : 'Registrar Office feedback will appear here.'}
           </p>
         </div>
       ) : (
@@ -150,11 +170,18 @@ export function RegistrarSuggestions() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(s => (
-                <SuggestionRow key={s.id} suggestion={s} showActions onStatusChange={handleStatusChange}/>
+              {paged.map(s => (
+                <SuggestionRow key={s.id} suggestion={s} showActions viewer="staff"
+                  onStatusChange={handleStatusChange} onOpen={handleOpen}/>
               ))}
             </tbody>
           </table>
+          <div className="flex items-center justify-between px-4 py-2 border-t border-ascb-navy-mid/70">
+            <p className="text-xs text-gray-500 font-ui">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+          </div>
         </div>
       )}
     </div>

@@ -28,6 +28,7 @@ func main() {
 	announcementRepo := repository.NewAnnouncementRepo(db)
 	testimonialRepo := repository.NewTestimonialRepo(db)
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
+	highlightRepo := repository.NewHighlightRepo(db)
 
 	// Services
 	mailer := mail.NewSender(mail.Config{
@@ -38,9 +39,11 @@ func main() {
 		From: cfg.SMTPFrom,
 	})
 	authSvc := services.NewAuthService(userRepo, passwordResetRepo, mailer, cfg.JWTSecret, cfg.FrontendURL)
-	announcementSvc := services.NewAnnouncementService(announcementRepo)
+	provisioningSvc := services.NewUserProvisioningService(userRepo, authSvc, mailer, cfg.FrontendURL)
+	announcementSvc := services.NewAnnouncementService(announcementRepo, userRepo)
 	testimonialSvc := services.NewTestimonialService(testimonialRepo)
 	suggestionSvc := services.NewSuggestionService(suggestionRepo, testimonialRepo)
+	highlightSvc := services.NewHighlightService(highlightRepo, suggestionRepo)
 
 	// Handlers
 	authH := handlers.NewAuthHandler(authSvc)
@@ -50,6 +53,8 @@ func main() {
 	adminH := handlers.NewAdminHandler(suggestionRepo, userRepo)
 	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo)
 	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
+	highlightH := handlers.NewHighlightHandler(highlightSvc)
+	usersH := handlers.NewUsersHandler(provisioningSvc)
 
 	// Router
 	r := gin.Default()
@@ -85,12 +90,25 @@ func main() {
 			admin.PATCH("/testimonials/:id/toggle", testimonialH.Toggle)
 			admin.POST("/suggestions/:id/feature", suggestionH.Feature)
 			admin.GET("/admin/analytics", adminH.Analytics)
+			admin.POST("/admin/highlights", highlightH.Create)
+			admin.DELETE("/admin/highlights/:id", highlightH.Delete)
+		}
+
+		// Admin + Registrar can provision student accounts
+		provisioners := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "admin", "registrar"))
+		{
+			provisioners.POST("/admin/users", usersH.Create)
+			provisioners.POST("/admin/users/bulk", usersH.BulkCreate)
 		}
 
 		// User only
 		user := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user"))
 		{
 			user.POST("/suggestions", suggestionH.Submit)
+			user.POST("/highlights/:id/react", highlightH.React)
+			user.GET("/submissions/status-unread-count", suggestionH.StatusUnreadCount)
+			user.POST("/submissions/mark-seen", suggestionH.MarkSubmissionsSeen)
+			user.GET("/submissions/weekly-usage", suggestionH.WeeklyUsage)
 		}
 
 		// Authenticated (all roles)
@@ -98,12 +116,22 @@ func main() {
 		{
 			authenticated.GET("/suggestions", suggestionH.List)
 			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)
+			authenticated.GET("/highlights", highlightH.List)
+			authenticated.GET("/announcements/unread-count", announcementH.UnreadCount)
+			authenticated.POST("/announcements/mark-seen", announcementH.MarkSeen)
+		}
+
+		// Admin + staff analytics
+		staffAnalytics := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "admin", "registrar", "accounting"))
+		{
+			staffAnalytics.GET("/ratings-summary", adminH.RatingsSummary)
 		}
 
 		// Admin + registrar + accounting
 		staff := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "admin", "registrar", "accounting"))
 		{
 			staff.PATCH("/suggestions/:id/status", suggestionH.UpdateStatus)
+			staff.POST("/suggestions/:id/read", suggestionH.MarkReviewed)
 			staff.POST("/office-hours/:dept", officeHoursH.Set)
 		}
 	}

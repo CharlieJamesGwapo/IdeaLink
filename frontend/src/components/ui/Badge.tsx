@@ -1,35 +1,48 @@
 import { cn } from '../../lib/utils'
 
-interface BadgeProps { status: string; className?: string }
+interface BadgeProps {
+  status: string
+  className?: string
+  // When "staff", render Delivered as "Unreviewed" (admin/registrar/finance PoV).
+  // When "user" (default), render Delivered as "Delivered".
+  viewer?: 'user' | 'staff'
+}
 
-// Normalize status for case-insensitive matching
-function normalizeStatus(s: string): string {
+// Normalize legacy status values into the new canonical set.
+// Old: Pending / Under Review / Resolved
+// New: Delivered / Reviewed
+function normalizeStatus(s: string): 'Delivered' | 'Reviewed' | string {
   const lower = s.toLowerCase().trim()
-  if (lower === 'pending') return 'Pending'
-  if (lower === 'under review') return 'Under Review'
-  if (lower === 'resolved') return 'Resolved'
+  if (lower === 'delivered' || lower === 'pending' || lower === 'under review') return 'Delivered'
+  if (lower === 'reviewed' || lower === 'resolved') return 'Reviewed'
   return s
 }
 
-export function Badge({ status, className }: BadgeProps) {
-  const normalized = normalizeStatus(status)
+export function Badge({ status, className, viewer = 'user' }: BadgeProps) {
+  const canonical = normalizeStatus(status)
+
+  // Label swap for staff audience: Delivered ⇒ "Unreviewed".
+  const label =
+    viewer === 'staff' && canonical === 'Delivered' ? 'Unreviewed' :
+    canonical
+
   const styles: Record<string, string> = {
-    Pending:        'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-    'Under Review': 'bg-blue-500/10  text-blue-300  border-blue-500/20',
-    Resolved:       'bg-green-500/10 text-green-300 border-green-500/20',
+    Delivered:  'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
+    Unreviewed: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
+    Reviewed:   'bg-green-500/10  text-green-300  border-green-500/20',
   }
   const dotColors: Record<string, string> = {
-    Pending:        'bg-yellow-400',
-    'Under Review': 'bg-blue-400',
-    Resolved:       'bg-green-400',
+    Delivered:  'bg-yellow-400',
+    Unreviewed: 'bg-yellow-400',
+    Reviewed:   'bg-green-400',
   }
-  const style = styles[normalized] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-  const dot   = dotColors[normalized] ?? 'bg-gray-400'
+  const style = styles[label] ?? 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+  const dot   = dotColors[label] ?? 'bg-gray-400'
 
   return (
     <span className={cn('inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border', style, className)}>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
-      {normalized}
+      {label}
     </span>
   )
 }

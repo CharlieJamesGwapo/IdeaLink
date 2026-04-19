@@ -65,6 +65,18 @@ func (r *AnnouncementRepo) Update(id int, input models.UpdateAnnouncementInput) 
 	return nil
 }
 
+// CountSince returns the number of announcements posted strictly after the
+// given cutoff. Used to compute the "unread" badge for a user based on their
+// last_announcement_view timestamp.
+func (r *AnnouncementRepo) CountSince(cutoff interface{}) (int, error) {
+	var count int
+	err := r.db.QueryRow(
+		`SELECT COUNT(*) FROM announcements WHERE date_posted > $1`,
+		cutoff,
+	).Scan(&count)
+	return count, err
+}
+
 func (r *AnnouncementRepo) Delete(id int) error {
 	res, err := r.db.Exec(`DELETE FROM announcements WHERE id = $1`, id)
 	if err != nil {

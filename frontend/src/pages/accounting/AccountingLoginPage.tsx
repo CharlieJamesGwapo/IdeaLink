@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { User, Lock, Calculator, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Calculator, ArrowRight } from 'lucide-react'
 import { accountingLogin } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
 import { Button } from '../../components/ui/Button'
@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/Button'
 export function AccountingLoginPage() {
   const { setAuth } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -17,9 +17,9 @@ export function AccountingLoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const res = await accountingLogin(username, password)
+      const res = await accountingLogin(email, password)
       setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'accounting')
-      toast.success('Welcome, Accounting!')
+      toast.success('Welcome, Finance Office!')
       navigate('/accounting/suggestions')
     } catch (err: any) {
       toast.error(err.response?.data?.error ?? 'Invalid credentials')
@@ -35,15 +35,15 @@ export function AccountingLoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
             <Calculator size={28} className="text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Accounting Login</h1>
-          <p className="text-gray-500 text-sm mt-1">IdeaLink — Accounting Office</p>
+          <h1 className="text-2xl font-bold text-white">Finance Office Login</h1>
+          <p className="text-gray-500 text-sm mt-1">IdeaLink — Finance Office</p>
         </div>
         <form onSubmit={handleSubmit} className="glass rounded-2xl p-6 space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Username</label>
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
             <div className="relative">
-              <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required placeholder="accounting" className="input-field pl-10" />
+              <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="finance@ascb.edu.ph" className="input-field pl-10" />
             </div>
           </div>
           <div className="space-y-1">

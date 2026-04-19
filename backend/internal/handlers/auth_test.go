@@ -62,17 +62,17 @@ func (m *mockAuthSvc) LoginAdmin(email, password string) (*models.AdminAccount, 
 	}
 	return m.signedAdmin, m.token, nil
 }
-func (m *mockAuthSvc) LoginRegistrar(username, password string) (*models.RegistrarAccount, string, error) {
+func (m *mockAuthSvc) LoginRegistrar(email, password string) (*models.RegistrarAccount, string, error) {
 	if m.loginErr != nil {
 		return nil, "", m.loginErr
 	}
-	return &models.RegistrarAccount{ID: 1, Username: username}, m.token, nil
+	return &models.RegistrarAccount{ID: 1, Email: email}, m.token, nil
 }
-func (m *mockAuthSvc) LoginAccounting(username, password string) (*models.AccountingAccount, string, error) {
+func (m *mockAuthSvc) LoginAccounting(email, password string) (*models.AccountingAccount, string, error) {
 	if m.loginErr != nil {
 		return nil, "", m.loginErr
 	}
-	return &models.AccountingAccount{ID: 1, Username: username}, m.token, nil
+	return &models.AccountingAccount{ID: 1, Email: email}, m.token, nil
 }
 
 func (m *mockAuthSvc) GetUserByID(userID int) (*models.User, error) {
@@ -220,7 +220,7 @@ func TestAuthHandler_RegistrarLogin_Success(t *testing.T) {
 	svc := &mockAuthSvc{token: "regtok"}
 	r := setupAuthRouter(svc)
 
-	body := `{"username":"registrar","password":"regpass"}`
+	body := `{"email":"registrar@ascb.edu.ph","password":"regpass"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/registrar/login", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -232,7 +232,7 @@ func TestAuthHandler_AccountingLogin_Success(t *testing.T) {
 	svc := &mockAuthSvc{token: "accttok"}
 	r := setupAuthRouter(svc)
 
-	body := `{"username":"accounting","password":"acctpass"}`
+	body := `{"email":"finance@ascb.edu.ph","password":"acctpass"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/accounting/login", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -287,7 +287,7 @@ func TestAuthHandler_RegistrarLogin_InvalidCredentials(t *testing.T) {
 	r := gin.New()
 	r.POST("/api/auth/registrar/login", h.RegistrarLogin)
 
-	body := `{"username":"baduser","password":"wrong"}`
+	body := `{"email":"baduser@ascb.edu.ph","password":"wrong"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/registrar/login", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -302,7 +302,7 @@ func TestAuthHandler_AccountingLogin_InvalidCredentials(t *testing.T) {
 	r := gin.New()
 	r.POST("/api/auth/accounting/login", h.AccountingLogin)
 
-	body := `{"username":"baduser","password":"wrong"}`
+	body := `{"email":"baduser@ascb.edu.ph","password":"wrong"}`
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/auth/accounting/login", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")

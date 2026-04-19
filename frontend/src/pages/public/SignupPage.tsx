@@ -131,7 +131,7 @@ export function SignupPage() {
             {/* Benefits */}
             <div className="mt-10 space-y-3">
               {[
-                'Submit feedback to Registrar & Accounting',
+                'Submit feedback to Registrar & Finance Office',
                 'Track all your submissions in real time',
                 'Receive updates on your concerns',
               ].map(benefit => (

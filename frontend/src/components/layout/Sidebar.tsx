@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare, Megaphone, Star, LogOut, X, Menu } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Megaphone, Star, UserPlus, LogOut, X, Menu } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import { logout } from '../../api/auth'
@@ -12,8 +12,10 @@ const navItems = [
   { to: '/admin/suggestions',    icon: MessageSquare,   label: 'Feedback',      roles: ['admin'] },
   { to: '/admin/announcements',  icon: Megaphone,       label: 'Announcements', roles: ['admin'] },
   { to: '/admin/testimonials',   icon: Star,            label: 'Testimonials',  roles: ['admin'] },
+  { to: '/admin/users',          icon: UserPlus,        label: 'Users',         roles: ['admin'] },
   { to: '/registrar/dashboard',  icon: LayoutDashboard, label: 'Dashboard',     roles: ['registrar'] },
   { to: '/registrar/suggestions',icon: MessageSquare,   label: 'Feedback',      roles: ['registrar'] },
+  { to: '/registrar/users',      icon: UserPlus,        label: 'Users',         roles: ['registrar'] },
   { to: '/accounting/dashboard', icon: LayoutDashboard, label: 'Dashboard',     roles: ['accounting'] },
   { to: '/accounting/suggestions',icon: MessageSquare,  label: 'Feedback',      roles: ['accounting'] },
 ]
@@ -21,7 +23,7 @@ const navItems = [
 const roleConfig: Record<string, { label: string; color: string; accent: string }> = {
   admin:      { label: 'Admin Panel',       color: 'text-ascb-orange', accent: '#F47C20' },
   registrar:  { label: 'Registrar Office',  color: 'text-green-400',   accent: '#34d399' },
-  accounting: { label: 'Accounting Office', color: 'text-purple-400',  accent: '#a78bfa' },
+  accounting: { label: 'Finance Office',    color: 'text-purple-400',  accent: '#a78bfa' },
 }
 
 export function Sidebar() {

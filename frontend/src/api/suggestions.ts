@@ -7,6 +7,7 @@ export interface CreateSuggestionPayload {
   user_role: string
   title: string
   description: string
+  rating?: number
   anonymous: boolean
 }
 
@@ -21,3 +22,23 @@ export const updateSuggestionStatus = (id: number, status: string) =>
 
 export const featureSuggestion = (id: number) =>
   client.post(`/api/suggestions/${id}/feature`)
+
+// Staff auto-mark: opening a feedback detail flips status to "Reviewed".
+export const markSuggestionReviewed = (id: number) =>
+  client.post<void>(`/api/suggestions/${id}/read`)
+
+// User-side: unread-status-change badge for "My Submissions".
+export const getSubmissionsStatusUnreadCount = () =>
+  client.get<{ count: number }>('/api/submissions/status-unread-count')
+
+export const markSubmissionsSeen = () =>
+  client.post<void>('/api/submissions/mark-seen')
+
+export interface WeeklyUsage {
+  used: number
+  limit: number
+  resets_at: string
+}
+
+export const getWeeklyUsage = () =>
+  client.get<WeeklyUsage>('/api/submissions/weekly-usage')

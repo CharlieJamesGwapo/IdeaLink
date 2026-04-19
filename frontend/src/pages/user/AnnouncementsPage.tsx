@@ -1,12 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAnnouncements } from '../../hooks/useAnnouncements'
+import { useAnnouncementUnread } from '../../hooks/useAnnouncementUnread'
 import { AnnouncementCard } from '../../components/shared/AnnouncementCard'
+import { HighlightsStrip } from '../../components/shared/HighlightsStrip'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { Megaphone, RefreshCw, Search } from 'lucide-react'
 
 export function AnnouncementsPage() {
   const { announcements, isLoading, error, refetch } = useAnnouncements()
+  const { clear } = useAnnouncementUnread()
   const [search, setSearch] = useState('')
+
+  // Mark announcements as seen once the user lands on this page.
+  useEffect(() => { clear() }, [clear])
 
   const filtered = search.trim()
     ? announcements.filter(a =>
@@ -17,6 +23,7 @@ export function AnnouncementsPage() {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 animate-fade-in">
+      <HighlightsStrip />
       <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
         <div>
           <div className="flex items-center gap-2 mb-2">

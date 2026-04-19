@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Mail, Lock, User, ChevronRight, GraduationCap, ShieldCheck, BookOpen, Calculator, Sparkles } from 'lucide-react'
 import { login, adminLogin, registrarLogin, accountingLogin } from '../../api/auth'
@@ -10,8 +10,8 @@ type StaffRole = 'admin' | 'registrar' | 'accounting'
 
 const staffRoles: { id: StaffRole; label: string; icon: React.ReactNode; desc: string; accent: string }[] = [
   { id: 'admin',      label: 'Admin',      icon: <ShieldCheck size={18} />, desc: 'System administration',   accent: '#F47C20' },
-  { id: 'registrar',  label: 'Registrar',  icon: <BookOpen size={18} />,    desc: 'Registrar Office portal', accent: '#34d399' },
-  { id: 'accounting', label: 'Accounting', icon: <Calculator size={18} />,  desc: 'Accounting Office portal',accent: '#a78bfa' },
+  { id: 'registrar',  label: 'Registrar Office', icon: <BookOpen size={18} />,    desc: 'Registrar Office portal', accent: '#34d399' },
+  { id: 'accounting', label: 'Finance Office',   icon: <Calculator size={18} />,  desc: 'Finance Office portal',   accent: '#a78bfa' },
 ]
 
 const cardStyle = {
@@ -205,11 +205,8 @@ export function LoginPage() {
               </form>
             </div>
 
-            <p className="text-center text-sm text-gray-500 font-ui">
-              No account?{' '}
-              <Link to="/signup" className="text-ascb-orange hover:text-ascb-gold transition-colors font-semibold">
-                Create one
-              </Link>
+            <p className="text-center text-xs text-gray-500 font-ui">
+              Accounts are issued by the Registrar's Office.
             </p>
           </div>
 

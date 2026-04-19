@@ -51,24 +51,24 @@ func (r *UserRepo) FindAdminByEmail(email string) (*models.AdminAccount, error) 
 	return &a, err
 }
 
-func (r *UserRepo) FindRegistrarByUsername(username string) (*models.RegistrarAccount, error) {
+func (r *UserRepo) FindRegistrarByEmail(email string) (*models.RegistrarAccount, error) {
 	var reg models.RegistrarAccount
 	err := r.db.QueryRow(
-		`SELECT id, username, password FROM registrar_accounts WHERE username = $1`,
-		username,
-	).Scan(&reg.ID, &reg.Username, &reg.Password)
+		`SELECT id, email, password FROM registrar_accounts WHERE email = $1`,
+		email,
+	).Scan(&reg.ID, &reg.Email, &reg.Password)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
 	return &reg, err
 }
 
-func (r *UserRepo) FindAccountingByUsername(username string) (*models.AccountingAccount, error) {
+func (r *UserRepo) FindAccountingByEmail(email string) (*models.AccountingAccount, error) {
 	var acc models.AccountingAccount
 	err := r.db.QueryRow(
-		`SELECT id, username, password FROM accounting_accounts WHERE username = $1`,
-		username,
-	).Scan(&acc.ID, &acc.Username, &acc.Password)
+		`SELECT id, email, password FROM accounting_accounts WHERE email = $1`,
+		email,
+	).Scan(&acc.ID, &acc.Email, &acc.Password)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

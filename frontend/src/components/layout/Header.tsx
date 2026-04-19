@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { LogOut, Menu, X, ChevronRight } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { useAnnouncementUnread } from '../../hooks/useAnnouncementUnread'
+import { useSubmissionStatusUnread } from '../../hooks/useSubmissionStatusUnread'
 import { logout } from '../../api/auth'
 import { toast } from 'sonner'
 
 export function Header() {
   const { currentUser, role, isLoading, clearAuth } = useAuth()
+  const { count: unread } = useAnnouncementUnread()
+  const { count: statusUnread } = useSubmissionStatusUnread()
   const navigate = useNavigate()
   const location = useLocation()
   const [isScrolled, setIsScrolled] = useState(false)
@@ -57,29 +61,34 @@ export function Header() {
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-2">
             {!isLoading && !currentUser && (
-              <>
-                <Link to="/login" className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors rounded-lg hover:bg-white/10 font-ui">
-                  Sign In
-                </Link>
-                <Link to="/signup" className="flex items-center gap-1 px-4 py-2 bg-ascb-orange hover:bg-ascb-orange-dark text-white text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-ascb-orange/30 font-ui">
-                  Register <ChevronRight size={14} />
-                </Link>
-              </>
+              <Link to="/login" className="flex items-center gap-1 px-4 py-2 bg-ascb-orange hover:bg-ascb-orange-dark text-white text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-ascb-orange/30 font-ui">
+                Sign In <ChevronRight size={14} />
+              </Link>
             )}
             {!isLoading && currentUser && role === 'user' && (
               <>
                 {[
-                  { to: '/user/submit', label: 'Submit Feedback' },
-                  { to: '/user/submissions', label: 'My Submissions' },
-                  { to: '/user/announcements', label: 'Announcements' },
-                ].map(({ to, label }) => (
+                  { to: '/user/submit', label: 'Submit Feedback', badge: 0 },
+                  { to: '/user/submissions', label: 'My Submissions', badge: statusUnread },
+                  { to: '/user/announcements', label: 'Announcements', badge: unread },
+                ].map(({ to, label, badge }) => (
                   <NavLink key={to} to={to} className={({ isActive }) =>
-                    `px-4 py-2 text-sm transition-all rounded-lg font-ui relative ${
+                    `px-4 py-2 text-sm transition-all rounded-lg font-ui relative inline-flex items-center gap-1.5 ${
                       isActive
                         ? 'text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:bg-ascb-orange after:rounded-full'
                         : 'text-gray-400 hover:text-white hover:bg-white/10'
                     }`
-                  }>{label}</NavLink>
+                  }>
+                    {label}
+                    {badge > 0 && (
+                      <span
+                        aria-label={`${badge} new`}
+                        className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-ascb-orange text-[10px] font-bold text-white tabular-nums animate-pulse"
+                      >
+                        {badge > 9 ? '9+' : badge}
+                      </span>
+                    )}
+                  </NavLink>
                 ))}
                 <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 font-ui">
                   <LogOut size={16} /> Logout
@@ -118,23 +127,27 @@ export function Header() {
         {isMobileOpen && (
           <div className="md:hidden border-t border-white/10 py-3 space-y-1 animate-fade-in">
             {!isLoading && !currentUser && (
-              <>
-                <Link to="/login" className="block px-4 py-2.5 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-ui">Sign In</Link>
-                <Link to="/signup" className="block px-4 py-2.5 text-sm text-white bg-ascb-orange hover:bg-ascb-orange-dark rounded-lg transition-colors font-ui">Register</Link>
-              </>
+              <Link to="/login" className="block px-4 py-2.5 text-sm text-white bg-ascb-orange hover:bg-ascb-orange-dark rounded-lg transition-colors font-ui">Sign In</Link>
             )}
             {!isLoading && currentUser && role === 'user' && (
               <>
                 {[
-                  { to: '/user/submit', label: 'Submit Feedback' },
-                  { to: '/user/submissions', label: 'My Submissions' },
-                  { to: '/user/announcements', label: 'Announcements' },
-                ].map(({ to, label }) => (
+                  { to: '/user/submit', label: 'Submit Feedback', badge: 0 },
+                  { to: '/user/submissions', label: 'My Submissions', badge: statusUnread },
+                  { to: '/user/announcements', label: 'Announcements', badge: unread },
+                ].map(({ to, label, badge }) => (
                   <NavLink key={to} to={to} className={({ isActive }) =>
                     `flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg transition-colors font-ui ${
                       isActive ? 'text-white bg-ascb-orange/15 font-semibold border-l-2 border-ascb-orange pl-3' : 'text-gray-300 hover:text-white hover:bg-white/10'
                     }`
-                  }>{label}</NavLink>
+                  }>
+                    <span>{label}</span>
+                    {badge > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-ascb-orange text-[10px] font-bold text-white tabular-nums">
+                        {badge > 9 ? '9+' : badge}
+                      </span>
+                    )}
+                  </NavLink>
                 ))}
                 <button onClick={handleLogout} className="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-ui">
                   <LogOut size={15} /> Logout

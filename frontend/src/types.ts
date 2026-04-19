@@ -14,7 +14,7 @@ export interface AdminAccount {
 
 export interface StaffAccount {
   id: number
-  username: string
+  email: string
 }
 
 export type AuthUser =
@@ -31,9 +31,10 @@ export interface Suggestion {
   user_role?: string
   title: string
   description: string
-  status: 'Pending' | 'Under Review' | 'Resolved'
+  status: 'Delivered' | 'Reviewed'
   anonymous: boolean
   is_read: boolean
+  status_seen_by_user?: boolean
   submitted_at: string
   submitter_name?: string
 }
@@ -68,6 +69,17 @@ export interface Analytics {
   monthly_trend: { month: string; count: number }[]
   by_category_registrar: { category: string; count: number }[]
   by_category_accounting: { category: string; count: number }[]
+}
+
+export interface Highlight {
+  id: number
+  suggestion_id: number
+  created_by: number
+  created_at: string
+  expires_at: string
+  react_count: number
+  viewer_reacted: boolean
+  suggestion: Suggestion
 }
 
 export interface OfficeHoursStatus {

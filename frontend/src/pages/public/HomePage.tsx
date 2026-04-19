@@ -42,7 +42,7 @@ const goals = [
 ]
 
 const features = [
-  { icon: MessageSquare, title: 'Direct to Departments', desc: 'Submit feedback directly to the Registrar or Accounting Office with service-specific categories.' },
+  { icon: MessageSquare, title: 'Direct to Departments', desc: 'Submit feedback directly to the Registrar Office or Finance Office with service-specific categories.' },
   { icon: Shield,        title: 'Anonymous Option',      desc: 'Choose to submit anonymously — your identity stays completely private.' },
   { icon: CheckCircle2,  title: 'Track Your Feedback',   desc: 'Monitor real-time status updates: Pending, Under Review, or Resolved.' },
   { icon: Star,          title: 'Recognition',           desc: 'Outstanding feedback may be featured as institutional testimonials.' },
@@ -135,7 +135,7 @@ export function HomePage() {
             IdeaLink — Feedback Management System
           </h2>
           <p className="text-gray-300 max-w-lg mx-auto text-sm leading-relaxed font-body animate-fade-in stagger-4">
-            Your voice matters. Share feedback with the Registrar and Accounting Office —
+            Your voice matters. Share feedback with the Registrar Office and Finance Office —
             categorized, tracked, and acted upon.
           </p>
 
@@ -346,8 +346,8 @@ export function HomePage() {
               <h4 className="text-white font-semibold text-sm font-ui mb-3">Quick Links</h4>
               <div className="space-y-1.5">
                 <Link to="/login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Submit Feedback</Link>
-                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Registrar Portal</Link>
-                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Accounting Portal</Link>
+                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Registrar Office Portal</Link>
+                <Link to="/staff-login" className="block text-gray-400 hover:text-ascb-orange text-xs font-ui transition-colors">Finance Office Portal</Link>
               </div>
             </div>
             <div>

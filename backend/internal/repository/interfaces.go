@@ -13,8 +13,8 @@ type UserRepository interface {
 	UpdatePassword(userID int, hashedPassword string) error
 	UpdateEducation(userID int, educationLevel string, collegeDepartment *string) error
 	FindAdminByEmail(email string) (*models.AdminAccount, error)
-	FindRegistrarByUsername(username string) (*models.RegistrarAccount, error)
-	FindAccountingByUsername(username string) (*models.AccountingAccount, error)
+	FindRegistrarByEmail(email string) (*models.RegistrarAccount, error)
+	FindAccountingByEmail(email string) (*models.AccountingAccount, error)
 	UpdateLastAnnouncementView(userID int) error
 	CountUsers() (int, error)
 }
@@ -27,8 +27,12 @@ type SuggestionRepository interface {
 	FindByID(id int) (*models.Suggestion, error)
 	UpdateStatus(id int, status string) error
 	MarkAsRead(id int) error
+	MarkStatusSeenByUser(userID int) error
+	CountStatusUnreadByUser(userID int) (int, error)
 	CountUnread() (int, error)
 	CountUnreadByDepartment(department string) (int, error)
+	CountSubmissionsThisWeekByUser(userID int) (int, error)
+	GetRatingSummary() ([]*models.RatingGroup, error)
 	GetAnalytics() (*models.Analytics, error)
 }
 
@@ -37,6 +41,7 @@ type AnnouncementRepository interface {
 	Create(adminID int, input models.CreateAnnouncementInput) (*models.Announcement, error)
 	Update(id int, input models.UpdateAnnouncementInput) error
 	Delete(id int) error
+	CountSince(cutoff interface{}) (int, error)
 }
 
 type TestimonialRepository interface {
@@ -54,4 +59,13 @@ type PasswordResetRepository interface {
 	Create(userID int, tokenHash string, expiresAt time.Time) error
 	FindValidByHash(tokenHash string) (userID int, id int, err error)
 	MarkUsed(id int) error
+}
+
+type HighlightRepository interface {
+	Create(suggestionID, adminID int, ttl time.Duration) (int, error)
+	Expire(id int) error
+	IsActive(id int) (bool, error)
+	ActiveSuggestionIDs() (map[int]int, error)
+	ListActive(viewerUserID int) ([]*models.Highlight, error)
+	ToggleReact(highlightID, userID int) (int, bool, error)
 }

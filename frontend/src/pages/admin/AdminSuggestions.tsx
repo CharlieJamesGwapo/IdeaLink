@@ -1,25 +1,67 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Download, MessageSquare, Search, Filter, ArrowUpDown } from 'lucide-react'
 import { useSuggestions } from '../../hooks/useSuggestions'
 import { SuggestionRow } from '../../components/shared/SuggestionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
-import { updateSuggestionStatus, featureSuggestion } from '../../api/suggestions'
+import { Pagination } from '../../components/ui/Pagination'
+import { featureSuggestion } from '../../api/suggestions'
+import { getHighlights, createHighlight, deleteHighlight } from '../../api/highlights'
 import { exportToCSV } from '../../api/reports'
-import type { Suggestion } from '../../types'
 
-type StatusFilter = 'all' | 'Pending' | 'Under Review' | 'Resolved'
-type DeptFilter   = 'all' | 'Registrar' | 'Accounting Office'
+const PAGE_SIZE = 10
+
+type StatusFilter = 'all' | 'Delivered' | 'Reviewed'
+type DeptFilter   = 'all' | 'Registrar Office' | 'Finance Office'
 type SortOption   = 'newest' | 'oldest' | 'status'
 
 const selectStyle = { height: '40px', background: 'rgba(13,31,60,0.85)' } as const
 
 export function AdminSuggestions() {
-  const { suggestions, setSuggestions, isLoading, error, refetch } = useSuggestions()
+  const { suggestions, isLoading, error, refetch } = useSuggestions()
   const [status, setStatus] = useState<StatusFilter>('all')
   const [dept, setDept]     = useState<DeptFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort]     = useState<SortOption>('newest')
+  const [page, setPage]     = useState(1)
+  // Map of suggestion_id → highlight_id for active highlights.
+  const [highlightedMap, setHighlightedMap] = useState<Record<number, number>>({})
+
+  const loadHighlights = async () => {
+    try {
+      const res = await getHighlights()
+      const map: Record<number, number> = {}
+      for (const h of res.data ?? []) map[h.suggestion_id] = h.id
+      setHighlightedMap(map)
+    } catch {
+      // Silently ignore — highlights are a soft feature in this view.
+    }
+  }
+
+  useEffect(() => { void loadHighlights() }, [])
+
+  const handleToggleHighlight = async (suggestionId: number) => {
+    const existing = highlightedMap[suggestionId]
+    try {
+      if (existing) {
+        await deleteHighlight(existing)
+        setHighlightedMap(prev => {
+          const next = { ...prev }
+          delete next[suggestionId]
+          return next
+        })
+        toast.success('Unhighlighted')
+      } else {
+        const res = await createHighlight(suggestionId)
+        setHighlightedMap(prev => ({ ...prev, [suggestionId]: res.data.id }))
+        toast.success('Highlighted for 24h')
+      }
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number } }
+      if (err.response?.status === 409) toast.error('Already highlighted')
+      else toast.error('Failed to toggle highlight')
+    }
+  }
 
   const filtered = suggestions
     .filter(s => {
@@ -39,17 +81,9 @@ export function AdminSuggestions() {
     .sort((a, b) => {
       if (sort === 'newest') return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
       if (sort === 'oldest') return new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime()
-      const o: Record<string, number> = { Pending: 0, 'Under Review': 1, Resolved: 2 }
+      const o: Record<string, number> = { Delivered: 0, Reviewed: 1 }
       return (o[a.status] ?? 0) - (o[b.status] ?? 0)
     })
-
-  const handleStatusChange = async (id: number, newStatus: string) => {
-    try {
-      await updateSuggestionStatus(id, newStatus)
-      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as Suggestion['status'] } : s))
-      toast.success('Status updated')
-    } catch { toast.error('Failed to update') }
-  }
 
   const handleFeature = async (id: number) => {
     try {
@@ -59,10 +93,19 @@ export function AdminSuggestions() {
     } catch { toast.error('Failed to feature') }
   }
 
-  const pending     = suggestions.filter(s => s.status === 'Pending').length
-  const underReview = suggestions.filter(s => s.status === 'Under Review').length
-  const resolved    = suggestions.filter(s => s.status === 'Resolved').length
-  const hasFilters  = search || dept !== 'all'
+  const unreviewed = suggestions.filter(s => s.status === 'Delivered').length
+  const reviewed   = suggestions.filter(s => s.status === 'Reviewed').length
+  const hasFilters = search || dept !== 'all'
+
+  // Reset to first page whenever the filter/sort/search changes
+  useEffect(() => { setPage(1) }, [status, dept, search, sort])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [filtered, currentPage],
+  )
 
   return (
     <div className="animate-fade-in space-y-5 pb-6">
@@ -74,7 +117,7 @@ export function AdminSuggestions() {
             <h1 className="text-2xl font-bold text-white font-display">All Feedback</h1>
           </div>
           <p className="text-gray-500 text-sm font-ui ml-3">
-            {suggestions.length} total · {pending} pending · {underReview} in review · {resolved} resolved
+            {suggestions.length} total · {unreviewed} unreviewed · {reviewed} reviewed
           </p>
         </div>
         <button
@@ -89,10 +132,9 @@ export function AdminSuggestions() {
       {/* Status pills */}
       <div className="flex flex-wrap gap-2">
         {([
-          { val: 'all',          label: `All (${suggestions.length})`,  cls: status === 'all'          ? 'bg-ascb-orange text-white border-ascb-orange'           : '' },
-          { val: 'Pending',      label: `Pending (${pending})`,         cls: status === 'Pending'      ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40'  : '' },
-          { val: 'Under Review', label: `In Review (${underReview})`,   cls: status === 'Under Review' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'        : '' },
-          { val: 'Resolved',     label: `Resolved (${resolved})`,       cls: status === 'Resolved'     ? 'bg-green-500/20 text-green-300 border-green-500/40'     : '' },
+          { val: 'all',       label: `All (${suggestions.length})`,  cls: status === 'all'       ? 'bg-ascb-orange text-white border-ascb-orange'          : '' },
+          { val: 'Delivered', label: `Unreviewed (${unreviewed})`,    cls: status === 'Delivered' ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/40' : '' },
+          { val: 'Reviewed',  label: `Reviewed (${reviewed})`,        cls: status === 'Reviewed'  ? 'bg-green-500/20 text-green-300 border-green-500/40'   : '' },
         ] as { val: StatusFilter; label: string; cls: string }[]).map(f => (
           <button key={f.val} onClick={() => setStatus(f.val)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 font-ui ${f.cls || 'border-white/10 text-gray-500 hover:text-white hover:border-white/20'}`}>
@@ -116,8 +158,8 @@ export function AdminSuggestions() {
               className="rounded-xl border border-white/15 px-3 text-white text-sm font-ui focus:outline-none focus:border-ascb-orange cursor-pointer appearance-none"
               style={selectStyle}>
               <option value="all">All Offices</option>
-              <option value="Registrar">Registrar</option>
-              <option value="Accounting Office">Accounting</option>
+              <option value="Registrar Office">Registrar Office</option>
+              <option value="Finance Office">Finance Office</option>
             </select>
           </div>
           <div className="flex items-center gap-1.5">
@@ -168,12 +210,21 @@ export function AdminSuggestions() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(s => (
-                <SuggestionRow key={s.id} suggestion={s} showActions showFeature
-                  onStatusChange={handleStatusChange} onFeature={handleFeature}/>
+              {paged.map(s => (
+                <SuggestionRow key={s.id} suggestion={s} showActions showFeature showHighlight
+                  viewer="admin"
+                  isHighlighted={!!highlightedMap[s.id]}
+                  onFeature={handleFeature}
+                  onToggleHighlight={handleToggleHighlight}/>
               ))}
             </tbody>
           </table>
+          <div className="flex items-center justify-between px-4 py-2 border-t border-ascb-navy-mid/70">
+            <p className="text-xs text-gray-500 font-ui">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </p>
+            <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+          </div>
         </div>
       )}
     </div>

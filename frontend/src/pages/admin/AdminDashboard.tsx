@@ -8,6 +8,7 @@ import {
 import { Skeleton } from '../../components/ui/Skeleton'
 import { exportToCSV } from '../../api/reports'
 import { getSuggestions } from '../../api/suggestions'
+import { RatingsPanel } from '../../components/shared/RatingsPanel'
 import client from '../../api/client'
 import type { Analytics, Suggestion } from '../../types'
 
@@ -217,9 +218,9 @@ export function AdminDashboard() {
 
         {/* Registrar categories */}
         <div className="bg-ascb-navy rounded-2xl p-5 border border-ascb-navy-mid">
-          <h2 className="font-semibold text-white mb-4 font-ui">Registrar — Top Categories</h2>
+          <h2 className="font-semibold text-white mb-4 font-ui">Registrar Office — Top Categories</h2>
           {regData.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-8 font-ui">No Registrar feedback yet</p>
+            <p className="text-gray-500 text-sm text-center py-8 font-ui">No Registrar Office feedback yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={regData} layout="vertical">
@@ -236,9 +237,9 @@ export function AdminDashboard() {
 
       {/* Accounting categories */}
       <div className="bg-ascb-navy rounded-2xl p-5 border border-ascb-navy-mid">
-        <h2 className="font-semibold text-white mb-4 font-ui">Accounting — Top Categories</h2>
+        <h2 className="font-semibold text-white mb-4 font-ui">Finance Office — Top Categories</h2>
         {accData.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-8 font-ui">No Accounting feedback yet</p>
+          <p className="text-gray-500 text-sm text-center py-8 font-ui">No Finance Office feedback yet</p>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={accData}>
@@ -251,6 +252,9 @@ export function AdminDashboard() {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Ratings */}
+      <RatingsPanel />
 
       {/* Quick actions */}
       <div className="bg-ascb-navy rounded-2xl p-5 border border-ascb-navy-mid">

@@ -13,8 +13,8 @@ const ROLES: {
   desc: string; accent: string; placeholder: string
 }[] = [
   { id: 'admin',      label: 'Admin',      icon: <ShieldCheck size={18} />, desc: 'Full system access',    accent: '#F47C20', placeholder: 'admin@ascb.edu.ph' },
-  { id: 'registrar',  label: 'Registrar',  icon: <BookOpen size={18} />,    desc: 'Registrar Office',     accent: '#34d399', placeholder: 'registrar'         },
-  { id: 'accounting', label: 'Accounting', icon: <Calculator size={18} />,  desc: 'Accounting Office',    accent: '#a78bfa', placeholder: 'accounting'        },
+  { id: 'registrar',  label: 'Registrar Office', icon: <BookOpen size={18} />,    desc: 'Registrar Office',   accent: '#34d399', placeholder: 'registrar@ascb.edu.ph' },
+  { id: 'accounting', label: 'Finance Office',   icon: <Calculator size={18} />,  desc: 'Finance Office',     accent: '#a78bfa', placeholder: 'finance@ascb.edu.ph'   },
 ]
 
 export function StaffLoginPage() {
@@ -28,7 +28,8 @@ export function StaffLoginPage() {
   const [focused, setFocused]       = useState<string | null>(null)
 
   const current   = ROLES.find(r => r.id === selected)!
-  const usesEmail = selected === 'admin'
+  // All staff roles (admin / registrar / finance) now use email-based login.
+  const usesEmail = true
   const roleIndex = ROLES.findIndex(r => r.id === selected)
 
   const handleSelect = (role: StaffRole) => { setSelected(role); setIdentifier(''); setPassword('') }

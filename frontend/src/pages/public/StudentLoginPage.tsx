@@ -209,17 +209,15 @@ export function StudentLoginPage() {
             to="/staff-login"
             className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] hover:border-white/15 transition-all duration-200 group"
           >
-            <span className="text-xs text-gray-500 font-ui">Admin / Registrar / Accounting?</span>
+            <span className="text-xs text-gray-500 font-ui">Admin / Registrar / Finance?</span>
             <span className="text-xs text-ascb-orange font-semibold font-ui flex items-center gap-1">
               Staff Portal <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </span>
           </Link>
 
-          <p className="mt-5 text-center text-sm text-gray-600 font-ui">
-            No account?{' '}
-            <Link to="/signup" className="text-ascb-orange hover:text-ascb-gold font-semibold transition-colors">
-              Create New Account
-            </Link>
+          <p className="mt-5 text-center text-xs text-gray-600 font-ui">
+            Accounts are issued by the Registrar's Office. Didn't receive your credentials?
+            Contact admin@ascb.edu.ph.
           </p>
         </div>
       </div>

@@ -38,5 +38,20 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.PasswordResetTokensSQL); err != nil {
 		log.Fatalf("failed to run password_reset_tokens migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.HighlightsSQL); err != nil {
+		log.Fatalf("failed to run highlights migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.RenameDepartmentsSQL); err != nil {
+		log.Fatalf("failed to run rename_departments migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.StaffEmailLoginSQL); err != nil {
+		log.Fatalf("failed to run staff_email_login migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.StatusSimplificationSQL); err != nil {
+		log.Fatalf("failed to run status_simplification migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.SuggestionRatingSQL); err != nil {
+		log.Fatalf("failed to run suggestion_rating migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }

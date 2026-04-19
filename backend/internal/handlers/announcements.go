@@ -65,6 +65,33 @@ func (h *AnnouncementHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
+// GET /api/announcements/unread-count — authenticated users only
+func (h *AnnouncementHandler) UnreadCount(c *gin.Context) {
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+	if userID == 0 {
+		c.JSON(http.StatusOK, gin.H{"count": 0})
+		return
+	}
+	n, err := h.svc.UnreadCount(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"count": n})
+}
+
+// POST /api/announcements/mark-seen — marks everything as read for this user
+func (h *AnnouncementHandler) MarkSeen(c *gin.Context) {
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+	if err := h.svc.MarkSeen(userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 func (h *AnnouncementHandler) Delete(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

@@ -61,15 +61,15 @@ func (m *mockUserRepo) FindAdminByEmail(email string) (*models.AdminAccount, err
 	}
 	return a, nil
 }
-func (m *mockUserRepo) FindRegistrarByUsername(username string) (*models.RegistrarAccount, error) {
-	r, ok := m.regs[username]
+func (m *mockUserRepo) FindRegistrarByEmail(email string) (*models.RegistrarAccount, error) {
+	r, ok := m.regs[email]
 	if !ok {
 		return nil, nil
 	}
 	return r, nil
 }
-func (m *mockUserRepo) FindAccountingByUsername(username string) (*models.AccountingAccount, error) {
-	a, ok := m.accts[username]
+func (m *mockUserRepo) FindAccountingByEmail(email string) (*models.AccountingAccount, error) {
+	a, ok := m.accts[email]
 	if !ok {
 		return nil, nil
 	}
@@ -109,11 +109,11 @@ func (m *mockUserRepo) UpdateEducation(userID int, level string, dept *string) e
 func (m *mockUserRepo) seedAdmin(email, hashedPw, fullname string) {
 	m.admins[email] = &models.AdminAccount{ID: 1, Email: email, Password: hashedPw, Fullname: fullname}
 }
-func (m *mockUserRepo) seedRegistrar(username, hashedPw string) {
-	m.regs[username] = &models.RegistrarAccount{ID: 1, Username: username, Password: hashedPw}
+func (m *mockUserRepo) seedRegistrar(email, hashedPw string) {
+	m.regs[email] = &models.RegistrarAccount{ID: 1, Email: email, Password: hashedPw}
 }
-func (m *mockUserRepo) seedAccounting(username, hashedPw string) {
-	m.accts[username] = &models.AccountingAccount{ID: 1, Username: username, Password: hashedPw}
+func (m *mockUserRepo) seedAccounting(email, hashedPw string) {
+	m.accts[email] = &models.AccountingAccount{ID: 1, Email: email, Password: hashedPw}
 }
 
 // --- Mock PasswordResetRepository ---
@@ -259,11 +259,11 @@ func TestAuthService_LoginRegistrar_Success(t *testing.T) {
 	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("regpass")
 	require.NoError(t, err)
-	repo.seedRegistrar("registrar", hashed)
+	repo.seedRegistrar("registrar@ascb.edu.ph", hashed)
 
-	reg, token, err := svc.LoginRegistrar("registrar", "regpass")
+	reg, token, err := svc.LoginRegistrar("registrar@ascb.edu.ph", "regpass")
 	require.NoError(t, err)
-	assert.Equal(t, "registrar", reg.Username)
+	assert.Equal(t, "registrar@ascb.edu.ph", reg.Email)
 	assert.NotEmpty(t, token)
 }
 
@@ -271,9 +271,9 @@ func TestAuthService_LoginRegistrar_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
 	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, _ := svc.HashPassword("regpass")
-	repo.seedRegistrar("registrar", hashed)
+	repo.seedRegistrar("registrar@ascb.edu.ph", hashed)
 
-	_, _, err := svc.LoginRegistrar("registrar", "wrong")
+	_, _, err := svc.LoginRegistrar("registrar@ascb.edu.ph", "wrong")
 	assert.EqualError(t, err, "invalid credentials")
 }
 
@@ -282,11 +282,11 @@ func TestAuthService_LoginAccounting_Success(t *testing.T) {
 	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, err := svc.HashPassword("acctpass")
 	require.NoError(t, err)
-	repo.seedAccounting("accounting", hashed)
+	repo.seedAccounting("finance@ascb.edu.ph", hashed)
 
-	acc, token, err := svc.LoginAccounting("accounting", "acctpass")
+	acc, token, err := svc.LoginAccounting("finance@ascb.edu.ph", "acctpass")
 	require.NoError(t, err)
-	assert.Equal(t, "accounting", acc.Username)
+	assert.Equal(t, "finance@ascb.edu.ph", acc.Email)
 	assert.NotEmpty(t, token)
 }
 
@@ -294,9 +294,9 @@ func TestAuthService_LoginAccounting_WrongPassword(t *testing.T) {
 	repo := newMockUserRepo()
 	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "test-secret", "https://frontend.test")
 	hashed, _ := svc.HashPassword("acctpass")
-	repo.seedAccounting("accounting", hashed)
+	repo.seedAccounting("finance@ascb.edu.ph", hashed)
 
-	_, _, err := svc.LoginAccounting("accounting", "wrong")
+	_, _, err := svc.LoginAccounting("finance@ascb.edu.ph", "wrong")
 	assert.EqualError(t, err, "invalid credentials")
 }
 

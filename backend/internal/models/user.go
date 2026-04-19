@@ -24,12 +24,12 @@ type AdminAccount struct {
 
 type RegistrarAccount struct {
 	ID       int    `json:"id"`
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"-"`
 }
 
 type AccountingAccount struct {
 	ID       int    `json:"id"`
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"-"`
 }

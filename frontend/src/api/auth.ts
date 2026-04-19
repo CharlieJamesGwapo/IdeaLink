@@ -31,11 +31,11 @@ export const login = (email: string, password: string) =>
 export const adminLogin = (email: string, password: string) =>
   client.post('/api/auth/admin/login', { email, password })
 
-export const registrarLogin = (username: string, password: string) =>
-  client.post('/api/auth/registrar/login', { username, password })
+export const registrarLogin = (email: string, password: string) =>
+  client.post('/api/auth/registrar/login', { email, password })
 
-export const accountingLogin = (username: string, password: string) =>
-  client.post('/api/auth/accounting/login', { username, password })
+export const accountingLogin = (email: string, password: string) =>
+  client.post('/api/auth/accounting/login', { email, password })
 
 export const logout = () => client.post('/api/auth/logout')
 

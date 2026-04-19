@@ -27,9 +27,9 @@ func (h *NotificationsHandler) UnreadCount(c *gin.Context) {
 
 	switch roleStr {
 	case "registrar":
-		count, err = h.suggestionRepo.CountUnreadByDepartment("Registrar")
+		count, err = h.suggestionRepo.CountUnreadByDepartment("Registrar Office")
 	case "accounting":
-		count, err = h.suggestionRepo.CountUnreadByDepartment("Accounting Office")
+		count, err = h.suggestionRepo.CountUnreadByDepartment("Finance Office")
 	default:
 		count, err = h.suggestionRepo.CountUnread()
 	}

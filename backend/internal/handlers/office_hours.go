@@ -63,12 +63,12 @@ func (h *OfficeHoursHandler) Set(c *gin.Context) {
 	roleStr, _ := roleVal.(string)
 
 	// Registrar can only update their own dept
-	if roleStr == "registrar" && dept != "Registrar" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "registrar can only update Registrar office hours"})
+	if roleStr == "registrar" && dept != "Registrar Office" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "registrar can only update Registrar Office hours"})
 		return
 	}
-	if roleStr == "accounting" && dept != "Accounting Office" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "accounting can only update Accounting Office hours"})
+	if roleStr == "accounting" && dept != "Finance Office" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "accounting can only update Finance Office hours"})
 		return
 	}
 

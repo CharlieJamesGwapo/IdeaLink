@@ -12,8 +12,8 @@ type AuthServicer interface {
 	SignupUser(email, password, fullname, educationLevel string, collegeDepartment *string) (*models.User, string, error)
 	LoginUser(email, password string) (*models.User, string, error)
 	LoginAdmin(email, password string) (*models.AdminAccount, string, error)
-	LoginRegistrar(username, password string) (*models.RegistrarAccount, string, error)
-	LoginAccounting(username, password string) (*models.AccountingAccount, string, error)
+	LoginRegistrar(email, password string) (*models.RegistrarAccount, string, error)
+	LoginAccounting(email, password string) (*models.AccountingAccount, string, error)
 
 	GetUserByID(userID int) (*models.User, error)
 	RequestPasswordReset(email string) error

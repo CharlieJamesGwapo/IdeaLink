@@ -33,3 +33,12 @@ type CategoryCount struct {
 	Category string `json:"category"`
 	Count    int    `json:"count"`
 }
+
+// RatingGroup aggregates ratings for one department+category slice.
+type RatingGroup struct {
+	Department  string         `json:"department"`
+	Category    string         `json:"category"`
+	Count       int            `json:"count"`   // number of rated submissions
+	Average     float64        `json:"average"` // 0 if Count = 0
+	Breakdown   map[int]int    `json:"breakdown"` // rating -> count (1..5)
+}

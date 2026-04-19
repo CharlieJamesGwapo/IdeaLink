@@ -13,3 +13,18 @@ var UserEducationSQL string
 
 //go:embed 004_password_reset_tokens.sql
 var PasswordResetTokensSQL string
+
+//go:embed 005_highlights.sql
+var HighlightsSQL string
+
+//go:embed 006_rename_departments.sql
+var RenameDepartmentsSQL string
+
+//go:embed 007_staff_email_login.sql
+var StaffEmailLoginSQL string
+
+//go:embed 008_status_simplification.sql
+var StatusSimplificationSQL string
+
+//go:embed 009_suggestion_rating.sql
+var SuggestionRatingSQL string
