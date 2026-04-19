@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 
-	"idealink/internal/models"
 	"idealink/internal/repository"
 )
 
@@ -155,9 +154,6 @@ func (s *UserProvisioningService) ProvisionFromCSV(r io.Reader) ([]ProvisionResu
 			return nil, fmt.Errorf("CSV missing required column: %s", n)
 		}
 	}
-
-	results := make([]*models.User, 0) // not used directly; keeps import happy
-	_ = results
 
 	out := make([]ProvisionResult, 0, len(records)-1)
 	for _, row := range records[1:] {

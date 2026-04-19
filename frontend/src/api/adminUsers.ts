@@ -25,7 +25,8 @@ export const provisionUser = (input: ProvisionInput) =>
 export const bulkProvisionUsers = (file: File) => {
   const form = new FormData()
   form.append('file', file)
-  return client.post<BulkResult>('/api/admin/users/bulk', form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  // Don't set Content-Type manually — axios/browser auto-set it with the
+  // required multipart boundary. Forcing the header strips the boundary
+  // and the server will fail to parse the upload.
+  return client.post<BulkResult>('/api/admin/users/bulk', form)
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface ModalProps {
@@ -37,7 +38,11 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
 
   if (!isOpen) return null
 
-  return (
+  // Render into document.body so the modal escapes invalid-parent contexts
+  // like a <tbody> (callers embed <SuggestionRow> with a Modal in the tree).
+  // Browsers would otherwise hoist a <div> inside <tbody> out of the DOM,
+  // breaking backdrop clicks and focus management.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       role="dialog"
@@ -76,6 +81,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' 
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
