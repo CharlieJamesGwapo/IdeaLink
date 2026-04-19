@@ -62,7 +62,10 @@ func main() {
 
 	auth := r.Group("/api/auth")
 	{
-		auth.POST("/signup", authH.Signup)
+		// Public signup is disabled — accounts are provisioned by Admin/Registrar
+		// via POST /api/admin/users. The handler returns 403 so stale bookmarks
+		// and scripts get a clear signal instead of silently creating accounts.
+		auth.POST("/signup", authH.SignupDisabled)
 		auth.POST("/login", authH.Login)
 		auth.POST("/admin/login", authH.AdminLogin)
 		auth.POST("/registrar/login", authH.RegistrarLogin)

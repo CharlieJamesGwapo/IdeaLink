@@ -10,7 +10,6 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary'
 const HomePage           = lazy(() => import('./pages/public/HomePage').then(m => ({ default: m.HomePage })))
 const StudentLoginPage   = lazy(() => import('./pages/public/StudentLoginPage').then(m => ({ default: m.StudentLoginPage })))
 const StaffLoginPage     = lazy(() => import('./pages/public/StaffLoginPage').then(m => ({ default: m.StaffLoginPage })))
-const SignupPage          = lazy(() => import('./pages/public/SignupPage').then(m => ({ default: m.SignupPage })))
 const ForgotPasswordPage  = lazy(() => import('./pages/public/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
 const ResetPasswordPage   = lazy(() => import('./pages/public/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
 const CompleteProfilePage = lazy(() => import('./pages/user/CompleteProfilePage').then(m => ({ default: m.CompleteProfilePage })))
@@ -179,7 +178,8 @@ export function AppRouter() {
           <Route path="/"                 element={<AuthGatedPage><HomePage /></AuthGatedPage>} />
           <Route path="/login"            element={<AuthGatedPage><StudentLoginPage /></AuthGatedPage>} />
           <Route path="/staff-login"      element={<AuthGatedPage><StaffLoginPage /></AuthGatedPage>} />
-          <Route path="/signup"           element={<AuthGatedPage><SignupPage /></AuthGatedPage>} />
+          {/* Self-service signup is retired — accounts are provisioned by Admin/Registrar. */}
+          <Route path="/signup"           element={<Navigate to="/login" replace />} />
           <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
           <Route path="/reset-password"   element={<ResetPasswordPage />} />
         </Route>

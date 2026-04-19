@@ -50,6 +50,15 @@ func (h *AuthHandler) Signup(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 
+// SignupDisabled returns 403 — public self-service signup was replaced by
+// Admin/Registrar-provisioned accounts (POST /api/admin/users).
+func (h *AuthHandler) SignupDisabled(c *gin.Context) {
+	c.JSON(http.StatusForbidden, gin.H{
+		"error": "Self-service signup is disabled. Please contact the Registrar's Office to request an account.",
+		"code":  "SIGNUP_DISABLED",
+	})
+}
+
 type loginInput struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`

@@ -44,7 +44,7 @@ const goals = [
 const features = [
   { icon: MessageSquare, title: 'Direct to Departments', desc: 'Submit feedback directly to the Registrar Office or Finance Office with service-specific categories.' },
   { icon: Shield,        title: 'Anonymous Option',      desc: 'Choose to submit anonymously — your identity stays completely private.' },
-  { icon: CheckCircle2,  title: 'Track Your Feedback',   desc: 'Monitor real-time status updates: Pending, Under Review, or Resolved.' },
+  { icon: CheckCircle2,  title: 'Track Your Feedback',   desc: 'Monitor real-time status updates: Delivered or Reviewed by staff.' },
   { icon: Star,          title: 'Recognition',           desc: 'Outstanding feedback may be featured as institutional testimonials.' },
 ]
 
