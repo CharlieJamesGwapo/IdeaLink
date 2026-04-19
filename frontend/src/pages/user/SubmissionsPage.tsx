@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MessageSquare, Clock, CheckCircle, Search, Filter, ChevronDown, ChevronUp, Plus, Calendar, Tag, EyeOff } from 'lucide-react'
 import { useSuggestions } from '../../hooks/useSuggestions'
+import { useSubmissionStatusUnread } from '../../hooks/useSubmissionStatusUnread'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { markSubmissionsSeen } from '../../api/suggestions'
 import type { Suggestion } from '../../types'
@@ -70,14 +71,18 @@ export function SubmissionsPage() {
   const [sort, setSort]             = useState<SortOption>('newest')
   const [showFilters, setShowFilters] = useState(false)
 
+  const { clearLocal } = useSubmissionStatusUnread()
   const delivered = suggestions.filter(s => s.status === 'Delivered').length
   const reviewed  = suggestions.filter(s => s.status === 'Reviewed').length
   const total     = suggestions.length
 
   // Opening this page = user has seen any pending status changes.
+  // Clear the shared badge state immediately so the Header updates this
+  // tick, then confirm with the server.
   useEffect(() => {
+    clearLocal()
     markSubmissionsSeen().catch(() => {})
-  }, [])
+  }, [clearLocal])
 
   const filtered = suggestions
     .filter(s => {
