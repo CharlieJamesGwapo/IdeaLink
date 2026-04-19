@@ -65,8 +65,17 @@ func (h *AnnouncementHandler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
-// GET /api/announcements/unread-count — authenticated users only
+// GET /api/announcements/unread-count — only meaningful for 'user' role.
+// Admin/staff have IDs from separate tables that collide with user IDs in
+// the shared SERIAL space, so we hard-return 0 for them to avoid leaking
+// another user's last_announcement_view.
 func (h *AnnouncementHandler) UnreadCount(c *gin.Context) {
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	role, _ := roleVal.(string)
+	if role != "user" {
+		c.JSON(http.StatusOK, gin.H{"count": 0})
+		return
+	}
 	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
 	userID, _ := userIDVal.(int)
 	if userID == 0 {
@@ -81,8 +90,15 @@ func (h *AnnouncementHandler) UnreadCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"count": n})
 }
 
-// POST /api/announcements/mark-seen — marks everything as read for this user
+// POST /api/announcements/mark-seen — only 'user' role has a
+// last_announcement_view timestamp to advance. No-op for admin/staff.
 func (h *AnnouncementHandler) MarkSeen(c *gin.Context) {
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	role, _ := roleVal.(string)
+	if role != "user" {
+		c.Status(http.StatusNoContent)
+		return
+	}
 	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
 	userID, _ := userIDVal.(int)
 	if err := h.svc.MarkSeen(userID); err != nil {
