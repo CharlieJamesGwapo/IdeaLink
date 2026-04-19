@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	stdmail "net/mail"
 	"strings"
 
 	"idealink/internal/repository"
@@ -36,7 +37,7 @@ func NewUserProvisioningService(
 // ProvisionInput is one row worth of account data coming from the admin UI
 // or a CSV import.
 type ProvisionInput struct {
-	Email             string  `json:"email" binding:"required"`
+	Email             string  `json:"email" binding:"required,email"`
 	Fullname          string  `json:"fullname" binding:"required"`
 	EducationLevel    string  `json:"education_level" binding:"required"`
 	CollegeDepartment *string `json:"college_department"`
@@ -72,7 +73,27 @@ func generateTempPassword() (string, error) {
 // Duplicate-email results in status="skipped".
 func (s *UserProvisioningService) ProvisionOne(input ProvisionInput) (ProvisionResult, error) {
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
+	input.Fullname = strings.TrimSpace(input.Fullname)
 	res := ProvisionResult{Email: input.Email, Fullname: input.Fullname}
+
+	// Reject anything that isn't a syntactically valid email. This blocks
+	// CRLF / header injection attempts via the CSV path (which skips Gin's
+	// binding validator) and keeps the SMTP "To:" header safe.
+	if _, err := stdmail.ParseAddress(input.Email); err != nil {
+		res.Status = "error"
+		res.Error = "invalid email address"
+		return res, nil
+	}
+	if strings.ContainsAny(input.Fullname, "\r\n") {
+		res.Status = "error"
+		res.Error = "invalid full name"
+		return res, nil
+	}
+	if input.Fullname == "" {
+		res.Status = "error"
+		res.Error = "full name is required"
+		return res, nil
+	}
 
 	if err := validateEducation(input.EducationLevel, input.CollegeDepartment); err != nil {
 		res.Status = "error"
@@ -142,8 +163,13 @@ func (s *UserProvisioningService) ProvisionFromCSV(r io.Reader) ([]ProvisionResu
 		return nil, errors.New("empty CSV")
 	}
 
-	// Map header to column index.
+	// Map header to column index. Strip a leading UTF-8 BOM ("\ufeff") off
+	// the first header — Excel prepends it on exported CSVs which would
+	// otherwise make the first column lookup fail silently.
 	header := records[0]
+	if len(header) > 0 {
+		header[0] = strings.TrimPrefix(header[0], "\ufeff")
+	}
 	idx := map[string]int{}
 	for i, h := range header {
 		idx[strings.ToLower(strings.TrimSpace(h))] = i
