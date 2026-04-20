@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"idealink/internal/models"
+
+	"github.com/lib/pq"
 )
 
 type OfficeHoursRepo struct {
@@ -20,11 +22,18 @@ func (r *OfficeHoursRepo) GetByDepartment(department string) (*models.OfficeHour
 	var oh models.OfficeHours
 	var closureReason sql.NullString
 	var closedUntil sql.NullTime
-	err := r.db.QueryRow(
+	// Inline the literal (pq.QuoteLiteral is SQL-safe) instead of using $1.
+	// Parameterised reads against Render's pgbouncer intermittently surface
+	// `pq: unnamed prepared statement does not exist` when the pool
+	// reassigns backends between Parse and Execute. A simple-protocol query
+	// with no placeholders sidesteps the issue — this is the only public
+	// read on the homepage that relies on a bound parameter.
+	query := fmt.Sprintf(
 		`SELECT id, department, open_hour, close_hour, is_open, closure_reason, closed_until, updated_at
-		 FROM office_hours WHERE department = $1`,
-		department,
-	).Scan(&oh.ID, &oh.Department, &oh.OpenHour, &oh.CloseHour, &oh.IsOpen, &closureReason, &closedUntil, &oh.UpdatedAt)
+		 FROM office_hours WHERE department = %s`,
+		pq.QuoteLiteral(department),
+	)
+	err := r.db.QueryRow(query).Scan(&oh.ID, &oh.Department, &oh.OpenHour, &oh.CloseHour, &oh.IsOpen, &closureReason, &closedUntil, &oh.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
