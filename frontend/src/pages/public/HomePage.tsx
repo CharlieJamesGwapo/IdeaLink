@@ -117,6 +117,16 @@ export function HomePage() {
     return () => clearInterval(t)
   }, [testimonials.length])
 
+  // Re-scroll to URL hash after async sections mount. The browser's initial
+  // hash scroll fires before testimonials/office-hours fetch resolves, so
+  // links like /#testimonials otherwise land on empty space.
+  useEffect(() => {
+    const hash = window.location.hash
+    if (!hash) return
+    const el = document.getElementById(hash.slice(1))
+    if (el) el.scrollIntoView({ block: 'start' })
+  }, [testimonials.length, officeStatuses.length])
+
   const totalPages = Math.ceil(announcements.length / ANNOUNCEMENTS_PER_PAGE)
   const paged = announcements.slice((page - 1) * ANNOUNCEMENTS_PER_PAGE, page * ANNOUNCEMENTS_PER_PAGE)
 
