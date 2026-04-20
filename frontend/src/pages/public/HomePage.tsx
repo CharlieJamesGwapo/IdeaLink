@@ -419,20 +419,62 @@ export function HomePage() {
 
       {/* ─── TESTIMONIALS ─── */}
       {testimonials.length > 0 && (
-        <section id="testimonials" ref={testimonialsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy transition-all duration-700 ${testimonialsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="max-w-2xl mx-auto px-6">
-            <div className="text-center mb-10">
+        <section id="testimonials" ref={testimonialsRef.ref} className={`scroll-mt-28 py-20 bg-gradient-to-b from-ascb-navy to-ascb-navy-dark transition-all duration-700 ${testimonialsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="text-center mb-10 sm:mb-14">
               <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Student Voices</span>
-              <h2 className="text-3xl font-bold font-display mt-2">Testimonies</h2>
-              <div className="section-divider w-20 mx-auto mt-4" />
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold font-display mt-2 tracking-tight">
+                Highlight <span className="text-ascb-orange">Testimonies</span>
+              </h2>
+              <div className="section-divider w-24 mx-auto mt-4" />
             </div>
+
+            {/* Carousel: 1 card on mobile, 2 on tablet, 3 on desktop.
+                testimonialIdx is the left-most visible card; arrows cycle it. */}
             <div className="relative">
-              <TestimonialCard testimonial={testimonials[testimonialIdx]} />
+              {/* Arrows sit outside the card grid on desktop, overlay on mobile */}
               {testimonials.length > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4">
+                <>
+                  <button
+                    onClick={() => setTestimonialIdx(i => (i - 1 + testimonials.length) % testimonials.length)}
+                    aria-label="Previous testimonial"
+                    className="absolute left-0 lg:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-ascb-orange hover:bg-ascb-orange-dark text-white shadow-xl shadow-ascb-orange/30 flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    onClick={() => setTestimonialIdx(i => (i + 1) % testimonials.length)}
+                    aria-label="Next testimonial"
+                    className="absolute right-0 lg:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-ascb-orange hover:bg-ascb-orange-dark text-white shadow-xl shadow-ascb-orange/30 flex items-center justify-center transition-all hover:scale-110"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </>
+              )}
+
+              <div className="mx-12 sm:mx-14 lg:mx-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+                  {[0, 1, 2].map(offset => {
+                    if (offset > 0 && offset >= testimonials.length) return null
+                    const t = testimonials[(testimonialIdx + offset) % testimonials.length]
+                    return (
+                      <div key={`${t.id}-${offset}`} className={offset === 0 ? '' : offset === 1 ? 'hidden md:block' : 'hidden lg:block'}>
+                        <TestimonialCard testimonial={t} />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {testimonials.length > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
                   {testimonials.map((_, i) => (
-                    <button key={i} onClick={() => setTestimonialIdx(i)}
-                      className={`w-2 h-2 rounded-full transition-all ${i === testimonialIdx ? 'bg-ascb-orange w-6' : 'bg-gray-600 hover:bg-gray-400'}`} />
+                    <button
+                      key={i}
+                      onClick={() => setTestimonialIdx(i)}
+                      aria-label={`Go to testimonial ${i + 1}`}
+                      className={`h-2 rounded-full transition-all ${i === testimonialIdx ? 'bg-ascb-orange w-8' : 'bg-white/20 hover:bg-white/40 w-2'}`}
+                    />
                   ))}
                 </div>
               )}
