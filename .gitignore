@@ -21,3 +21,6 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Claude Code session state
+.claude/
