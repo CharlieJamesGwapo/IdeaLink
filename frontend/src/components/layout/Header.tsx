@@ -74,8 +74,11 @@ export function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-2">
+            {/* Anchors need serious horizontal room — only show from lg+
+                to avoid wrapping/overflow on tablets. Tablets fall back to
+                the mobile hamburger (which also lists these anchors). */}
             {showHomeAnchors && (
-              <ul className="flex items-center gap-1 mr-2">
+              <ul className="hidden lg:flex items-center gap-1 mr-2">
                 {HOME_ANCHORS.map(a => (
                   <li key={a.id}>
                     <a
