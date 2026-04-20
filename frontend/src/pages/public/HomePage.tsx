@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, ArrowRight, Shield, MessageSquare, CheckCircle2, Star, BookOpen, Target, Heart, Zap, Sparkles, ArrowUp } from 'lucide-react'
 import { useAnnouncements } from '../../hooks/useAnnouncements'
@@ -19,18 +19,33 @@ function formatHour(h: number): string {
 const ANNOUNCEMENTS_PER_PAGE = 5
 
 function useScrollReveal<T extends HTMLElement = HTMLElement>() {
-  const ref = useRef<T>(null)
   // Default to visible if IntersectionObserver is unavailable (old WebViews, Facebook Lite)
   const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
-  useEffect(() => {
-    if (typeof IntersectionObserver === 'undefined') { setVisible(true); return }
-    const observer = new IntersectionObserver(
+  const observerRef = useRef<IntersectionObserver | null>(null)
+
+  // Use a ref *callback* so the observer attaches the moment the element
+  // mounts. Sections that render conditionally (e.g. testimonials after an
+  // async fetch) were stuck at opacity-0 because the previous useEffect
+  // only ran on mount — before the element existed.
+  const ref = useCallback((node: T | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+      observerRef.current = null
+    }
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      if (typeof IntersectionObserver === 'undefined') setVisible(true)
+      return
+    }
+    const obs = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setVisible(true) },
-      { threshold: 0.08 }
+      { threshold: 0.08 },
     )
-    if (ref.current) observer.observe(ref.current)
-    return () => observer.disconnect()
+    obs.observe(node)
+    observerRef.current = obs
   }, [])
+
+  useEffect(() => () => { observerRef.current?.disconnect() }, [])
+
   return { ref, visible }
 }
 
