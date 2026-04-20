@@ -54,6 +54,7 @@ export interface Testimonial {
   name: string
   department: string
   message: string
+  rating?: number | null
   is_active: boolean
   created_at: string
 }
@@ -72,19 +73,10 @@ export interface Analytics {
   by_category_accounting: { category: string; count: number }[]
 }
 
-export interface Highlight {
-  id: number
-  suggestion_id: number
-  created_by: number
-  created_at: string
-  expires_at: string
-  react_count: number
-  viewer_reacted: boolean
-  suggestion: Suggestion
-}
-
 export interface OfficeHoursStatus {
   department: string
+  open_hour: number
+  close_hour: number
   is_open: boolean
   closure_reason?: string
   closed_until?: string

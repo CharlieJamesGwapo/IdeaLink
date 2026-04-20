@@ -253,7 +253,10 @@ func TestAuthHandler_Logout(t *testing.T) {
 }
 
 func TestAuthHandler_Me(t *testing.T) {
-	r := setupAuthRouter(&mockAuthSvc{})
+	level := "College"
+	dept := "CCE"
+	svc := &mockAuthSvc{getUserResult: &models.User{ID: 1, EducationLevel: &level, CollegeDepartment: &dept}}
+	r := setupAuthRouter(svc)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/auth/me", nil)
 	r.ServeHTTP(w, req)
@@ -263,6 +266,29 @@ func TestAuthHandler_Me(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	assert.Equal(t, float64(1), resp["user_id"])
 	assert.Equal(t, services.RoleUser, resp["role"])
+	// Bug fix: /me must always include education_level for role=user so the
+	// frontend's cached value is never silently overwritten with null.
+	_, hasEducation := resp["education_level"]
+	assert.True(t, hasEducation, "education_level key must be present in /me response for role=user")
+	assert.Equal(t, "College", resp["education_level"])
+}
+
+func TestAuthHandler_Me_UserLookupFailsReturns500(t *testing.T) {
+	svc := &mockAuthSvc{getUserErr: errors.New("db down")}
+	r := setupAuthRouter(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/auth/me", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestAuthHandler_Me_UserMissingReturns401(t *testing.T) {
+	svc := &mockAuthSvc{} // getUserResult=nil, no error — user not found
+	r := setupAuthRouter(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/auth/me", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestAuthHandler_AdminLogin_InvalidCredentials(t *testing.T) {

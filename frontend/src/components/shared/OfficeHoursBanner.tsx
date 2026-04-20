@@ -5,6 +5,13 @@ import type { OfficeHoursStatus } from '../../types'
 
 interface Props { department: string }
 
+function formatHour(h: number): string {
+  if (h === 24) return '12:00 AM'
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  const display = h % 12 === 0 ? 12 : h % 12
+  return `${display}:00 ${suffix}`
+}
+
 export function OfficeHoursBanner({ department }: Props) {
   const [status, setStatus] = useState<OfficeHoursStatus | null>(null)
   const [loading, setLoading] = useState(true)
@@ -24,6 +31,7 @@ export function OfficeHoursBanner({ department }: Props) {
   if (!status) return null
 
   const isOpen = status.is_open
+  const hoursLabel = `Mon–Fri  ${formatHour(status.open_hour)} – ${formatHour(status.close_hour)}`
 
   return (
     <div className={`flex items-start gap-3 p-4 rounded-xl border mb-2 transition-all duration-300 ${
@@ -46,11 +54,9 @@ export function OfficeHoursBanner({ department }: Props) {
             {isOpen ? 'OPEN' : 'CLOSED'}
           </span>
           <span className="text-sm font-medium text-white font-ui">{department}</span>
-          {isOpen && (
-            <span className="text-xs text-gray-400 flex items-center gap-1 font-ui">
-              <Clock size={11} /> Mon–Fri  8:00 AM – 5:00 PM
-            </span>
-          )}
+          <span className="text-xs text-gray-400 flex items-center gap-1 font-ui">
+            <Clock size={11} /> {hoursLabel}
+          </span>
         </div>
         {!isOpen && status.closure_reason && (
           <p className="text-sm text-red-300 mt-1 font-body">{status.closure_reason}</p>

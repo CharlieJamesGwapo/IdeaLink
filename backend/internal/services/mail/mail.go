@@ -1,11 +1,17 @@
 package mail
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/mail"
 	"net/smtp"
 )
+
+// ErrNotConfigured is returned when SMTP_HOST is unset. Callers should treat
+// this as "email did not send" and surface a fallback (e.g., display the
+// credentials in the admin UI so they can be relayed manually).
+var ErrNotConfigured = errors.New("mail: SMTP_HOST not configured")
 
 type Config struct {
 	Host string
@@ -24,11 +30,11 @@ func NewSender(cfg Config) *Sender {
 }
 
 // SendPasswordReset sends a plain-text password reset email.
-// If Host is empty, it logs and returns nil (local dev without SMTP).
+// Returns ErrNotConfigured if SMTP_HOST is empty.
 func (s *Sender) SendPasswordReset(to, resetLink string) error {
 	if s.cfg.Host == "" {
-		log.Printf("[mail] SMTP_HOST unset — skipping send. Reset link for %s: %s", to, resetLink)
-		return nil
+		log.Printf("[mail] SMTP_HOST unset — password reset link for %s: %s", to, resetLink)
+		return ErrNotConfigured
 	}
 	subject := "Reset your IdeaLink password"
 	body := fmt.Sprintf(
@@ -59,12 +65,13 @@ func (s *Sender) SendPasswordReset(to, resetLink string) error {
 }
 
 // SendNewUserCredentials emails a freshly provisioned account's login details.
-// Generated passwords are single-use in practice — the UI prompts the user to
-// change it on first login. If Host is empty (dev), the creds are logged.
+// Returns ErrNotConfigured if SMTP_HOST is empty — the caller is expected to
+// surface the temp password through another channel (admin UI) when that
+// happens instead of pretending the email went out.
 func (s *Sender) SendNewUserCredentials(to, fullname, rawPassword, loginURL string) error {
 	if s.cfg.Host == "" {
-		log.Printf("[mail] SMTP_HOST unset — skipping send. Creds for %s: pw=%s url=%s", to, rawPassword, loginURL)
-		return nil
+		log.Printf("[mail] SMTP_HOST unset — cannot send credentials for %s", to)
+		return ErrNotConfigured
 	}
 	subject := "Your IdeaLink account has been created"
 	body := fmt.Sprintf(

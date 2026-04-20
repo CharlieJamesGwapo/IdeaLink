@@ -9,6 +9,9 @@ type Testimonial struct {
 	Name         string    `json:"name"`
 	Department   string    `json:"department"`
 	Message      string    `json:"message"`
-	IsActive     bool      `json:"is_active"`
-	CreatedAt    time.Time `json:"created_at"`
+	// Rating (1-5) pulled from the source suggestion when available. Null for
+	// legacy testimonials created before ratings were required.
+	Rating    *int      `json:"rating,omitempty"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
 }

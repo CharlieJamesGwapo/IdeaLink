@@ -31,9 +31,10 @@ type SuggestionRepository interface {
 	CountStatusUnreadByUser(userID int) (int, error)
 	CountUnread() (int, error)
 	CountUnreadByDepartment(department string) (int, error)
-	CountSubmissionsThisWeekByUser(userID int) (int, error)
+	CountSubmissionsSince(userID int, cutoff time.Time) (int, error)
 	GetRatingSummary() ([]*models.RatingGroup, error)
 	GetAnalytics() (*models.Analytics, error)
+	SoftDelete(id int) error
 }
 
 type AnnouncementRepository interface {
@@ -61,11 +62,9 @@ type PasswordResetRepository interface {
 	MarkUsed(id int) error
 }
 
-type HighlightRepository interface {
-	Create(suggestionID, adminID int, ttl time.Duration) (int, error)
-	Expire(id int) error
-	IsActive(id int) (bool, error)
-	ActiveSuggestionIDs() (map[int]int, error)
-	ListActive(viewerUserID int) ([]*models.Highlight, error)
-	ToggleReact(highlightID, userID int) (int, bool, error)
+type SuggestionAttachmentRepository interface {
+	Create(suggestionID int, filename, mimeType string, data []byte) (*models.SuggestionAttachment, error)
+	ListBySuggestion(suggestionID int) ([]*models.SuggestionAttachment, error)
+	CountBySuggestion(suggestionID int) (int, error)
+	FindBlob(attachmentID int) (*models.SuggestionAttachment, []byte, error)
 }

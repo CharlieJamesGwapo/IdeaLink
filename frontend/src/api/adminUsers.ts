@@ -12,6 +12,11 @@ export interface ProvisionResult {
   fullname: string
   status: 'created' | 'skipped' | 'error'
   error?: string
+  // Whether the welcome email with credentials actually sent. If false,
+  // temp_password will be set so the admin can relay the password manually.
+  email_sent?: boolean
+  email_error?: string
+  temp_password?: string
 }
 
 export interface BulkResult {

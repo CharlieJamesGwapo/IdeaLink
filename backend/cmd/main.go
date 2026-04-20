@@ -28,7 +28,7 @@ func main() {
 	announcementRepo := repository.NewAnnouncementRepo(db)
 	testimonialRepo := repository.NewTestimonialRepo(db)
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
-	highlightRepo := repository.NewHighlightRepo(db)
+	attachmentRepo := repository.NewSuggestionAttachmentRepo(db)
 
 	// Services
 	mailer := mail.NewSender(mail.Config{
@@ -43,17 +43,15 @@ func main() {
 	announcementSvc := services.NewAnnouncementService(announcementRepo, userRepo)
 	testimonialSvc := services.NewTestimonialService(testimonialRepo)
 	suggestionSvc := services.NewSuggestionService(suggestionRepo, testimonialRepo)
-	highlightSvc := services.NewHighlightService(highlightRepo, suggestionRepo)
 
 	// Handlers
 	authH := handlers.NewAuthHandler(authSvc)
 	announcementH := handlers.NewAnnouncementHandler(announcementSvc)
 	testimonialH := handlers.NewTestimonialHandler(testimonialSvc)
-	suggestionH := handlers.NewSuggestionHandler(suggestionSvc)
+	suggestionH := handlers.NewSuggestionHandler(suggestionSvc, attachmentRepo)
 	adminH := handlers.NewAdminHandler(suggestionRepo, userRepo)
 	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo)
 	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
-	highlightH := handlers.NewHighlightHandler(highlightSvc)
 	usersH := handlers.NewUsersHandler(provisioningSvc)
 
 	// Router
@@ -93,8 +91,6 @@ func main() {
 			admin.PATCH("/testimonials/:id/toggle", testimonialH.Toggle)
 			admin.POST("/suggestions/:id/feature", suggestionH.Feature)
 			admin.GET("/admin/analytics", adminH.Analytics)
-			admin.POST("/admin/highlights", highlightH.Create)
-			admin.DELETE("/admin/highlights/:id", highlightH.Delete)
 		}
 
 		// Admin + Registrar can provision student accounts
@@ -108,7 +104,7 @@ func main() {
 		user := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user"))
 		{
 			user.POST("/suggestions", suggestionH.Submit)
-			user.POST("/highlights/:id/react", highlightH.React)
+			user.POST("/suggestions/:id/attachments", suggestionH.UploadAttachment)
 			user.GET("/submissions/status-unread-count", suggestionH.StatusUnreadCount)
 			user.POST("/submissions/mark-seen", suggestionH.MarkSubmissionsSeen)
 			user.GET("/submissions/weekly-usage", suggestionH.WeeklyUsage)
@@ -118,8 +114,9 @@ func main() {
 		authenticated := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user", "admin", "registrar", "accounting"))
 		{
 			authenticated.GET("/suggestions", suggestionH.List)
+			authenticated.GET("/suggestions/:id/attachments", suggestionH.ListAttachments)
+			authenticated.GET("/suggestions/:id/attachments/:aid", suggestionH.DownloadAttachment)
 			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)
-			authenticated.GET("/highlights", highlightH.List)
 			authenticated.GET("/announcements/unread-count", announcementH.UnreadCount)
 			authenticated.POST("/announcements/mark-seen", announcementH.MarkSeen)
 		}
@@ -135,6 +132,7 @@ func main() {
 		{
 			staff.PATCH("/suggestions/:id/status", suggestionH.UpdateStatus)
 			staff.POST("/suggestions/:id/read", suggestionH.MarkReviewed)
+			staff.DELETE("/suggestions/:id", suggestionH.Delete)
 			staff.POST("/office-hours/:dept", officeHoursH.Set)
 		}
 	}

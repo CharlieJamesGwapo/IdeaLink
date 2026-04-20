@@ -5,9 +5,9 @@ import {
   Send, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft, Plus,
   FileText, Award, BookOpen, Shield, CreditCard, Shuffle, HelpCircle,
   DollarSign, GraduationCap, Receipt, RotateCcw, AlertTriangle, Check,
-  Building2, Calculator, Star,
+  Building2, Calculator, Star, Paperclip, X as XIcon,
 } from 'lucide-react'
-import { submitSuggestion, getWeeklyUsage, type WeeklyUsage } from '../../api/suggestions'
+import { submitSuggestion, getWeeklyUsage, uploadSuggestionAttachment, type WeeklyUsage } from '../../api/suggestions'
 import { Button } from '../../components/ui/Button'
 import { OfficeHoursBanner } from '../../components/shared/OfficeHoursBanner'
 import axios from 'axios'
@@ -84,6 +84,7 @@ export function SubmitPage() {
   const [description, setDescription] = useState('')
   const [anonymous, setAnonymous]     = useState(false)
   const [rating, setRating]           = useState<number>(0)
+  const [attachments, setAttachments] = useState<File[]>([])
   const [isLoading, setIsLoading]     = useState(false)
   const [submitted, setSubmitted]     = useState(false)
   const [referenceID, setReferenceID] = useState<number | null>(null)
@@ -221,6 +222,10 @@ export function SubmitPage() {
       toast.error('Please fill in all required fields.')
       return
     }
+    if (rating < 1 || rating > 5) {
+      toast.error('Please rate the service before submitting.')
+      return
+    }
     if (usage && usage.used >= usage.limit) {
       toast.error(`Weekly limit reached. Resets ${new Date(usage.resets_at).toLocaleDateString('en-PH', { weekday: 'long' })}.`)
       return
@@ -233,10 +238,31 @@ export function SubmitPage() {
         user_role: 'Student',
         title,
         description,
-        rating: rating > 0 ? rating : undefined,
+        rating,
         anonymous,
       })
-      setReferenceID(res.data?.id ?? null)
+      const newID = res.data?.id ?? null
+      setReferenceID(newID)
+
+      // Upload any attachments after the suggestion exists. Failures are
+      // reported but don't invalidate the submission itself.
+      if (newID !== null && attachments.length > 0) {
+        const uploadErrors: string[] = []
+        for (const file of attachments) {
+          try {
+            await uploadSuggestionAttachment(newID, file)
+          } catch (e) {
+            const msg = axios.isAxiosError(e)
+              ? (e.response?.data?.error as string | undefined) ?? e.message
+              : 'upload failed'
+            uploadErrors.push(`${file.name}: ${msg}`)
+          }
+        }
+        if (uploadErrors.length > 0) {
+          toast.error(`Some attachments failed: ${uploadErrors.join(', ')}`)
+        }
+      }
+
       setSubmitted(true)
       toast.success('Feedback received — thank you!')
       fetchUsage()
@@ -313,7 +339,7 @@ export function SubmitPage() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Rate this service (optional)</label>
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">Rate this service *</label>
           <div className="flex items-center gap-1.5 p-3 rounded-xl bg-ascb-navy-dark border border-white/8">
             {[1, 2, 3, 4, 5].map(n => {
               const active = rating >= n
@@ -351,6 +377,69 @@ export function SubmitPage() {
           </p>
         </div>
 
+        {/* Attachments */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-ui">
+            Attachments (optional)
+          </label>
+          <div className="p-3 rounded-xl bg-ascb-navy-dark border border-white/8 space-y-2">
+            {attachments.length > 0 && (
+              <ul className="space-y-1.5">
+                {attachments.map((file, i) => (
+                  <li key={i} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/8">
+                    <Paperclip size={13} className="text-ascb-gold shrink-0" />
+                    <span className="flex-1 min-w-0 text-xs text-white font-ui truncate">{file.name}</span>
+                    <span className="text-[10px] text-gray-500 font-ui tabular-nums shrink-0">
+                      {(file.size / 1024).toFixed(0)} KB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
+                      className="shrink-0 p-1 text-gray-500 hover:text-red-400 transition-colors"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <XIcon size={13} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {attachments.length < 3 && (
+              <label className="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-dashed border-white/15 text-xs font-ui text-gray-400 hover:text-ascb-orange hover:border-ascb-orange/40 cursor-pointer transition-colors">
+                <Paperclip size={13} />
+                Add file
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                  multiple
+                  className="hidden"
+                  onChange={e => {
+                    const picked = Array.from(e.target.files ?? [])
+                    const allowed: File[] = []
+                    for (const f of picked) {
+                      if (attachments.length + allowed.length >= 3) {
+                        toast.error('Max 3 files per submission.')
+                        break
+                      }
+                      if (f.size > 5 * 1024 * 1024) {
+                        toast.error(`${f.name} exceeds the 5 MB limit.`)
+                        continue
+                      }
+                      allowed.push(f)
+                    }
+                    if (allowed.length > 0) setAttachments(prev => [...prev, ...allowed])
+                    // Clear the input so selecting the same file again re-fires.
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+            )}
+            <p className="text-[11px] text-gray-600 font-body">
+              JPG / PNG / GIF / WebP / PDF · up to 5 MB each · max 3 files
+            </p>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between p-4 rounded-xl bg-ascb-navy-dark border border-white/8 hover:border-white/15 transition-colors">
           <div className="flex items-center gap-3">
             {anonymous
@@ -381,8 +470,15 @@ export function SubmitPage() {
           >
             <ArrowLeft size={15} /> Back
           </button>
-          <Button type="submit" isLoading={isLoading} size="lg" className="flex-1">
-            <Send size={16} /> Submit Feedback
+          <Button
+            type="submit"
+            isLoading={isLoading}
+            disabled={(usage !== null && usage.used >= usage.limit) || rating < 1}
+            size="lg"
+            className="flex-1"
+          >
+            <Send size={16} />
+            {usage !== null && usage.used >= usage.limit ? 'Weekly limit reached' : 'Submit Feedback'}
           </Button>
         </div>
       </form>
@@ -427,7 +523,7 @@ export function SubmitPage() {
             <button
               onClick={() => {
                 setStep(1); setDepartment(''); setService('')
-                setTitle(''); setDescription(''); setAnonymous(false); setSubmitted(false); setReferenceID(null); setRating(0)
+                setTitle(''); setDescription(''); setAnonymous(false); setSubmitted(false); setReferenceID(null); setRating(0); setAttachments([])
               }}
               className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-gray-300 hover:text-white hover:border-white/30 text-sm font-ui transition-all"
             >

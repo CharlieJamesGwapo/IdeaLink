@@ -144,11 +144,21 @@ func (h *AuthHandler) Me(c *gin.Context) {
 
 	resp := gin.H{"user_id": userID, "role": role}
 	if role == services.RoleUser {
+		// education_level MUST be in the response for role=user — the frontend
+		// uses its presence to decide whether to gate on the "complete your
+		// profile" page. Silently omitting it on a DB hiccup caused a bug where
+		// the cached value was overwritten with null and the gate re-fired.
 		user, err := h.svc.GetUserByID(userID)
-		if err == nil && user != nil {
-			resp["education_level"] = user.EducationLevel
-			resp["college_department"] = user.CollegeDepartment
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch user"})
+			return
 		}
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+			return
+		}
+		resp["education_level"] = user.EducationLevel
+		resp["college_department"] = user.CollegeDepartment
 	}
 	c.JSON(http.StatusOK, resp)
 }

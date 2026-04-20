@@ -1,4 +1,4 @@
-import { Quote } from 'lucide-react'
+import { Quote, Star } from 'lucide-react'
 import type { Testimonial } from '../../types'
 
 interface Props {
@@ -8,11 +8,26 @@ interface Props {
 }
 
 export function TestimonialCard({ testimonial, showToggle, onToggle }: Props) {
+  const rating = testimonial.rating ?? null
   return (
     <div className="group glass rounded-2xl p-6 flex flex-col gap-4 hover:border-ascb-orange/30 transition-all duration-300 hover:-translate-y-1 h-full border border-transparent">
-      {/* Decorative quote mark */}
-      <div className="w-10 h-10 rounded-xl bg-ascb-orange/10 flex items-center justify-center">
-        <Quote size={20} className="text-ascb-orange" />
+      {/* Decorative quote mark + rating */}
+      <div className="flex items-center justify-between">
+        <div className="w-10 h-10 rounded-xl bg-ascb-orange/10 flex items-center justify-center">
+          <Quote size={20} className="text-ascb-orange" />
+        </div>
+        {rating != null && (
+          <div className="inline-flex items-center gap-0.5" aria-label={`Rated ${rating} out of 5`}>
+            {[1, 2, 3, 4, 5].map(n => (
+              <Star
+                key={n}
+                size={14}
+                className={n <= rating ? 'text-ascb-gold' : 'text-gray-700'}
+                fill={n <= rating ? 'currentColor' : 'none'}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="text-gray-300 text-sm leading-relaxed flex-1 font-body italic">

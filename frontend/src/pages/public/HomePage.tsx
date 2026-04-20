@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, ArrowRight, Shield, MessageSquare, CheckCircle2, Star, BookOpen, Target, Heart, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight, Shield, MessageSquare, CheckCircle2, Star, BookOpen, Target, Heart, Zap, Sparkles, ArrowUp } from 'lucide-react'
 import { useAnnouncements } from '../../hooks/useAnnouncements'
 import { AnnouncementCard } from '../../components/shared/AnnouncementCard'
 import { TestimonialCard } from '../../components/shared/TestimonialCard'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { getTestimonials } from '../../api/testimonials'
-import type { Testimonial } from '../../types'
+import { getOfficeHours } from '../../api/officeHours'
+import type { Testimonial, OfficeHoursStatus } from '../../types'
+
+function formatHour(h: number): string {
+  if (h === 24) return '12:00 AM'
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  const display = h % 12 === 0 ? 12 : h % 12
+  return `${display}:00 ${suffix}`
+}
 
 const ANNOUNCEMENTS_PER_PAGE = 5
 
@@ -48,18 +56,42 @@ const features = [
   { icon: Star,          title: 'Recognition',           desc: 'Outstanding feedback may be featured as institutional testimonials.' },
 ]
 
+// Sections used by the sticky in-page nav. IDs must match the section markup.
+const navSections = [
+  { id: 'about',          label: 'About' },
+  { id: 'foundation',     label: 'Foundation' },
+  { id: 'values',         label: 'Values' },
+  { id: 'goals',          label: 'Goals' },
+  { id: 'how-it-works',   label: 'How It Works' },
+  { id: 'announcements',  label: 'Announcements' },
+  { id: 'testimonials',   label: 'Testimonials' },
+]
+
 export function HomePage() {
   const { announcements, isLoading } = useAnnouncements()
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [page, setPage] = useState(1)
   const [testimonialIdx, setTestimonialIdx] = useState(0)
+  const [officeStatuses, setOfficeStatuses] = useState<OfficeHoursStatus[]>([])
 
+  const systemRef = useScrollReveal<HTMLElement>()
   const aboutRef = useScrollReveal<HTMLElement>()
   const valuesRef = useScrollReveal<HTMLElement>()
   const goalsRef = useScrollReveal<HTMLElement>()
   const featuresRef = useScrollReveal<HTMLElement>()
   const announcementsRef = useScrollReveal<HTMLElement>()
   const testimonialsRef = useScrollReveal<HTMLElement>()
+
+  // Show the in-page nav + back-to-top once the user has scrolled past the hero.
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 400)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
   const mountedRef = useRef(true)
   useEffect(() => {
@@ -70,6 +102,12 @@ export function HomePage() {
   useEffect(() => {
     getTestimonials()
       .then(res => { if (mountedRef.current) setTestimonials(Array.isArray(res.data) ? res.data : []) })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    Promise.all([getOfficeHours('Registrar Office'), getOfficeHours('Finance Office')])
+      .then(([r, f]) => { if (mountedRef.current) setOfficeStatuses([r.data, f.data]) })
       .catch(() => {})
   }, [])
 
@@ -160,8 +198,86 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── ABOUT / PHILOSOPHY / VISION / MISSION ─── */}
-      <section ref={aboutRef.ref} className={`py-20 bg-ascb-navy-dark transition-all duration-700 ${aboutRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      {/* ─── IN-PAGE NAV (sticky, appears after scrolling past hero) ─── */}
+      <nav
+        className={`sticky top-16 z-40 bg-ascb-navy-dark/95 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${
+          scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
+        }`}
+        aria-label="Page sections"
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <ul className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-thin">
+            {navSections.map(s => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  className="inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold font-ui text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  {s.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+
+      {/* ─── ABOUT IDEALINK (the system) ─── */}
+      <section
+        id="about"
+        ref={systemRef.ref}
+        className={`scroll-mt-28 py-20 bg-ascb-navy transition-all duration-700 ${systemRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+      >
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-ascb-orange/15 border border-ascb-orange/30 text-ascb-orange text-[11px] font-semibold uppercase tracking-widest font-ui mb-4">
+            <Sparkles size={12} /> About the System
+          </div>
+          <h2 className="text-3xl font-bold font-display mb-4">What is IdeaLink?</h2>
+          <div className="section-divider w-20 mx-auto mb-6" />
+          <p className="text-gray-300 text-base leading-relaxed font-body mb-4">
+            IdeaLink is the official feedback management system of Andres Soriano Colleges of Bislig.
+            It gives students a direct, trackable channel to the <strong className="text-white">Registrar Office</strong> and
+            the <strong className="text-white">Finance Office</strong> — with service-specific categories, optional anonymity,
+            and real-time status updates from the staff who handle each concern.
+          </p>
+          <p className="text-gray-400 text-sm leading-relaxed font-body">
+            Every piece of feedback is rated, routed, and reviewed. Staff mark items as Reviewed once acted on,
+            and outstanding feedback can be featured as institutional testimonials.
+          </p>
+
+          {/* Live office-status widget — auto-derived from each office's schedule. */}
+          {officeStatuses.length === 2 && (
+            <div className="mt-8 grid sm:grid-cols-2 gap-3 text-left">
+              {officeStatuses.map(s => (
+                <div
+                  key={s.department}
+                  className={`rounded-2xl p-4 border ${s.is_open ? 'border-green-500/25 bg-green-500/5' : 'border-red-500/25 bg-red-500/5'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${s.is_open ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                    <span className={`text-xs font-bold font-ui uppercase tracking-widest ${s.is_open ? 'text-green-300' : 'text-red-300'}`}>
+                      {s.is_open ? 'Open now' : 'Closed'}
+                    </span>
+                  </div>
+                  <p className="text-white text-sm font-semibold font-ui mt-2">{s.department}</p>
+                  <p className="text-[11px] text-gray-400 font-ui mt-0.5">
+                    Mon–Fri · {formatHour(s.open_hour)} – {formatHour(s.close_hour)}
+                  </p>
+                  {!s.is_open && s.closure_reason && (
+                    <p className="text-[11px] text-red-300 font-body mt-1">{s.closure_reason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ─── OUR FOUNDATION / PHILOSOPHY / VISION / MISSION ─── */}
+      <section
+        id="foundation"
+        ref={aboutRef.ref}
+        className={`scroll-mt-28 py-20 bg-ascb-navy-dark transition-all duration-700 ${aboutRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+      >
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">About ASCB</span>
@@ -199,7 +315,7 @@ export function HomePage() {
       </section>
 
       {/* ─── CORE VALUES ─── */}
-      <section ref={valuesRef.ref} className={`py-20 bg-ascb-navy transition-all duration-700 ${valuesRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <section id="values" ref={valuesRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy transition-all duration-700 ${valuesRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">What We Stand For</span>
@@ -218,12 +334,12 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ─── GOALS ─── */}
-      <section ref={goalsRef.ref} className={`py-20 bg-ascb-navy-dark transition-all duration-700 ${goalsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      {/* ─── INSTITUTIONAL GOALS ─── */}
+      <section id="goals" ref={goalsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy-dark transition-all duration-700 ${goalsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
-            <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Institutional Goals</span>
-            <h2 className="text-3xl font-bold font-display mt-2">Our Goals</h2>
+            <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">What We Aim For</span>
+            <h2 className="text-3xl font-bold font-display mt-2">Institutional Goals</h2>
             <div className="section-divider w-20 mx-auto mt-4" />
           </div>
           <div className="space-y-3">
@@ -240,7 +356,7 @@ export function HomePage() {
       </section>
 
       {/* ─── HOW IDEALINK WORKS ─── */}
-      <section ref={featuresRef.ref} className={`py-20 bg-ascb-navy transition-all duration-700 ${featuresRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <section id="how-it-works" ref={featuresRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy transition-all duration-700 ${featuresRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">IdeaLink System</span>
@@ -267,7 +383,7 @@ export function HomePage() {
       </section>
 
       {/* ─── ANNOUNCEMENTS ─── */}
-      <section ref={announcementsRef.ref} className={`py-20 bg-ascb-navy-dark transition-all duration-700 ${announcementsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+      <section id="announcements" ref={announcementsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy-dark transition-all duration-700 ${announcementsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
             <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Latest Updates</span>
@@ -303,11 +419,11 @@ export function HomePage() {
 
       {/* ─── TESTIMONIALS ─── */}
       {testimonials.length > 0 && (
-        <section ref={testimonialsRef.ref} className={`py-20 bg-ascb-navy transition-all duration-700 ${testimonialsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <section id="testimonials" ref={testimonialsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy transition-all duration-700 ${testimonialsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <div className="max-w-2xl mx-auto px-6">
             <div className="text-center mb-10">
               <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Student Voices</span>
-              <h2 className="text-3xl font-bold font-display mt-2">Testimonials</h2>
+              <h2 className="text-3xl font-bold font-display mt-2">Testimonies</h2>
               <div className="section-divider w-20 mx-auto mt-4" />
             </div>
             <div className="relative">
@@ -324,6 +440,17 @@ export function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ─── BACK TO TOP ─── */}
+      <button
+        onClick={scrollToTop}
+        aria-label="Back to top"
+        className={`fixed bottom-5 right-5 md:bottom-6 md:right-6 z-40 w-11 h-11 rounded-full bg-ascb-orange hover:bg-ascb-orange-dark text-white shadow-lg shadow-ascb-orange/40 flex items-center justify-center transition-all duration-300 ${
+          scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+      >
+        <ArrowUp size={18} />
+      </button>
 
       {/* ─── FOOTER ─── */}
       <footer className="bg-ascb-navy-dark border-t border-white/10 py-10">

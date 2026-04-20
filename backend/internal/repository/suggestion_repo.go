@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"idealink/internal/models"
 )
@@ -104,7 +105,7 @@ func (r *SuggestionRepo) Create(userID int, input models.CreateSuggestionInput) 
 }
 
 func (r *SuggestionRepo) FindAll() ([]*models.Suggestion, error) {
-	rows, err := r.db.Query(selectSuggestions + ` ORDER BY s.submitted_at DESC`)
+	rows, err := r.db.Query(selectSuggestions + ` WHERE s.deleted_at IS NULL ORDER BY s.submitted_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,7 @@ func (r *SuggestionRepo) FindAll() ([]*models.Suggestion, error) {
 }
 
 func (r *SuggestionRepo) FindByDepartment(department string) ([]*models.Suggestion, error) {
-	rows, err := r.db.Query(selectSuggestions+` WHERE s.department = $1 ORDER BY s.submitted_at DESC`, department)
+	rows, err := r.db.Query(selectSuggestions+` WHERE s.deleted_at IS NULL AND s.department = $1 ORDER BY s.submitted_at DESC`, department)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +123,7 @@ func (r *SuggestionRepo) FindByDepartment(department string) ([]*models.Suggesti
 }
 
 func (r *SuggestionRepo) FindByUserID(userID int) ([]*models.Suggestion, error) {
-	rows, err := r.db.Query(selectSuggestions+` WHERE s.user_id = $1 ORDER BY s.submitted_at DESC`, userID)
+	rows, err := r.db.Query(selectSuggestions+` WHERE s.deleted_at IS NULL AND s.user_id = $1 ORDER BY s.submitted_at DESC`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +132,18 @@ func (r *SuggestionRepo) FindByUserID(userID int) ([]*models.Suggestion, error) 
 }
 
 func (r *SuggestionRepo) FindByID(id int) (*models.Suggestion, error) {
-	row := r.db.QueryRow(selectSuggestions+` WHERE s.id = $1`, id)
+	row := r.db.QueryRow(selectSuggestions+` WHERE s.deleted_at IS NULL AND s.id = $1`, id)
 	return r.scanRow(row)
+}
+
+// SoftDelete marks a suggestion as deleted without removing the row. Lists
+// filter deleted_at IS NULL; analytics exclude deleted rows too. Idempotent.
+func (r *SuggestionRepo) SoftDelete(id int) error {
+	_, err := r.db.Exec(
+		`UPDATE suggestions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`,
+		id,
+	)
+	return err
 }
 
 func (r *SuggestionRepo) UpdateStatus(id int, status string) error {
@@ -167,7 +178,7 @@ func (r *SuggestionRepo) CountStatusUnreadByUser(userID int) (int, error) {
 	var count int
 	err := r.db.QueryRow(
 		`SELECT COUNT(*) FROM suggestions
-		 WHERE user_id = $1 AND status_seen_by_user = FALSE`,
+		 WHERE deleted_at IS NULL AND user_id = $1 AND status_seen_by_user = FALSE`,
 		userID,
 	).Scan(&count)
 	return count, err
@@ -176,14 +187,14 @@ func (r *SuggestionRepo) CountStatusUnreadByUser(userID int) (int, error) {
 func (r *SuggestionRepo) CountUnreadByDepartment(department string) (int, error) {
 	var count int
 	err := r.db.QueryRow(
-		`SELECT COUNT(*) FROM suggestions WHERE is_read = false AND department = $1`, department,
+		`SELECT COUNT(*) FROM suggestions WHERE deleted_at IS NULL AND is_read = false AND department = $1`, department,
 	).Scan(&count)
 	return count, err
 }
 
 func (r *SuggestionRepo) CountUnread() (int, error) {
 	var count int
-	err := r.db.QueryRow(`SELECT COUNT(*) FROM suggestions WHERE is_read = false`).Scan(&count)
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM suggestions WHERE deleted_at IS NULL AND is_read = false`).Scan(&count)
 	return count, err
 }
 
@@ -194,7 +205,7 @@ func (r *SuggestionRepo) GetRatingSummary() ([]*models.RatingGroup, error) {
 		SELECT department, COALESCE(service_category,'Uncategorized') AS category,
 		       rating, COUNT(*)
 		  FROM suggestions
-		 WHERE rating IS NOT NULL
+		 WHERE deleted_at IS NULL AND rating IS NOT NULL
 		 GROUP BY department, category, rating
 		 ORDER BY department, category, rating
 	`)
@@ -235,16 +246,18 @@ func (r *SuggestionRepo) GetRatingSummary() ([]*models.RatingGroup, error) {
 	return out, nil
 }
 
-// CountSubmissionsThisWeekByUser returns how many suggestions the given user
-// has submitted since the start of the current ISO week (Monday 00:00 UTC).
-// Used to enforce the 5-per-week submission cap.
-func (r *SuggestionRepo) CountSubmissionsThisWeekByUser(userID int) (int, error) {
+// CountSubmissionsSince returns how many suggestions the given user has
+// submitted at or after the cutoff. The caller supplies the cutoff so the
+// week boundary can follow Manila time (not the DB server timezone).
+// Soft-deleted rows still count against the weekly quota — deletion is an
+// admin cleanup action, not a way for users to bypass the rate limit.
+func (r *SuggestionRepo) CountSubmissionsSince(userID int, cutoff time.Time) (int, error) {
 	var count int
 	err := r.db.QueryRow(
 		`SELECT COUNT(*) FROM suggestions
 		 WHERE user_id = $1
-		   AND submitted_at >= date_trunc('week', NOW())`,
-		userID,
+		   AND submitted_at >= $2`,
+		userID, cutoff,
 	).Scan(&count)
 	return count, err
 }
@@ -261,6 +274,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 			COUNT(*) FILTER (WHERE user_role = 'Student'),
 			COUNT(*) FILTER (WHERE user_role = 'Faculty Staff')
 		FROM suggestions
+		WHERE deleted_at IS NULL
 	`).Scan(&a.TotalSuggestions, &a.ThisMonthSuggestions,
 		&a.UnreadSuggestions, &a.StudentCount, &a.FacultyCount)
 	if err != nil {
@@ -268,7 +282,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	}
 
 	// By department
-	rows, err := r.db.Query(`SELECT department, COUNT(*) FROM suggestions GROUP BY department ORDER BY department`)
+	rows, err := r.db.Query(`SELECT department, COUNT(*) FROM suggestions WHERE deleted_at IS NULL GROUP BY department ORDER BY department`)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +296,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	}
 
 	// By status
-	statusRows, err := r.db.Query(`SELECT status, COUNT(*) FROM suggestions GROUP BY status ORDER BY status`)
+	statusRows, err := r.db.Query(`SELECT status, COUNT(*) FROM suggestions WHERE deleted_at IS NULL GROUP BY status ORDER BY status`)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +314,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 		SELECT TO_CHAR(DATE_TRUNC('month', submitted_at), 'Mon YYYY') as month,
 		       COUNT(*)
 		FROM suggestions
-		WHERE submitted_at >= NOW() - INTERVAL '6 months'
+		WHERE deleted_at IS NULL AND submitted_at >= NOW() - INTERVAL '6 months'
 		GROUP BY DATE_TRUNC('month', submitted_at)
 		ORDER BY DATE_TRUNC('month', submitted_at)
 	`)
@@ -319,7 +333,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	// By category - Registrar
 	catRegRows, err := r.db.Query(`
 		SELECT COALESCE(service_category,'Uncategorized'), COUNT(*)
-		FROM suggestions WHERE department = 'Registrar Office'
+		FROM suggestions WHERE deleted_at IS NULL AND department = 'Registrar Office'
 		GROUP BY service_category ORDER BY COUNT(*) DESC
 	`)
 	if err != nil {
@@ -337,7 +351,7 @@ func (r *SuggestionRepo) GetAnalytics() (*models.Analytics, error) {
 	// By category - Accounting
 	catAccRows, err := r.db.Query(`
 		SELECT COALESCE(service_category,'Uncategorized'), COUNT(*)
-		FROM suggestions WHERE department = 'Finance Office'
+		FROM suggestions WHERE deleted_at IS NULL AND department = 'Finance Office'
 		GROUP BY service_category ORDER BY COUNT(*) DESC
 	`)
 	if err != nil {

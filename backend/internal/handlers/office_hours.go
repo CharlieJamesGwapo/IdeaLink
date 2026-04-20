@@ -19,7 +19,8 @@ func NewOfficeHoursHandler(repo repository.OfficeHoursRepository) *OfficeHoursHa
 	return &OfficeHoursHandler{repo: repo}
 }
 
-// GET /api/office-hours/:dept — public
+// GET /api/office-hours/:dept — public. is_open is computed from the
+// department's weekday schedule and any temporary closure override.
 func (h *OfficeHoursHandler) Get(c *gin.Context) {
 	dept := c.Param("dept")
 	oh, err := h.repo.GetByDepartment(dept)
@@ -28,41 +29,24 @@ func (h *OfficeHoursHandler) Get(c *gin.Context) {
 		return
 	}
 	if oh == nil {
-		// Default: open during business hours
-		c.JSON(http.StatusOK, gin.H{"department": dept, "is_open": isBusinessHours(), "closure_reason": nil, "closed_until": nil})
+		// No row yet — fall back to defaults.
+		defaults := &models.OfficeHours{
+			Department: dept,
+			OpenHour:   8,
+			CloseHour:  17,
+		}
+		c.JSON(http.StatusOK, buildStatus(defaults))
 		return
 	}
-
-	// If closed_until is in the past, auto-reopen in DB then return open state
-	if oh.ClosedUntil != nil && oh.ClosedUntil.Before(time.Now()) {
-		input := models.SetOfficeHoursInput{IsOpen: true}
-		_, _ = h.repo.Update(dept, input) // best-effort; ignore error — client still gets correct state
-		c.JSON(http.StatusOK, gin.H{"department": dept, "is_open": isBusinessHours(), "closure_reason": nil, "closed_until": nil})
-		return
-	}
-
-	// Manual override takes precedence; if no override, use schedule
-	isOpen := oh.IsOpen
-	if oh.ClosureReason == nil && oh.ClosedUntil == nil {
-		isOpen = isBusinessHours()
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"department":     oh.Department,
-		"is_open":        isOpen,
-		"closure_reason": oh.ClosureReason,
-		"closed_until":   oh.ClosedUntil,
-		"updated_at":     oh.UpdatedAt,
-	})
+	c.JSON(http.StatusOK, buildStatus(oh))
 }
 
-// POST /api/office-hours/:dept — staff/admin only
+// POST /api/office-hours/:dept — staff/admin only. Partial update.
 func (h *OfficeHoursHandler) Set(c *gin.Context) {
 	dept := c.Param("dept")
 	roleVal, _ := c.Get(middleware.CtxKeyRole)
 	roleStr, _ := roleVal.(string)
 
-	// Registrar can only update their own dept
 	if roleStr == "registrar" && dept != "Registrar Office" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "registrar can only update Registrar Office hours"})
 		return
@@ -77,22 +61,62 @@ func (h *OfficeHoursHandler) Set(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	if input.OpenHour != nil && input.CloseHour != nil && *input.OpenHour >= *input.CloseHour {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "open_hour must be earlier than close_hour"})
+		return
+	}
 
 	oh, err := h.repo.Update(dept, input)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, oh)
+	c.JSON(http.StatusOK, buildStatus(oh))
 }
 
-func isBusinessHours() bool {
-	loc, _ := time.LoadLocation("Asia/Manila")
-	now := time.Now().In(loc)
-	weekday := now.Weekday()
-	if weekday == time.Saturday || weekday == time.Sunday {
+// buildStatus applies the automatic open/closed decision.
+//
+// Precedence:
+//  1. Temporary closure (closed_until still in the future) → CLOSED.
+//  2. Weekday schedule (Mon–Fri, open_hour <= hour < close_hour, Asia/Manila) → OPEN.
+//  3. Otherwise → CLOSED.
+func buildStatus(oh *models.OfficeHours) models.OfficeHoursStatus {
+	now := time.Now().In(manilaLocation())
+	// If a temporary closure is active, honor it.
+	if oh.ClosedUntil != nil && oh.ClosedUntil.After(now) {
+		return models.OfficeHoursStatus{
+			Department:    oh.Department,
+			OpenHour:      oh.OpenHour,
+			CloseHour:     oh.CloseHour,
+			IsOpen:        false,
+			ClosureReason: oh.ClosureReason,
+			ClosedUntil:   oh.ClosedUntil,
+			UpdatedAt:     oh.UpdatedAt,
+		}
+	}
+	// Closure has expired — don't surface stale ClosureReason/ClosedUntil.
+	return models.OfficeHoursStatus{
+		Department: oh.Department,
+		OpenHour:   oh.OpenHour,
+		CloseHour:  oh.CloseHour,
+		IsOpen:     isOnSchedule(now, oh.OpenHour, oh.CloseHour),
+		UpdatedAt:  oh.UpdatedAt,
+	}
+}
+
+// isOnSchedule reports whether `now` falls inside the weekday hours window.
+func isOnSchedule(now time.Time, openHour, closeHour int) bool {
+	wd := now.Weekday()
+	if wd == time.Saturday || wd == time.Sunday {
 		return false
 	}
-	hour := now.Hour()
-	return hour >= 8 && hour < 17
+	h := now.Hour()
+	return h >= openHour && h < closeHour
+}
+
+func manilaLocation() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Manila"); err == nil {
+		return loc
+	}
+	return time.FixedZone("Asia/Manila", 8*60*60)
 }

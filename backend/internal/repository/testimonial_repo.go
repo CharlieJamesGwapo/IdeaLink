@@ -16,9 +16,14 @@ func NewTestimonialRepo(db *sql.DB) *TestimonialRepo {
 }
 
 func (r *TestimonialRepo) FindActive() ([]*models.Testimonial, error) {
+	// LEFT JOIN so testimonials whose source suggestion was deleted still render.
 	rows, err := r.db.Query(
-		`SELECT id, suggestion_id, name, department, message, is_active, created_at
-		 FROM testimonials WHERE is_active = true ORDER BY created_at DESC`,
+		`SELECT t.id, t.suggestion_id, t.name, t.department, t.message,
+		        t.is_active, t.created_at, s.rating
+		 FROM testimonials t
+		 LEFT JOIN suggestions s ON s.id = t.suggestion_id
+		 WHERE t.is_active = true
+		 ORDER BY t.created_at DESC`,
 	)
 	if err != nil {
 		return nil, err
@@ -30,13 +35,18 @@ func (r *TestimonialRepo) FindActive() ([]*models.Testimonial, error) {
 		var t models.Testimonial
 		var sid sql.NullInt64
 		var dept sql.NullString
+		var rating sql.NullInt16
 		if err := rows.Scan(&t.ID, &sid, &t.Name, &dept,
-			&t.Message, &t.IsActive, &t.CreatedAt); err != nil {
+			&t.Message, &t.IsActive, &t.CreatedAt, &rating); err != nil {
 			return nil, err
 		}
 		if sid.Valid {
 			v := int(sid.Int64)
 			t.SuggestionID = &v
+		}
+		if rating.Valid {
+			v := int(rating.Int16)
+			t.Rating = &v
 		}
 		t.Department = dept.String
 		list = append(list, &t)

@@ -68,40 +68,25 @@ export function RatingsPanel({ department }: Props) {
       )}
 
       {filtered.length > 0 && (
-        <ul className="space-y-3">
-          {filtered.map(g => {
-            const max = Math.max(...[1,2,3,4,5].map(n => g.breakdown[String(n)] ?? 0), 1)
-            return (
-              <li key={`${g.department}-${g.category}`} className="rounded-xl border border-white/6 bg-ascb-navy-dark/50 p-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div>
-                    <p className="text-xs font-semibold text-white font-ui leading-snug">{g.category}</p>
-                    {!department && <p className="text-[10px] text-gray-500 font-ui">{g.department}</p>}
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <Star size={12} className="text-ascb-gold" fill="currentColor" />
-                    <span className="text-sm font-bold text-ascb-gold font-ui tabular-nums">{g.average.toFixed(2)}</span>
-                    <span className="text-[10px] text-gray-500 font-ui">({g.count})</span>
-                  </div>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          {filtered.map(g => (
+            <li
+              key={`${g.department}-${g.category}`}
+              className="rounded-lg border border-white/6 bg-ascb-navy-dark/50 p-2.5 flex flex-col justify-between aspect-square min-h-[96px]"
+            >
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-white font-ui leading-tight line-clamp-2">{g.category}</p>
+                {!department && <p className="text-[9px] text-gray-500 font-ui mt-0.5 truncate">{g.department}</p>}
+              </div>
+              <div className="flex items-center justify-between gap-1 mt-1">
+                <div className="flex items-center gap-1">
+                  <Star size={11} className="text-ascb-gold" fill="currentColor" />
+                  <span className="text-sm font-bold text-ascb-gold font-ui tabular-nums leading-none">{g.average.toFixed(1)}</span>
                 </div>
-                <div className="space-y-1">
-                  {[5, 4, 3, 2, 1].map(n => {
-                    const count = g.breakdown[String(n)] ?? 0
-                    const pct = Math.round((count / max) * 100)
-                    return (
-                      <div key={n} className="flex items-center gap-2 text-[11px] font-ui">
-                        <span className="w-4 text-gray-500 tabular-nums">{n}★</span>
-                        <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                          <div className="h-full rounded-full bg-ascb-gold/70 transition-all duration-500" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="w-8 text-right text-gray-400 tabular-nums">{count}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </li>
-            )
-          })}
+                <span className="text-[10px] text-gray-500 font-ui tabular-nums">{g.count}</span>
+              </div>
+            </li>
+          ))}
         </ul>
       )}
     </div>

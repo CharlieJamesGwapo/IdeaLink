@@ -64,10 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userId = res.data?.user_id
         const roleVal = res.data?.role
         if (typeof userId === 'number' && typeof roleVal === 'string') {
+          // Only override cached education fields when the server actually
+          // includes them. A missing key (older backend, transient hiccup)
+          // must NOT null-out a known-good cached value, or the profile gate
+          // will reactivate on reload.
+          const data = (res.data ?? {}) as unknown as Record<string, unknown>
+          const hasEducation = 'education_level' in data
+          const hasDept = 'college_department' in data
           finish({
             id: userId,
-            education_level: (res.data?.education_level as string | null | undefined) ?? null,
-            college_department: (res.data?.college_department as string | null | undefined) ?? null,
+            education_level: hasEducation
+              ? (data.education_level as string | null | undefined) ?? null
+              : cached?.user.education_level ?? null,
+            college_department: hasDept
+              ? (data.college_department as string | null | undefined) ?? null
+              : cached?.user.college_department ?? null,
           }, roleVal)
         } else {
           finish(null, null)

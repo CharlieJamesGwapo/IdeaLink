@@ -28,3 +28,12 @@ var StatusSimplificationSQL string
 
 //go:embed 009_suggestion_rating.sql
 var SuggestionRatingSQL string
+
+//go:embed 010_suggestion_soft_delete.sql
+var SuggestionSoftDeleteSQL string
+
+//go:embed 011_office_hours_schedule.sql
+var OfficeHoursScheduleSQL string
+
+//go:embed 012_suggestion_attachments.sql
+var SuggestionAttachmentsSQL string

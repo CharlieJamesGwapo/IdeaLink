@@ -137,13 +137,12 @@ function RequireAuth({ role }: { role: string }) {
   return <Outlet />
 }
 
-// Redirect authenticated users away from public-only pages.
-// Uses window.location.replace() — bypasses React Router to guarantee the
-// redirect always fires regardless of Suspense/concurrent-mode quirks.
+// Redirect authenticated users away from the login pages only. The homepage
+// ("/") is intentionally NOT gated — logged-in users can revisit it from the
+// Header's logo link.
 function useRedirectIfAuthed() {
   const { currentUser, role, isLoading } = useAuth()
   useEffect(() => {
-    // Only redirect when both currentUser AND role are valid (guard against garbage API responses)
     if (!isLoading && currentUser && role) {
       const dest =
         role === 'admin'      ? '/admin/dashboard'
@@ -158,7 +157,6 @@ function useRedirectIfAuthed() {
 
 function AuthGatedPage({ children }: { children: React.ReactNode }) {
   const { isLoading, currentUser, role } = useRedirectIfAuthed()
-  // Show loader only while auth is resolving OR while a valid session is being redirected
   if (isLoading || (currentUser && role)) return <AuthLoader />
   return <>{children}</>
 }
@@ -175,7 +173,7 @@ export function AppRouter() {
 
         {/* Public pages — auth users get redirected to their dashboard */}
         <Route element={<PublicLayout />}>
-          <Route path="/"                 element={<AuthGatedPage><HomePage /></AuthGatedPage>} />
+          <Route path="/"                 element={<HomePage />} />
           <Route path="/login"            element={<AuthGatedPage><StudentLoginPage /></AuthGatedPage>} />
           <Route path="/staff-login"      element={<AuthGatedPage><StaffLoginPage /></AuthGatedPage>} />
           {/* Self-service signup is retired — accounts are provisioned by Admin/Registrar. */}

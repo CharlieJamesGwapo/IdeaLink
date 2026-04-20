@@ -46,11 +46,16 @@ type ProvisionInput struct {
 // ProvisionResult reports what happened for a single row — useful for bulk
 // CSV imports so admins can see partial successes and per-row errors.
 type ProvisionResult struct {
-	Email       string `json:"email"`
-	Fullname    string `json:"fullname"`
-	Status      string `json:"status"` // "created" | "skipped" | "error"
-	Error       string `json:"error,omitempty"`
-	RawPassword string `json:"-"` // never serialize to HTTP response
+	Email    string `json:"email"`
+	Fullname string `json:"fullname"`
+	Status   string `json:"status"` // "created" | "skipped" | "error"
+	Error    string `json:"error,omitempty"`
+	// EmailSent reports whether the welcome email with credentials was
+	// successfully delivered to SMTP. When false, the UI must expose
+	// TempPassword so the admin can relay credentials manually.
+	EmailSent    bool   `json:"email_sent"`
+	EmailError   string `json:"email_error,omitempty"`
+	TempPassword string `json:"temp_password,omitempty"`
 }
 
 // generateTempPassword returns a reasonably random 10-char password that is
@@ -138,12 +143,18 @@ func (s *UserProvisioningService) ProvisionOne(input ProvisionInput) (ProvisionR
 	primary = strings.TrimSpace(strings.TrimRight(primary, "/"))
 	loginURL := primary + "/login"
 
-	if err := s.mailer.SendNewUserCredentials(input.Email, input.Fullname, rawPw, loginURL); err != nil {
-		// Account still exists — surface the email error but report success.
-		fmt.Printf("[provisioning] credentials email failed for %s: %v\n", input.Email, err)
-	}
 	res.Status = "created"
-	res.RawPassword = rawPw
+	if err := s.mailer.SendNewUserCredentials(input.Email, input.Fullname, rawPw, loginURL); err != nil {
+		// Account was created, but admin needs to know email failed so they can
+		// relay the temp password manually. Expose the password in the response
+		// ONLY on failure — not on success.
+		fmt.Printf("[provisioning] credentials email failed for %s: %v\n", input.Email, err)
+		res.EmailSent = false
+		res.EmailError = err.Error()
+		res.TempPassword = rawPw
+		return res, nil
+	}
+	res.EmailSent = true
 	return res, nil
 }
 

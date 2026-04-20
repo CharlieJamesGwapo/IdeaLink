@@ -5,7 +5,7 @@ import { useSuggestions } from '../../hooks/useSuggestions'
 import { SuggestionRow } from '../../components/shared/SuggestionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { Pagination } from '../../components/ui/Pagination'
-import { updateSuggestionStatus, markSuggestionReviewed } from '../../api/suggestions'
+import { updateSuggestionStatus, markSuggestionReviewed, deleteSuggestion } from '../../api/suggestions'
 import { exportToCSV } from '../../api/reports'
 import type { Suggestion } from '../../types'
 
@@ -49,6 +49,14 @@ export function AccountingSuggestions() {
       setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus as Suggestion['status'] } : s))
       toast.success('Status updated')
     } catch { toast.error('Failed to update status') }
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteSuggestion(id)
+      setSuggestions(prev => prev.filter(s => s.id !== id))
+      toast.success('Feedback deleted')
+    } catch { toast.error('Failed to delete') }
   }
 
   const handleOpen = async (id: number) => {
@@ -170,8 +178,8 @@ export function AccountingSuggestions() {
             </thead>
             <tbody>
               {paged.map(s => (
-                <SuggestionRow key={s.id} suggestion={s} showActions viewer="staff"
-                  onStatusChange={handleStatusChange} onOpen={handleOpen}/>
+                <SuggestionRow key={s.id} suggestion={s} showActions showDelete viewer="staff"
+                  onStatusChange={handleStatusChange} onOpen={handleOpen} onDelete={handleDelete}/>
               ))}
             </tbody>
           </table>

@@ -5,8 +5,7 @@ import { useSuggestions } from '../../hooks/useSuggestions'
 import { SuggestionRow } from '../../components/shared/SuggestionRow'
 import { Skeleton } from '../../components/ui/Skeleton'
 import { Pagination } from '../../components/ui/Pagination'
-import { featureSuggestion } from '../../api/suggestions'
-import { getHighlights, createHighlight, deleteHighlight } from '../../api/highlights'
+import { featureSuggestion, deleteSuggestion } from '../../api/suggestions'
 import { exportToCSV } from '../../api/reports'
 
 const PAGE_SIZE = 10
@@ -24,43 +23,13 @@ export function AdminSuggestions() {
   const [search, setSearch] = useState('')
   const [sort, setSort]     = useState<SortOption>('newest')
   const [page, setPage]     = useState(1)
-  // Map of suggestion_id → highlight_id for active highlights.
-  const [highlightedMap, setHighlightedMap] = useState<Record<number, number>>({})
 
-  const loadHighlights = async () => {
+  const handleDelete = async (id: number) => {
     try {
-      const res = await getHighlights()
-      const map: Record<number, number> = {}
-      for (const h of res.data ?? []) map[h.suggestion_id] = h.id
-      setHighlightedMap(map)
-    } catch {
-      // Silently ignore — highlights are a soft feature in this view.
-    }
-  }
-
-  useEffect(() => { void loadHighlights() }, [])
-
-  const handleToggleHighlight = async (suggestionId: number) => {
-    const existing = highlightedMap[suggestionId]
-    try {
-      if (existing) {
-        await deleteHighlight(existing)
-        setHighlightedMap(prev => {
-          const next = { ...prev }
-          delete next[suggestionId]
-          return next
-        })
-        toast.success('Unhighlighted')
-      } else {
-        const res = await createHighlight(suggestionId)
-        setHighlightedMap(prev => ({ ...prev, [suggestionId]: res.data.id }))
-        toast.success('Highlighted for 24h')
-      }
-    } catch (e: unknown) {
-      const err = e as { response?: { status?: number } }
-      if (err.response?.status === 409) toast.error('Already highlighted')
-      else toast.error('Failed to toggle highlight')
-    }
+      await deleteSuggestion(id)
+      toast.success('Feedback deleted')
+      refetch()
+    } catch { toast.error('Failed to delete') }
   }
 
   const filtered = suggestions
@@ -211,11 +180,10 @@ export function AdminSuggestions() {
             </thead>
             <tbody>
               {paged.map(s => (
-                <SuggestionRow key={s.id} suggestion={s} showActions showFeature showHighlight
+                <SuggestionRow key={s.id} suggestion={s} showActions showFeature showDelete
                   viewer="admin"
-                  isHighlighted={!!highlightedMap[s.id]}
                   onFeature={handleFeature}
-                  onToggleHighlight={handleToggleHighlight}/>
+                  onDelete={handleDelete}/>
               ))}
             </tbody>
           </table>

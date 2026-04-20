@@ -53,5 +53,14 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.SuggestionRatingSQL); err != nil {
 		log.Fatalf("failed to run suggestion_rating migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.SuggestionSoftDeleteSQL); err != nil {
+		log.Fatalf("failed to run suggestion_soft_delete migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.OfficeHoursScheduleSQL); err != nil {
+		log.Fatalf("failed to run office_hours_schedule migration: %v", err)
+	}
+	if _, err := db.Exec(migrations.SuggestionAttachmentsSQL); err != nil {
+		log.Fatalf("failed to run suggestion_attachments migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }

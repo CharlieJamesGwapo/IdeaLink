@@ -8,10 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSender_NoOpWhenHostEmpty(t *testing.T) {
+func TestSender_ReturnsNotConfiguredWhenHostEmpty(t *testing.T) {
 	s := mail.NewSender(mail.Config{Host: ""})
 	err := s.SendPasswordReset("alice@example.com", "https://example.com/reset?token=abc")
-	assert.NoError(t, err, "no-op sender must not error when host is unset")
+	assert.ErrorIs(t, err, mail.ErrNotConfigured,
+		"caller must be able to detect unconfigured SMTP to surface a fallback")
 }
 
 func TestSender_ErrorsWhenHostSetButUnreachable(t *testing.T) {

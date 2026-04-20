@@ -137,7 +137,7 @@ export function AdminUsers() {
       {tab === 'single' && (
         <form onSubmit={handleSingle} className="glass rounded-2xl p-5 space-y-4 max-w-lg">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Working email</label>
+            <label className="text-xs font-medium text-gray-400 uppercase tracking-wider">Email</label>
             <input
               type="email"
               value={email}
@@ -192,21 +192,55 @@ export function AdminUsers() {
           </Button>
 
           {lastResult && (
-            <div className={`flex items-start gap-3 p-3 rounded-xl text-sm font-ui ${
-              lastResult.status === 'created'
-                ? 'bg-green-500/10 border border-green-500/25 text-green-300'
-                : 'bg-red-500/10 border border-red-500/25 text-red-300'
-            }`}>
-              {lastResult.status === 'created' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              <div>
-                <p className="font-semibold">
-                  {lastResult.status === 'created' ? 'Created' : lastResult.status === 'skipped' ? 'Skipped' : 'Error'}
-                </p>
-                <p className="text-xs opacity-80">
-                  {lastResult.email}
-                  {lastResult.error ? ` — ${lastResult.error}` : ''}
-                </p>
+            <div className="space-y-3">
+              <div className={`flex items-start gap-3 p-3 rounded-xl text-sm font-ui ${
+                lastResult.status === 'created'
+                  ? 'bg-green-500/10 border border-green-500/25 text-green-300'
+                  : 'bg-red-500/10 border border-red-500/25 text-red-300'
+              }`}>
+                {lastResult.status === 'created' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <div className="flex-1">
+                  <p className="font-semibold">
+                    {lastResult.status === 'created' ? 'Account created' : lastResult.status === 'skipped' ? 'Skipped' : 'Error'}
+                  </p>
+                  <p className="text-xs opacity-80">
+                    {lastResult.email}
+                    {lastResult.error ? ` — ${lastResult.error}` : ''}
+                  </p>
+                  {lastResult.status === 'created' && lastResult.email_sent && (
+                    <p className="text-xs opacity-80 mt-1">Welcome email sent with login details.</p>
+                  )}
+                </div>
               </div>
+
+              {lastResult.status === 'created' && lastResult.email_sent === false && lastResult.temp_password && (
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 text-sm font-ui">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold">Email didn't send — relay manually</p>
+                    <p className="text-xs opacity-80 mt-0.5">
+                      {lastResult.email_error ?? 'SMTP not configured or delivery failed.'}
+                      {' '}Share this temporary password with the user. They should change it after login.
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <code className="flex-1 text-sm font-mono bg-ascb-navy-dark border border-yellow-500/30 rounded-lg px-3 py-1.5 text-yellow-100 select-all break-all">
+                        {lastResult.temp_password}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(lastResult.temp_password!)
+                            .then(() => toast.success('Password copied'))
+                            .catch(() => toast.error('Could not copy'))
+                        }}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/40 text-xs font-semibold text-yellow-100 transition-all"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </form>

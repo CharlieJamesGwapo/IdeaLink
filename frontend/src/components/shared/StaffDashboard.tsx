@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageSquare, Clock, CheckCircle, Download, ToggleLeft, ToggleRight, Search, ArrowRight, TrendingUp } from 'lucide-react'
+import { MessageSquare, Clock, CheckCircle, Download, Search, ArrowRight, TrendingUp, CalendarX } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { toast } from 'sonner'
 import { useSuggestions } from '../../hooks/useSuggestions'
@@ -14,6 +14,14 @@ import type { OfficeHoursStatus, Suggestion } from '../../types'
 
 const STATUS_COLORS: Record<string, string> = { Delivered: '#F59E0B', Unreviewed: '#F59E0B', Reviewed: '#22C55E' }
 const BAR_COLOR = '#F47C20'
+
+// Format a 0-24 hour as "8:00 AM", "5:00 PM" for the schedule UI.
+function formatHour(h: number): string {
+  if (h === 24) return '12:00 AM'
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  const display = h % 12 === 0 ? 12 : h % 12
+  return `${display}:00 ${suffix}`
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
@@ -39,6 +47,8 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
   const [closedUntil, setClosedUntil] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
   const [showCloseForm, setShowCloseForm] = useState(false)
+  const [scheduleOpen, setScheduleOpen] = useState<number>(8)
+  const [scheduleClose, setScheduleClose] = useState<number>(17)
   const [search, setSearch] = useState('')
   const mountedRef = useRef(true)
 
@@ -50,7 +60,12 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
   useEffect(() => {
     setOfficeHoursLoading(true)
     getOfficeHours(dept)
-      .then(res => { if (mountedRef.current) setOfficeHoursState(res.data) })
+      .then(res => {
+        if (!mountedRef.current) return
+        setOfficeHoursState(res.data)
+        setScheduleOpen(res.data.open_hour)
+        setScheduleClose(res.data.close_hour)
+      })
       .catch(() => { if (mountedRef.current) toast.error('Could not load office hours status') })
       .finally(() => { if (mountedRef.current) setOfficeHoursLoading(false) })
   }, [dept])
@@ -77,24 +92,51 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
     } catch { toast.error('Failed to update') }
   }
 
-  const handleToggleOpen = async () => {
-    if (officeHours?.is_open && !closureReason.trim()) { setShowCloseForm(true); return }
+  const handleSaveSchedule = async () => {
+    if (scheduleOpen >= scheduleClose) {
+      toast.error('Opening time must be earlier than closing time.')
+      return
+    }
     setIsUpdating(true)
     try {
-      const willOpen = officeHours?.is_open === false
       const res = await setOfficeHours(dept, {
-        is_open: willOpen,
-        closure_reason: willOpen ? '' : closureReason,
-        closed_until: willOpen ? null : (closedUntil || null),
+        open_hour: scheduleOpen,
+        close_hour: scheduleClose,
+      })
+      setOfficeHoursState(res.data)
+      toast.success('Working hours updated')
+    } catch { toast.error('Failed to update working hours') }
+    finally { setIsUpdating(false) }
+  }
+
+  const handlePostClosure = async () => {
+    if (!closureReason.trim()) { toast.error('Please enter a reason'); return }
+    setIsUpdating(true)
+    try {
+      const res = await setOfficeHours(dept, {
+        closure_reason: closureReason,
+        closed_until: closedUntil || null,
       })
       setOfficeHoursState(res.data)
       setShowCloseForm(false)
       setClosureReason('')
       setClosedUntil('')
-      toast.success(willOpen ? 'Office is now open' : 'Closure notice posted')
-    } catch { toast.error('Failed to update office hours') }
+      toast.success('Temporary closure posted')
+    } catch { toast.error('Failed to post closure') }
     finally { setIsUpdating(false) }
   }
+
+  const handleClearClosure = async () => {
+    setIsUpdating(true)
+    try {
+      const res = await setOfficeHours(dept, { clear_closure: true })
+      setOfficeHoursState(res.data)
+      toast.success('Closure cleared — back on the regular schedule')
+    } catch { toast.error('Failed to clear closure') }
+    finally { setIsUpdating(false) }
+  }
+
+  const hasActiveClosure = !!(officeHours?.closure_reason || officeHours?.closed_until)
 
   const filteredRecent = suggestions
     .filter(s => !search.trim() || s.title.toLowerCase().includes(search.toLowerCase()) || (s.service_category ?? '').toLowerCase().includes(search.toLowerCase()) || (s.submitter_name ?? '').toLowerCase().includes(search.toLowerCase()))
@@ -140,63 +182,108 @@ export function StaffDashboard({ dept, accent, feedbackPath }: Props) {
         </button>
       </div>
 
-      {/* Office Hours Banner */}
+      {/* Office Hours: auto-derived from schedule + optional temporary closure */}
       {officeHoursLoading ? (
-        <Skeleton className="h-16 rounded-2xl" />
+        <Skeleton className="h-28 rounded-2xl" />
       ) : officeHours && (
         <div className={`rounded-2xl p-4 border transition-all ${isOpen ? 'border-green-500/25 bg-green-500/6' : 'border-red-500/25 bg-red-500/6'}`}>
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${isOpen ? 'bg-green-400 shadow-sm shadow-green-400/50' : 'bg-red-400'} ${isOpen ? 'animate-pulse' : ''}`}/>
+              <div className={`w-3 h-3 rounded-full ${isOpen ? 'bg-green-400 shadow-sm shadow-green-400/50 animate-pulse' : 'bg-red-400'}`}/>
               <div>
                 <p className={`text-sm font-bold font-ui ${isOpen ? 'text-green-300' : 'text-red-300'}`}>
                   Office is {isOpen ? 'OPEN' : 'CLOSED'}
                 </p>
-                {!isOpen && officeHours?.closure_reason && (
-                  <p className="text-xs text-gray-400 font-body mt-0.5">{officeHours.closure_reason}</p>
-                )}
-                {!isOpen && officeHours?.closed_until && (
-                  <p className="text-xs text-gray-500 font-ui mt-0.5">
-                    Reopens: {new Date(officeHours.closed_until).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                <p className="text-xs text-gray-400 font-ui mt-0.5">
+                  Weekdays · {formatHour(officeHours.open_hour)}–{formatHour(officeHours.close_hour)} (Asia/Manila)
+                </p>
+                {hasActiveClosure && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-300 font-ui">
+                    <CalendarX size={11} />
+                    <span>
+                      {officeHours.closure_reason ?? 'Temporarily closed'}
+                      {officeHours.closed_until && ` · reopens ${new Date(officeHours.closed_until).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isOpen ? (
-                <button onClick={() => setShowCloseForm(v => !v)} disabled={isUpdating}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold font-ui hover:bg-red-500/25 transition-all disabled:opacity-50">
-                  <ToggleRight size={15}/> Close Office
-                </button>
-              ) : (
-                <button onClick={handleToggleOpen} disabled={isUpdating}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold font-ui hover:bg-green-500/25 transition-all disabled:opacity-50">
-                  <ToggleLeft size={15}/> Mark Open
+              {hasActiveClosure && (
+                <button onClick={handleClearClosure} disabled={isUpdating}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-semibold font-ui hover:bg-green-500/25 transition-all disabled:opacity-50">
+                  Resume regular hours
                 </button>
               )}
+              <button onClick={() => setShowCloseForm(v => !v)} disabled={isUpdating}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold font-ui hover:bg-red-500/25 transition-all disabled:opacity-50">
+                <CalendarX size={13}/> Temporary closure
+              </button>
             </div>
           </div>
 
-          {/* Closure form */}
-          {showCloseForm && isOpen && (
+          {/* Working-hours editor */}
+          <div className="mt-4 pt-4 border-t border-white/8">
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-ui mb-2">Working hours (Mon–Fri)</p>
+            <div className="flex items-end gap-2 flex-wrap">
+              <div>
+                <label className="text-[10px] text-gray-500 font-ui block mb-1">Opens at</label>
+                <select
+                  value={scheduleOpen}
+                  onChange={e => setScheduleOpen(Number(e.target.value))}
+                  className="rounded-xl border border-white/15 px-3 text-white text-sm font-ui focus:outline-none focus:border-ascb-orange cursor-pointer"
+                  style={{ height: '36px', background: 'rgba(13,31,60,0.85)' }}
+                >
+                  {Array.from({ length: 24 }, (_, h) => (
+                    <option key={h} value={h}>{formatHour(h)}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 font-ui block mb-1">Closes at</label>
+                <select
+                  value={scheduleClose}
+                  onChange={e => setScheduleClose(Number(e.target.value))}
+                  className="rounded-xl border border-white/15 px-3 text-white text-sm font-ui focus:outline-none focus:border-ascb-orange cursor-pointer"
+                  style={{ height: '36px', background: 'rgba(13,31,60,0.85)' }}
+                >
+                  {Array.from({ length: 24 }, (_, h) => h + 1).map(h => (
+                    <option key={h} value={h}>{formatHour(h)}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleSaveSchedule}
+                disabled={isUpdating || (scheduleOpen === officeHours.open_hour && scheduleClose === officeHours.close_hour)}
+                className="px-4 py-2 rounded-xl bg-ascb-orange/15 border border-ascb-orange/30 text-ascb-orange text-xs font-semibold font-ui hover:bg-ascb-orange/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ height: '36px' }}
+              >
+                Save hours
+              </button>
+            </div>
+          </div>
+
+          {/* Temporary closure form */}
+          {showCloseForm && (
             <div className="mt-4 pt-4 border-t border-white/8 space-y-3 animate-fade-in">
+              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-ui">Post a temporary closure</p>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reason *</label>
+                  <label className="text-[10px] text-gray-500 font-ui block mb-1">Reason *</label>
                   <input type="text" value={closureReason} onChange={e => setClosureReason(e.target.value)}
-                    placeholder="e.g. Staff meeting, holiday, etc."
+                    placeholder="e.g. Holiday, staff meeting"
                     className="input-field text-sm" style={{ height: '38px' }}/>
                 </div>
                 <div>
-                  <label className="text-[10px] text-gray-500 uppercase tracking-widest font-ui block mb-1">Reopen at (optional)</label>
+                  <label className="text-[10px] text-gray-500 font-ui block mb-1">Reopen at (optional)</label>
                   <input type="datetime-local" value={closedUntil} onChange={e => setClosedUntil(e.target.value)}
                     className="input-field text-sm" style={{ height: '38px' }}/>
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={handleToggleOpen} disabled={isUpdating || !closureReason.trim()}
+                <button onClick={handlePostClosure} disabled={isUpdating || !closureReason.trim()}
                   className="flex-1 py-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 text-sm font-ui hover:bg-red-500/30 transition-all disabled:opacity-40">
-                  Post Closure Notice
+                  Post closure
                 </button>
                 <button onClick={() => { setShowCloseForm(false); setClosureReason(''); setClosedUntil('') }}
                   className="px-4 py-2 rounded-xl border border-white/10 text-gray-400 text-sm font-ui hover:text-white transition-all">

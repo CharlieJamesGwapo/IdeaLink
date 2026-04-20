@@ -9,12 +9,13 @@ function TestComponent() {
   const { currentUser, role, isLoading } = useAuthContext()
   if (isLoading) return <div>Loading</div>
   if (!currentUser) return <div>Guest</div>
-  return <div>Role: {role}</div>
+  return <div>Role: {role} | EL: {currentUser.education_level ?? 'null'}</div>
 }
 
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('shows Guest when /me returns 401', async () => {
@@ -25,9 +26,29 @@ describe('AuthContext', () => {
 
   it('restores session when /me succeeds', async () => {
     vi.mocked(authApi.me).mockResolvedValue({
+      data: { user_id: 1, role: 'user', education_level: 'College', college_department: 'CCE' },
+    } as any)
+    render(<AuthProvider><TestComponent /></AuthProvider>)
+    await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
+  })
+
+  // Reproduces the "Complete your profile keeps coming back" bug:
+  // /me succeeds but omits education_level (e.g. GetUserByID failed server-side).
+  // The cached good value must NOT be overwritten with null, otherwise the
+  // profile gate reactivates on every reload.
+  it('preserves cached education_level when /me omits the field', async () => {
+    localStorage.setItem(
+      'idealink_auth',
+      JSON.stringify({
+        user: { id: 1, education_level: 'College', college_department: 'CCE' },
+        role: 'user',
+      }),
+    )
+    vi.mocked(authApi.me).mockResolvedValue({
       data: { user_id: 1, role: 'user' },
     } as any)
     render(<AuthProvider><TestComponent /></AuthProvider>)
-    await waitFor(() => expect(screen.getByText('Role: user')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
+    expect(screen.getByText(/EL: College/)).toBeInTheDocument()
   })
 })

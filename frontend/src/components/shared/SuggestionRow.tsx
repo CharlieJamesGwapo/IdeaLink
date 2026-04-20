@@ -1,23 +1,27 @@
-import { useState } from 'react'
-import { Eye, Sparkles, Building2, Tag, User as UserIcon, Calendar, Star } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Eye, Trash2, Building2, Tag, User as UserIcon, Calendar, Star, Paperclip, FileText, Download } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
+import {
+  listSuggestionAttachments,
+  attachmentDownloadURL,
+  type SuggestionAttachment,
+} from '../../api/suggestions'
 import type { Suggestion } from '../../types'
 
 interface Props {
   suggestion: Suggestion
   showActions?: boolean
   showFeature?: boolean
-  showHighlight?: boolean
-  isHighlighted?: boolean
+  showDelete?: boolean
   // "staff" = registrar / finance (can toggle status)
   // "admin" = read-only; sees Unreviewed/Reviewed summary but no toggle
   viewer?: 'staff' | 'admin'
   onStatusChange?: (id: number, status: string) => void
   onOpen?: (id: number) => void
   onFeature?: (id: number) => void
-  onToggleHighlight?: (id: number) => void
+  onDelete?: (id: number) => void
 }
 
 // Under the simplified flow the only toggle is Delivered ↔ Reviewed.
@@ -29,8 +33,25 @@ const nextBtnColor  = (s: string) =>
     ? 'text-gray-400 border-gray-400/30 bg-gray-400/8 hover:bg-gray-400/15'
     : 'text-green-400 border-green-400/30 bg-green-400/8 hover:bg-green-400/15'
 
-export function SuggestionRow({ suggestion, showActions, showFeature, showHighlight, isHighlighted, viewer = 'staff', onStatusChange, onOpen, onFeature, onToggleHighlight }: Props) {
+export function SuggestionRow({ suggestion, showActions, showFeature, showDelete, viewer = 'staff', onStatusChange, onOpen, onFeature, onDelete }: Props) {
   const [detailOpen, setDetailOpen] = useState(false)
+  const [attachments, setAttachments] = useState<SuggestionAttachment[] | null>(null)
+
+  // Load attachments lazily when the detail modal opens.
+  useEffect(() => {
+    if (!detailOpen) return
+    let cancelled = false
+    listSuggestionAttachments(suggestion.id)
+      .then(res => { if (!cancelled) setAttachments(res.data) })
+      .catch(() => { if (!cancelled) setAttachments([]) })
+    return () => { cancelled = true }
+  }, [detailOpen, suggestion.id])
+
+  const handleDelete = () => {
+    if (window.confirm(`Delete "${suggestion.title}"? This hides the feedback from all staff views.`)) {
+      onDelete?.(suggestion.id)
+    }
+  }
   const date = new Date(suggestion.submitted_at).toLocaleDateString('en-PH', {
     month: 'short', day: 'numeric', year: 'numeric',
   })
@@ -91,21 +112,18 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showHighli
                 </button>
               )}
               {showFeature && (
-                <Button size="sm" variant="outline" onClick={() => onFeature?.(suggestion.id)} className="text-xs py-1">
+                <Button size="sm" variant="outline" onClick={() => onFeature?.(suggestion.id)} className="text-xs py-1" title="Feature as testimonial">
                   ★
                 </Button>
               )}
-              {showHighlight && (
+              {showDelete && (
                 <button
-                  onClick={() => onToggleHighlight?.(suggestion.id)}
-                  title={isHighlighted ? 'Unhighlight' : 'Highlight for 24h'}
-                  className={`text-xs px-2 py-1 rounded-lg border transition-all font-ui font-semibold inline-flex items-center gap-1 ${
-                    isHighlighted
-                      ? 'bg-ascb-gold/20 border-ascb-gold/50 text-ascb-gold'
-                      : 'bg-white/5 border-white/15 text-gray-400 hover:border-ascb-gold/40 hover:text-ascb-gold'
-                  }`}
+                  onClick={handleDelete}
+                  title="Delete feedback"
+                  aria-label="Delete feedback"
+                  className="text-xs p-1.5 rounded-lg border border-red-500/25 bg-red-500/8 text-red-400 hover:bg-red-500/15 hover:border-red-500/40 transition-all"
                 >
-                  <Sparkles size={12} />
+                  <Trash2 size={13} />
                 </button>
               )}
             </div>
@@ -163,16 +181,12 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showHighli
                     ★ Feature
                   </Button>
                 )}
-                {showHighlight && (
+                {showDelete && (
                   <button
-                    onClick={() => onToggleHighlight?.(suggestion.id)}
-                    className={`text-xs px-2.5 py-1.5 rounded-lg border font-ui font-semibold inline-flex items-center gap-1 ${
-                      isHighlighted
-                        ? 'bg-ascb-gold/20 border-ascb-gold/50 text-ascb-gold'
-                        : 'bg-white/5 border-white/15 text-gray-400'
-                    }`}
+                    onClick={handleDelete}
+                    className="text-xs px-2.5 py-1.5 rounded-lg border border-red-500/25 bg-red-500/8 text-red-400 hover:bg-red-500/15 hover:border-red-500/40 font-ui font-semibold inline-flex items-center gap-1 transition-all"
                   >
-                    <Sparkles size={12} /> {isHighlighted ? 'Highlighted' : 'Highlight'}
+                    <Trash2 size={12} /> Delete
                   </button>
                 )}
               </div>
@@ -233,6 +247,57 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showHighli
               )}
             </div>
           </div>
+
+          {/* Attachments (loaded lazily when modal opens) */}
+          {attachments && attachments.length > 0 && (
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
+                <Paperclip size={11} /> Attachments ({attachments.length})
+              </p>
+              <ul className="space-y-1.5">
+                {attachments.map(att => {
+                  const url = attachmentDownloadURL(suggestion.id, att.id)
+                  const isImage = att.mime_type.startsWith('image/')
+                  return (
+                    <li
+                      key={att.id}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-ascb-navy-dark/60 border border-white/8"
+                    >
+                      {isImage ? (
+                        <a href={url} target="_blank" rel="noreferrer" className="shrink-0">
+                          <img
+                            src={url}
+                            alt={att.filename}
+                            className="w-10 h-10 rounded object-cover border border-white/10"
+                          />
+                        </a>
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-ascb-orange/10 border border-ascb-orange/25 flex items-center justify-center shrink-0">
+                          <FileText size={16} className="text-ascb-orange" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-white font-ui truncate">{att.filename}</p>
+                        <p className="text-[10px] text-gray-500 font-ui tabular-nums">
+                          {(att.size_bytes / 1024).toFixed(0)} KB · {att.mime_type}
+                        </p>
+                      </div>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        download={att.filename}
+                        className="shrink-0 p-1.5 rounded-lg border border-white/10 text-gray-400 hover:text-ascb-orange hover:border-ascb-orange/40 transition-colors"
+                        aria-label={`Download ${att.filename}`}
+                      >
+                        <Download size={13} />
+                      </a>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 text-xs text-gray-500 font-ui pt-1">
             <span className="inline-flex items-center gap-1.5">

@@ -9,12 +9,37 @@ import (
 )
 
 // WeeklySubmissionLimit caps how many suggestions a single user can submit
-// within one ISO week. Resets Monday 00:00 in the DB's timezone.
+// within one ISO week. Resets at Monday 00:00 local time (Asia/Manila).
 const WeeklySubmissionLimit = 5
 
 // ErrWeeklyLimitReached is returned when a user has already submitted
 // WeeklySubmissionLimit times in the current ISO week.
 var ErrWeeklyLimitReached = errors.New("weekly submission limit reached")
+
+// ErrRatingRequired is returned when a submission is missing a valid 1-5 rating.
+var ErrRatingRequired = errors.New("rating is required (1-5)")
+
+// manilaLocation returns the Asia/Manila time zone, falling back to UTC if
+// the zoneinfo database isn't available in the runtime image.
+func manilaLocation() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Manila"); err == nil {
+		return loc
+	}
+	// Manila is UTC+8 with no DST — a fixed offset is a safe fallback.
+	return time.FixedZone("Asia/Manila", 8*60*60)
+}
+
+// currentWeekBoundary returns [startOfWeek, startOfNextWeek) in UTC,
+// using Monday 00:00 Manila time as the boundary.
+func currentWeekBoundary() (time.Time, time.Time) {
+	loc := manilaLocation()
+	now := time.Now().In(loc)
+	// Go's Weekday: Sunday=0..Saturday=6. Shift so Monday=0.
+	offset := (int(now.Weekday()) + 6) % 7
+	monday := time.Date(now.Year(), now.Month(), now.Day()-offset, 0, 0, 0, 0, loc)
+	nextMonday := monday.Add(7 * 24 * time.Hour)
+	return monday.UTC(), nextMonday.UTC()
+}
 
 type SuggestionService struct {
 	repo     repository.SuggestionRepository
@@ -32,7 +57,11 @@ func (s *SuggestionService) Submit(userID int, input models.CreateSuggestionInpu
 	if input.Department != "Registrar Office" && input.Department != "Finance Office" {
 		return nil, errors.New("department must be 'Registrar Office' or 'Finance Office'")
 	}
-	used, err := s.repo.CountSubmissionsThisWeekByUser(userID)
+	if input.Rating == nil || *input.Rating < 1 || *input.Rating > 5 {
+		return nil, ErrRatingRequired
+	}
+	startOfWeek, _ := currentWeekBoundary()
+	used, err := s.repo.CountSubmissionsSince(userID, startOfWeek)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +72,7 @@ func (s *SuggestionService) Submit(userID int, input models.CreateSuggestionInpu
 }
 
 // WeeklyUsage describes how many submissions a user has used this ISO week
-// and when the window resets (next Monday 00:00 local).
+// and when the window resets (next Monday 00:00 Manila time, as UTC).
 type WeeklyUsage struct {
 	Used     int       `json:"used"`
 	Limit    int       `json:"limit"`
@@ -53,20 +82,15 @@ type WeeklyUsage struct {
 // WeeklyUsageFor returns the user's current submission count and the moment
 // the window rolls over. Used by the submit UI to render the counter.
 func (s *SuggestionService) WeeklyUsageFor(userID int) (*WeeklyUsage, error) {
-	used, err := s.repo.CountSubmissionsThisWeekByUser(userID)
+	startOfWeek, nextWeek := currentWeekBoundary()
+	used, err := s.repo.CountSubmissionsSince(userID, startOfWeek)
 	if err != nil {
 		return nil, err
 	}
-	// ISO week starts on Monday. Compute next Monday 00:00 in UTC.
-	now := time.Now().UTC()
-	// Go's Weekday: Sunday=0..Saturday=6. Convert so Monday=0.
-	offset := (int(now.Weekday()) + 6) % 7
-	monday := time.Date(now.Year(), now.Month(), now.Day()-offset, 0, 0, 0, 0, time.UTC)
-	nextMonday := monday.Add(7 * 24 * time.Hour)
 	return &WeeklyUsage{
 		Used:     used,
 		Limit:    WeeklySubmissionLimit,
-		ResetsAt: nextMonday,
+		ResetsAt: nextWeek,
 	}, nil
 }
 
@@ -121,6 +145,19 @@ func (s *SuggestionService) MarkStatusSeenByUser(userID int) error {
 // have had a status change the user hasn't acknowledged.
 func (s *SuggestionService) CountStatusUnreadByUser(userID int) (int, error) {
 	return s.repo.CountStatusUnreadByUser(userID)
+}
+
+// SoftDelete marks the suggestion as deleted. Admin, registrar, and finance can
+// all call this — staff manage their own department's feedback, admin manages
+// everything. See handler for role-scoped authorization.
+func (s *SuggestionService) SoftDelete(id int) error {
+	return s.repo.SoftDelete(id)
+}
+
+// FindByID exposes the repo lookup so handlers can run role-scoped checks
+// before mutating (e.g., "does this feedback belong to the caller's office?").
+func (s *SuggestionService) FindByID(id int) (*models.Suggestion, error) {
+	return s.repo.FindByID(id)
 }
 
 func (s *SuggestionService) Feature(suggestionID int) (*models.Testimonial, error) {
