@@ -7,6 +7,18 @@ import { useSubmissionStatusUnread } from '../../hooks/useSubmissionStatusUnread
 import { logout } from '../../api/auth'
 import { toast } from 'sonner'
 
+// Anchors shown inline in the header on the public home page, so the
+// section links and Sign In button share one row instead of stacking.
+const HOME_ANCHORS = [
+  { id: 'about',          label: 'About' },
+  { id: 'foundation',     label: 'Foundation' },
+  { id: 'values',         label: 'Values' },
+  { id: 'goals',          label: 'Goals' },
+  { id: 'how-it-works',   label: 'How It Works' },
+  { id: 'announcements',  label: 'Announcements' },
+  { id: 'testimonials',   label: 'Testimonials' },
+]
+
 export function Header() {
   const { currentUser, role, isLoading, clearAuth } = useAuth()
   const { count: unread } = useAnnouncementUnread()
@@ -31,6 +43,8 @@ export function Header() {
     toast.success('Logged out successfully')
     logout().catch(() => {}) // fire-and-forget server-side cookie clear
   }
+
+  const showHomeAnchors = location.pathname === '/' && !isLoading && !currentUser
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
@@ -60,6 +74,20 @@ export function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-2">
+            {showHomeAnchors && (
+              <ul className="flex items-center gap-1 mr-2">
+                {HOME_ANCHORS.map(a => (
+                  <li key={a.id}>
+                    <a
+                      href={`#${a.id}`}
+                      className="inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold font-ui text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                      {a.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
             {!isLoading && !currentUser && (
               <Link to="/login" className="flex items-center gap-1 px-4 py-2 bg-ascb-orange hover:bg-ascb-orange-dark text-white text-sm font-medium rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-ascb-orange/30 font-ui">
                 Sign In <ChevronRight size={14} />
@@ -126,6 +154,19 @@ export function Header() {
         {/* Mobile menu */}
         {isMobileOpen && (
           <div className="md:hidden border-t border-white/10 py-3 space-y-1 animate-fade-in">
+            {showHomeAnchors && (
+              <div className="grid grid-cols-2 gap-1 pb-2 mb-2 border-b border-white/10">
+                {HOME_ANCHORS.map(a => (
+                  <a
+                    key={a.id}
+                    href={`#${a.id}`}
+                    className="px-3 py-2 text-xs font-semibold font-ui text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    {a.label}
+                  </a>
+                ))}
+              </div>
+            )}
             {!isLoading && !currentUser && (
               <Link to="/login" className="block px-4 py-2.5 text-sm text-white bg-ascb-orange hover:bg-ascb-orange-dark rounded-lg transition-colors font-ui">Sign In</Link>
             )}

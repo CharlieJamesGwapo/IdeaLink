@@ -71,17 +71,6 @@ const features = [
   { icon: Star,          title: 'Recognition',           desc: 'Outstanding feedback may be featured as institutional testimonials.' },
 ]
 
-// Sections used by the sticky in-page nav. IDs must match the section markup.
-const navSections = [
-  { id: 'about',          label: 'About' },
-  { id: 'foundation',     label: 'Foundation' },
-  { id: 'values',         label: 'Values' },
-  { id: 'goals',          label: 'Goals' },
-  { id: 'how-it-works',   label: 'How It Works' },
-  { id: 'announcements',  label: 'Announcements' },
-  { id: 'testimonials',   label: 'Testimonials' },
-]
-
 export function HomePage() {
   const { announcements, isLoading } = useAnnouncements()
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
@@ -222,29 +211,6 @@ export function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* ─── IN-PAGE NAV (sticky, appears after scrolling past hero) ─── */}
-      <nav
-        className={`sticky top-16 z-40 bg-ascb-navy-dark/95 backdrop-blur-md border-b border-white/10 transition-all duration-300 ${
-          scrolled ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
-        }`}
-        aria-label="Page sections"
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <ul className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-thin">
-            {navSections.map(s => (
-              <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
-                  className="inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold font-ui text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                >
-                  {s.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
 
       {/* ─── ABOUT IDEALINK (the system) ─── */}
       <section
