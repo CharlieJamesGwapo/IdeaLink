@@ -46,6 +46,34 @@ export function Header() {
 
   const showHomeAnchors = location.pathname === '/' && !isLoading && !currentUser
 
+  // Scrollspy: highlight whichever section is currently in view. Updates on
+  // scroll + hashchange, so clicking an anchor lands on it AND paints it active.
+  const [activeAnchor, setActiveAnchor] = useState('')
+  useEffect(() => {
+    if (!showHomeAnchors) return
+    const ids = HOME_ANCHORS.map(a => a.id)
+    const pickActive = () => {
+      // Section whose top crosses ~30% of viewport height wins. Falls back to
+      // the first section if none match (e.g., user is in the hero).
+      const cutoff = window.innerHeight * 0.3
+      let current = ''
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (!el) continue
+        const top = el.getBoundingClientRect().top
+        if (top <= cutoff) current = id
+      }
+      setActiveAnchor(current)
+    }
+    pickActive()
+    window.addEventListener('scroll', pickActive, { passive: true })
+    window.addEventListener('hashchange', pickActive)
+    return () => {
+      window.removeEventListener('scroll', pickActive)
+      window.removeEventListener('hashchange', pickActive)
+    }
+  }, [showHomeAnchors])
+
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${
       isScrolled
@@ -79,16 +107,24 @@ export function Header() {
                 the mobile hamburger (which also lists these anchors). */}
             {showHomeAnchors && (
               <ul className="hidden lg:flex items-center gap-1 mr-2">
-                {HOME_ANCHORS.map(a => (
-                  <li key={a.id}>
-                    <a
-                      href={`#${a.id}`}
-                      className="inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold font-ui text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
-                    >
-                      {a.label}
-                    </a>
-                  </li>
-                ))}
+                {HOME_ANCHORS.map(a => {
+                  const isActive = activeAnchor === a.id
+                  return (
+                    <li key={a.id}>
+                      <a
+                        href={`#${a.id}`}
+                        aria-current={isActive ? 'true' : undefined}
+                        className={`inline-flex items-center whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-semibold font-ui transition-colors ${
+                          isActive
+                            ? 'bg-white/10 text-white shadow-inner shadow-black/30'
+                            : 'text-gray-300 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        {a.label}
+                      </a>
+                    </li>
+                  )
+                })}
               </ul>
             )}
             {!isLoading && !currentUser && (
