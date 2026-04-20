@@ -25,17 +25,24 @@ export const signup = (
     college_department: collegeDepartment,
   })
 
+interface LoginResponse {
+  id: number
+  role?: string
+  education_level?: string | null
+  college_department?: string | null
+}
+
 export const login = (email: string, password: string) =>
-  client.post('/api/auth/login', { email, password })
+  client.post<LoginResponse>('/api/auth/login', { email, password })
 
 export const adminLogin = (email: string, password: string) =>
-  client.post('/api/auth/admin/login', { email, password })
+  client.post<LoginResponse>('/api/auth/admin/login', { email, password })
 
 export const registrarLogin = (email: string, password: string) =>
-  client.post('/api/auth/registrar/login', { email, password })
+  client.post<LoginResponse>('/api/auth/registrar/login', { email, password })
 
 export const accountingLogin = (email: string, password: string) =>
-  client.post('/api/auth/accounting/login', { email, password })
+  client.post<LoginResponse>('/api/auth/accounting/login', { email, password })
 
 export const logout = () => client.post('/api/auth/logout')
 

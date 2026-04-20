@@ -23,12 +23,18 @@ function formatHour(h: number): string {
   return `${display}:00 ${suffix}`
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface ChartTooltipProps {
+  active?: boolean
+  payload?: { color?: string; fill?: string; name?: string; value?: number | string }[]
+  label?: string | number
+}
+
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-xl px-3 py-2 text-xs font-ui border border-white/10" style={{ background: 'rgba(13,31,60,0.95)', backdropFilter: 'blur(12px)' }}>
       <p className="text-gray-300 mb-1">{label}</p>
-      {payload.map((p: any, i: number) => <p key={i} style={{ color: p.color ?? p.fill }}>{p.name}: <strong>{p.value}</strong></p>)}
+      {payload.map((p, i) => <p key={i} style={{ color: p.color ?? p.fill }}>{p.name}: <strong>{p.value}</strong></p>)}
     </div>
   )
 }

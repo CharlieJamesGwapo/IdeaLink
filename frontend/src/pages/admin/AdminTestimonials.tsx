@@ -26,6 +26,9 @@ export function AdminTestimonials() {
       .finally(() => { if (mountedRef.current) setIsLoading(false) })
   }
 
+  // Initial + retry fetch. Sync setIsLoading(true) inside `load` is
+  // intentional so the Try-Again button can re-enter the loading state.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [])
 
   const handleToggle = async (id: number) => {

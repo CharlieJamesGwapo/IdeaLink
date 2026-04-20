@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import axios from 'axios'
 import { Mail, Lock, ShieldCheck, ArrowRight } from 'lucide-react'
 import { adminLogin } from '../../api/auth'
 import { useAuth } from '../../hooks/useAuth'
@@ -18,11 +19,14 @@ export function AdminLoginPage() {
     setIsLoading(true)
     try {
       const res = await adminLogin(email, password)
-      setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'admin')
+      setAuth({ id: res.data.id, education_level: null, college_department: null }, 'admin')
       toast.success('Welcome, Admin!')
       navigate('/admin/dashboard')
-    } catch (err: any) {
-      toast.error(err.response?.data?.error ?? 'Invalid credentials')
+    } catch (err) {
+      const message = axios.isAxiosError<{ error?: string }>(err)
+        ? err.response?.data?.error
+        : undefined
+      toast.error(message ?? 'Invalid credentials')
     } finally {
       setIsLoading(false)
     }

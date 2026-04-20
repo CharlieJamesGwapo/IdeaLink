@@ -33,18 +33,29 @@ function StatCard({ label, value, icon, color, trend }: {
   )
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="glass rounded-xl px-4 py-3 border border-ascb-orange/20 text-sm font-ui">
-        <p className="text-gray-300 mb-1">{label}</p>
-        {payload.map((p: any, i: number) => (
-          <p key={i} style={{ color: p.color }}>{p.name}: <strong>{p.value}</strong></p>
-        ))}
-      </div>
-    )
-  }
-  return null
+interface TooltipPayloadEntry {
+  color?: string
+  fill?: string
+  name?: string
+  value?: number | string
+}
+
+interface ChartTooltipProps {
+  active?: boolean
+  payload?: TooltipPayloadEntry[]
+  label?: string | number
+}
+
+const CustomTooltip = ({ active, payload, label }: ChartTooltipProps) => {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="glass rounded-xl px-4 py-3 border border-ascb-orange/20 text-sm font-ui">
+      <p className="text-gray-300 mb-1">{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color ?? p.fill }}>{p.name}: <strong>{p.value}</strong></p>
+      ))}
+    </div>
+  )
 }
 
 export function AdminDashboard() {
@@ -76,6 +87,10 @@ export function AdminDashboard() {
     })
   }
 
+  // Initial + retry fetch. The rule flags the sync setIsLoading(true) inside
+  // loadData — that's intentional: the Try-Again button reuses the same fn
+  // and must flip the UI back to the loading skeleton immediately.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadData() }, [])
 
   const handleExport = () => {

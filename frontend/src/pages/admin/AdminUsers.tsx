@@ -10,6 +10,7 @@ import axios from 'axios'
 
 const LEVELS = ['HS', 'SHS', 'College'] as const
 const DEPTS  = ['CCE', 'CTE', 'CABE', 'CCJE', 'TVET'] as const
+type CollegeDept = typeof DEPTS[number]
 
 const CSV_TEMPLATE = 'email,fullname,education_level,college_department\n' +
   'juan@ascb.edu.ph,Juan dela Cruz,College,CCE\n' +
@@ -65,7 +66,7 @@ export function AdminUsers() {
         email: email.trim(),
         fullname: fullname.trim(),
         education_level: level,
-        college_department: level === 'College' ? (dept as any) : null,
+        college_department: level === 'College' ? (dept as CollegeDept) : null,
       })
       setLastResult(res.data)
       toast.success(`Account created for ${res.data.email}`)

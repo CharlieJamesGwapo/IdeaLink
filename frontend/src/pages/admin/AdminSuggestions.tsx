@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Download, MessageSquare, Search, Filter, ArrowUpDown } from 'lucide-react'
 import { useSuggestions } from '../../hooks/useSuggestions'
@@ -22,7 +22,15 @@ export function AdminSuggestions() {
   const [dept, setDept]     = useState<DeptFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort]     = useState<SortOption>('newest')
-  const [page, setPage]     = useState(1)
+
+  // Page state is bound to the filter signature it was chosen for — when
+  // any filter changes, the signature mismatches and we derive back to
+  // page 1 without firing an effect. Replaces the old setPage(1) effect
+  // that React 19 flags as cascading-render risk.
+  const filterSig = `${status}|${dept}|${search}|${sort}`
+  const [pageState, setPageState] = useState({ sig: filterSig, page: 1 })
+  const page = pageState.sig === filterSig ? pageState.page : 1
+  const setPage = (p: number) => setPageState({ sig: filterSig, page: p })
 
   const handleDelete = async (id: number) => {
     try {
@@ -65,9 +73,6 @@ export function AdminSuggestions() {
   const unreviewed = suggestions.filter(s => s.status === 'Delivered').length
   const reviewed   = suggestions.filter(s => s.status === 'Reviewed').length
   const hasFilters = search || dept !== 'all'
-
-  // Reset to first page whenever the filter/sort/search changes
-  useEffect(() => { setPage(1) }, [status, dept, search, sort])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
