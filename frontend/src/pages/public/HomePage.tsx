@@ -201,6 +201,41 @@ export function HomePage() {
               Staff Portal
             </Link>
           </div>
+
+          {/* Live office-status pills — derived from each office's schedule + any temporary closure. */}
+          {officeStatuses.length === 2 && (
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto text-left animate-fade-in stagger-5">
+              {officeStatuses.map(s => (
+                <div
+                  key={s.department}
+                  className={`group rounded-2xl p-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 ${
+                    s.is_open
+                      ? 'bg-green-500/10 border border-green-400/30 hover:border-green-300/50 hover:shadow-lg hover:shadow-green-500/10'
+                      : 'bg-red-500/10 border border-red-400/30 hover:border-red-300/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`relative flex w-2.5 h-2.5`}>
+                      {s.is_open && (
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+                      )}
+                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${s.is_open ? 'bg-green-400' : 'bg-red-400'}`} />
+                    </span>
+                    <span className={`text-[10px] font-bold font-ui uppercase tracking-widest ${s.is_open ? 'text-green-300' : 'text-red-300'}`}>
+                      {s.is_open ? 'Open now' : 'Closed'}
+                    </span>
+                  </div>
+                  <p className="text-white text-sm font-semibold font-ui mt-2">{s.department}</p>
+                  <p className="text-[11px] text-gray-300/80 font-ui mt-0.5">
+                    Mon–Fri · {formatHour(s.open_hour)} – {formatHour(s.close_hour)}
+                  </p>
+                  {!s.is_open && s.closure_reason && (
+                    <p className="text-[11px] text-red-200 font-body mt-1 line-clamp-2">{s.closure_reason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Scroll indicator */}
@@ -234,32 +269,6 @@ export function HomePage() {
             Every piece of feedback is rated, routed, and reviewed. Staff mark items as Reviewed once acted on,
             and outstanding feedback can be featured as institutional testimonials.
           </p>
-
-          {/* Live office-status widget — auto-derived from each office's schedule. */}
-          {officeStatuses.length === 2 && (
-            <div className="mt-8 grid sm:grid-cols-2 gap-3 text-left">
-              {officeStatuses.map(s => (
-                <div
-                  key={s.department}
-                  className={`rounded-2xl p-4 border ${s.is_open ? 'border-green-500/25 bg-green-500/5' : 'border-red-500/25 bg-red-500/5'}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${s.is_open ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-                    <span className={`text-xs font-bold font-ui uppercase tracking-widest ${s.is_open ? 'text-green-300' : 'text-red-300'}`}>
-                      {s.is_open ? 'Open now' : 'Closed'}
-                    </span>
-                  </div>
-                  <p className="text-white text-sm font-semibold font-ui mt-2">{s.department}</p>
-                  <p className="text-[11px] text-gray-400 font-ui mt-0.5">
-                    Mon–Fri · {formatHour(s.open_hour)} – {formatHour(s.close_hour)}
-                  </p>
-                  {!s.is_open && s.closure_reason && (
-                    <p className="text-[11px] text-red-300 font-body mt-1">{s.closure_reason}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
