@@ -37,3 +37,6 @@ var OfficeHoursScheduleSQL string
 
 //go:embed 012_suggestion_attachments.sql
 var SuggestionAttachmentsSQL string
+
+//go:embed 013_email_logs.sql
+var EmailLogsSQL string
