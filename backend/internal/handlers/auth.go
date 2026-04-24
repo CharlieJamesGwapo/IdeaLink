@@ -187,8 +187,10 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "too many requests, please try again later"})
 	case errors.Is(err, mail.ErrNotConfigured):
 		c.JSON(http.StatusNotImplemented, gin.H{"error": "email is not configured on this server"})
-	default:
+	case errors.Is(err, services.ErrMailSendFailed):
 		c.JSON(http.StatusBadGateway, gin.H{"error": "email delivery failed"})
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 	}
 }
 
