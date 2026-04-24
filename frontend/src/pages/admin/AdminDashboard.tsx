@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, MessageSquare, TrendingUp, Bell, ArrowUpRight, Download } from 'lucide-react'
+import { Users, MessageSquare, TrendingUp, Bell, ArrowUpRight, Download, Mail } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line
@@ -274,11 +274,12 @@ export function AdminDashboard() {
       {/* Quick actions */}
       <div className="bg-ascb-navy rounded-2xl p-5 border border-ascb-navy-mid">
         <h2 className="font-semibold text-white mb-4 font-ui">Quick Actions</h2>
-        <div className="grid sm:grid-cols-3 gap-3">
+        <div className="grid sm:grid-cols-4 gap-3">
           {[
             { href: '/admin/suggestions', label: 'View All Feedback', icon: <MessageSquare size={15} /> },
             { href: '/admin/announcements', label: 'Manage Announcements', icon: <Bell size={15} /> },
             { href: '/admin/testimonials', label: 'Toggle Testimonials', icon: <TrendingUp size={15} /> },
+            { href: '/admin/email-logs', label: 'Email Logs', icon: <Mail size={15} /> },
           ].map(a => (
             <Link key={a.href} to={a.href}
               className="flex items-center justify-between p-3 rounded-xl bg-ascb-navy-dark hover:bg-ascb-navy-mid transition-colors">
