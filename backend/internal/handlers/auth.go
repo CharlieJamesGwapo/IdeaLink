@@ -8,6 +8,7 @@ import (
 
 	"idealink/internal/middleware"
 	"idealink/internal/services"
+	"idealink/internal/services/mail"
 
 	"github.com/gin-gonic/gin"
 )
@@ -179,11 +180,16 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		return
 	}
 	err := h.svc.RequestPasswordReset(input.Email)
-	if errors.Is(err, services.ErrRateLimited) {
+	switch {
+	case err == nil:
+		c.JSON(http.StatusOK, gin.H{"message": "If that email exists, a reset link was sent."})
+	case errors.Is(err, services.ErrRateLimited):
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "too many requests, please try again later"})
-		return
+	case errors.Is(err, mail.ErrNotConfigured):
+		c.JSON(http.StatusNotImplemented, gin.H{"error": "email is not configured on this server"})
+	default:
+		c.JSON(http.StatusBadGateway, gin.H{"error": "email delivery failed"})
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "If that email exists, a reset link was sent."})
 }
 
 type resetPasswordInput struct {

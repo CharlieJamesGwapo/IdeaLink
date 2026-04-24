@@ -12,23 +12,17 @@ import (
 	"idealink/internal/repository"
 )
 
-// CredentialsMailer is the narrow dependency UserProvisioningService needs
-// from mail.Sender — sending freshly minted account credentials.
-type CredentialsMailer interface {
-	SendNewUserCredentials(to, fullname, rawPassword, loginURL string) error
-}
-
 type UserProvisioningService struct {
 	userRepo    repository.UserRepository
 	auth        *AuthService
-	mailer      CredentialsMailer
+	mailer      Mailer
 	frontendURL string
 }
 
 func NewUserProvisioningService(
 	userRepo repository.UserRepository,
 	auth *AuthService,
-	mailer CredentialsMailer,
+	mailer Mailer,
 	frontendURL string,
 ) *UserProvisioningService {
 	return &UserProvisioningService{userRepo: userRepo, auth: auth, mailer: mailer, frontendURL: frontendURL}

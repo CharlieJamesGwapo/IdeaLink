@@ -29,15 +29,17 @@ func main() {
 	testimonialRepo := repository.NewTestimonialRepo(db)
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
 	attachmentRepo := repository.NewSuggestionAttachmentRepo(db)
+	emailLogRepo := repository.NewEmailLogRepo(db)
 
 	// Services
-	mailer := mail.NewSender(mail.Config{
+	rawMailer := mail.NewSender(mail.Config{
 		Host: cfg.SMTPHost,
 		Port: cfg.SMTPPort,
 		User: cfg.SMTPUser,
 		Pass: cfg.SMTPPass,
 		From: cfg.SMTPFrom,
 	})
+	mailer := mail.NewAuditingSender(rawMailer, emailLogRepo, cfg.MailAllowNoop)
 	authSvc := services.NewAuthService(userRepo, passwordResetRepo, mailer, cfg.JWTSecret, cfg.FrontendURL)
 	provisioningSvc := services.NewUserProvisioningService(userRepo, authSvc, mailer, cfg.FrontendURL)
 	announcementSvc := services.NewAnnouncementService(announcementRepo, userRepo)

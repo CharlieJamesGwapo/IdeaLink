@@ -38,25 +38,25 @@ type Claims struct {
 type AuthService struct {
 	userRepo      repository.UserRepository
 	resetRepo     repository.PasswordResetRepository
-	mailer        PasswordResetMailer
+	mailer        Mailer
 	rateLimiter   *RateLimiter
 	jwtSecret     string
 	frontendURL   string
 	resetTokenTTL time.Duration
 }
 
-// PasswordResetMailer is the narrow dependency AuthService needs from mail.Sender.
-type PasswordResetMailer interface {
-	SendPasswordReset(to, resetLink string) error
-}
-
-// Compile-time check that mail.Sender satisfies PasswordResetMailer.
-var _ PasswordResetMailer = (*mail.Sender)(nil)
+// Compile-time check that *mail.Sender and *mail.AuditingSender both satisfy
+// the Mailer interface (defined in interfaces.go) — so wiring code in main.go
+// can swap one for the other freely.
+var (
+	_ Mailer = (*mail.Sender)(nil)
+	_ Mailer = (*mail.AuditingSender)(nil)
+)
 
 func NewAuthService(
 	userRepo repository.UserRepository,
 	resetRepo repository.PasswordResetRepository,
-	mailer PasswordResetMailer,
+	mailer Mailer,
 	jwtSecret, frontendURL string,
 ) *AuthService {
 	return &AuthService{
@@ -288,7 +288,9 @@ func (s *AuthService) RequestPasswordReset(email string) error {
 	primaryURL = strings.TrimSpace(primaryURL)
 	link := strings.TrimRight(primaryURL, "/") + "/reset-password?token=" + rawToken
 	if err := s.mailer.SendPasswordReset(user.Email, link); err != nil {
-		fmt.Printf("[auth] password-reset mail send failed for %s: %v\n", user.Email, err)
+		// Token persisted — user can retry. Caller (HTTP handler) decides
+		// how to translate this (501 vs 502). See handlers/auth.go.
+		return err
 	}
 	return nil
 }

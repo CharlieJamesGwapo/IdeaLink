@@ -154,6 +154,12 @@ func (m *mockMailer) SendPasswordReset(to, link string) error {
 	return nil
 }
 
+// SendNewUserCredentials is unused by AuthService tests but is required to
+// satisfy the services.Mailer interface (which AuthService now depends on).
+func (m *mockMailer) SendNewUserCredentials(to, fullname, rawPassword, loginURL string) error {
+	return nil
+}
+
 // --- Tests ---
 
 func TestAuthService_SignAndParseToken(t *testing.T) {

@@ -20,3 +20,12 @@ type AuthServicer interface {
 	ResetPassword(rawToken, newPassword string) error
 	CompleteProfile(userID int, educationLevel string, collegeDepartment *string) (*models.User, error)
 }
+
+// Mailer is the minimal interface the auth and provisioning services need
+// from the email subsystem. *mail.Sender and *mail.AuditingSender both
+// satisfy it. Kept here (not in package mail) so package mail stays free of
+// application-level concerns.
+type Mailer interface {
+	SendPasswordReset(to, resetLink string) error
+	SendNewUserCredentials(to, fullname, rawPassword, loginURL string) error
+}
