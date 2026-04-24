@@ -247,6 +247,41 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* ─── ANNOUNCEMENTS ─── */}
+      <section id="announcements" ref={announcementsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy-dark transition-all duration-700 ${announcementsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Latest Updates</span>
+            <h2 className="text-3xl font-bold font-display mt-2">Announcements</h2>
+            <div className="section-divider w-20 mx-auto mt-4" />
+          </div>
+          {isLoading ? (
+            <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+          ) : announcements.length === 0 ? (
+            <p className="text-center text-gray-500 py-10 font-ui">No announcements yet.</p>
+          ) : (
+            <>
+              <div className="space-y-3">
+                {paged.map(a => <AnnouncementCard key={a.id} announcement={a} />)}
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-3 mt-6">
+                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                    className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-ascb-orange/50 disabled:opacity-30 transition-colors">
+                    <ChevronLeft size={16} />
+                  </button>
+                  <span className="text-sm text-gray-400 font-ui">{page} / {totalPages}</span>
+                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                    className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-ascb-orange/50 disabled:opacity-30 transition-colors">
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
       {/* ─── ABOUT IDEALINK (the system) ─── */}
       <section
         id="about"
@@ -379,41 +414,6 @@ export function HomePage() {
               Get Started <ArrowRight size={18} />
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* ─── ANNOUNCEMENTS ─── */}
-      <section id="announcements" ref={announcementsRef.ref} className={`scroll-mt-28 py-20 bg-ascb-navy-dark transition-all duration-700 ${announcementsRef.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <span className="text-xs text-ascb-orange uppercase tracking-widest font-ui font-semibold">Latest Updates</span>
-            <h2 className="text-3xl font-bold font-display mt-2">Announcements</h2>
-            <div className="section-divider w-20 mx-auto mt-4" />
-          </div>
-          {isLoading ? (
-            <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
-          ) : announcements.length === 0 ? (
-            <p className="text-center text-gray-500 py-10 font-ui">No announcements yet.</p>
-          ) : (
-            <>
-              <div className="space-y-3">
-                {paged.map(a => <AnnouncementCard key={a.id} announcement={a} />)}
-              </div>
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-3 mt-6">
-                  <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                    className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-ascb-orange/50 disabled:opacity-30 transition-colors">
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span className="text-sm text-gray-400 font-ui">{page} / {totalPages}</span>
-                  <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                    className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:border-ascb-orange/50 disabled:opacity-30 transition-colors">
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-            </>
-          )}
         </div>
       </section>
 
