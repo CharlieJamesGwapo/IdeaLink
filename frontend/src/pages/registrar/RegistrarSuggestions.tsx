@@ -60,14 +60,19 @@ export function RegistrarSuggestions() {
   }
 
   // Auto-mark as Reviewed when staff opens the feedback detail.
+  // Flip local state FIRST so the UI is instant; the API call runs in the
+  // background. On failure, revert + toast so the row doesn't lie.
   const handleOpen = async (id: number) => {
     const target = suggestions.find(s => s.id === id)
     if (!target || target.status === 'Reviewed') return
+    const prevStatus = target.status
+    const prevIsRead = target.is_read
+    setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'Reviewed', is_read: true } : s))
     try {
       await markSuggestionReviewed(id)
-      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'Reviewed', is_read: true } : s))
     } catch {
-      // Silent — opening should never block reading the content.
+      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: prevStatus, is_read: prevIsRead } : s))
+      toast.error('Couldn\'t mark as reviewed')
     }
   }
 

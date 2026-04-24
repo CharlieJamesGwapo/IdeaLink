@@ -62,11 +62,14 @@ export function AccountingSuggestions() {
   const handleOpen = async (id: number) => {
     const target = suggestions.find(s => s.id === id)
     if (!target || target.status === 'Reviewed') return
+    const prevStatus = target.status
+    const prevIsRead = target.is_read
+    setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'Reviewed', is_read: true } : s))
     try {
       await markSuggestionReviewed(id)
-      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'Reviewed', is_read: true } : s))
     } catch {
-      // Silent
+      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: prevStatus, is_read: prevIsRead } : s))
+      toast.error('Couldn\'t mark as reviewed')
     }
   }
 
