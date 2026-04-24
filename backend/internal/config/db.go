@@ -62,5 +62,8 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.SuggestionAttachmentsSQL); err != nil {
 		log.Fatalf("failed to run suggestion_attachments migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.EmailLogsSQL); err != nil {
+		log.Fatalf("failed to run email_logs migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }
