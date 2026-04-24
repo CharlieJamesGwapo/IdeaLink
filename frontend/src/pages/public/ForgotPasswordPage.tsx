@@ -18,8 +18,17 @@ export function ForgotPasswordPage() {
       await forgotPassword(email)
       setSent(true)
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 429) {
-        toast.error('Too many requests. Please try again later.')
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status
+        if (status === 429) {
+          toast.error('Too many requests. Please try again later.')
+        } else if (status === 501) {
+          toast.error('Email isn\'t set up on the server yet. Please contact the administrator.')
+        } else if (status === 502) {
+          toast.error('We couldn\'t send the reset email. Please try again in a minute, or contact the administrator.')
+        } else {
+          toast.error('Something went wrong. Please try again.')
+        }
       } else {
         toast.error('Something went wrong. Please try again.')
       }
