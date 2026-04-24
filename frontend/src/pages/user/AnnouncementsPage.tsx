@@ -6,12 +6,15 @@ import { Skeleton } from '../../components/ui/Skeleton'
 import { Megaphone, RefreshCw, Search } from 'lucide-react'
 
 export function AnnouncementsPage() {
-  const { announcements, isLoading, error, refetch } = useAnnouncements()
+  const { announcements, isLoading, error, refetch, ensureFresh } = useAnnouncements()
   const { clear } = useAnnouncementUnread()
   const [search, setSearch] = useState('')
 
-  // Mark announcements as seen once the user lands on this page.
-  useEffect(() => { clear() }, [clear])
+  // On mount: refresh the list if it's stale (kills "click twice before
+  // the announcement shows"), then mark as seen.
+  useEffect(() => {
+    ensureFresh().finally(() => clear())
+  }, [ensureFresh, clear])
 
   const filtered = search.trim()
     ? announcements.filter(a =>
