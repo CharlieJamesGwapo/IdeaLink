@@ -18,12 +18,16 @@ export function useAnnouncements() {
   }, [])
 
   const fetchNow = useCallback(async () => {
+    // Record start-of-fetch so concurrent ensureFresh() calls are debounced
+    // even before the response resolves. If this request fails, the next
+    // poll tick (≤30s) will retry; no need to keep refetching in a tight
+    // loop.
+    lastFetchedAtRef.current = Date.now()
     try {
       const res = await getAnnouncements()
       if (!mountedRef.current) return
       setAnnouncements(Array.isArray(res.data) ? res.data : [])
       setError(null)
-      lastFetchedAtRef.current = Date.now()
     } catch {
       if (mountedRef.current) setError('Failed to load announcements')
     } finally {

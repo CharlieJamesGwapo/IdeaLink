@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { toast } from 'sonner'
 import { getUnreadAnnouncementCount, markAnnouncementsSeen } from '../api/announcements'
 import { useAuth } from './useAuth'
@@ -16,19 +16,17 @@ const countStore = createSharedState(0)
 export function useAnnouncementUnread() {
   const { role } = useAuth()
   const count = countStore.useValue()
-  const roleRef = useRef(role)
-  roleRef.current = role
 
   const fetchCount = useCallback(async () => {
     // Backend returns 0 for non-'user' roles; skip the request entirely.
-    if (roleRef.current !== 'user') { countStore.set(0); return }
+    if (role !== 'user') { countStore.set(0); return }
     try {
       const res = await getUnreadAnnouncementCount()
       countStore.set(res.data?.count ?? 0)
     } catch {
       // Silent: background poll shouldn't noise up the UI
     }
-  }, [])
+  }, [role])
 
   // Only subscribe to the poll when we actually have a user role.
   useGlobalPoll(fetchCount, role === 'user')
