@@ -55,6 +55,7 @@ func main() {
 	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo)
 	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
 	usersH := handlers.NewUsersHandler(provisioningSvc)
+	adminEmailLogsH := handlers.NewAdminEmailLogsHandler(emailLogRepo)
 
 	// Router
 	r := gin.Default()
@@ -93,6 +94,7 @@ func main() {
 			admin.PATCH("/testimonials/:id/toggle", testimonialH.Toggle)
 			admin.POST("/suggestions/:id/feature", suggestionH.Feature)
 			admin.GET("/admin/analytics", adminH.Analytics)
+			admin.GET("/admin/email-logs", adminEmailLogsH.List)
 		}
 
 		// Admin + Registrar can provision student accounts
