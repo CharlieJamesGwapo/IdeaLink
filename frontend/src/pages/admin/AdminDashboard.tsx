@@ -274,7 +274,7 @@ export function AdminDashboard() {
       {/* Quick actions */}
       <div className="bg-ascb-navy rounded-2xl p-5 border border-ascb-navy-mid">
         <h2 className="font-semibold text-white mb-4 font-ui">Quick Actions</h2>
-        <div className="grid sm:grid-cols-4 gap-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { href: '/admin/suggestions', label: 'View All Feedback', icon: <MessageSquare size={15} /> },
             { href: '/admin/announcements', label: 'Manage Announcements', icon: <Bell size={15} /> },
