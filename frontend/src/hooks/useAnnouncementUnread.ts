@@ -1,19 +1,14 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import { getUnreadAnnouncementCount, markAnnouncementsSeen } from '../api/announcements'
 import { useAuth } from './useAuth'
+import { useGlobalPoll } from './useGlobalPoll'
 import { createSharedState } from './createSharedState'
-
-const POLL_INTERVAL_MS = 30_000
 
 // Shared across all components so the Header badge clears the moment
 // AnnouncementsPage calls clear() — otherwise both would have independent
 // local state and the badge would linger until the next poll.
 const countStore = createSharedState(0)
-
-// Guards so only one poll timer runs globally, regardless of how many
-// components call the hook at once.
-let pollTimer: number | null = null
-let pollOwners = 0
 
 // Polls /api/announcements/unread-count while the user is signed in.
 // Also exposes a `clear()` that hits /mark-seen and zeros the shared count,
@@ -35,36 +30,24 @@ export function useAnnouncementUnread() {
     }
   }, [])
 
+  // Only subscribe to the poll when we actually have a user role.
+  useGlobalPoll(fetchCount, role === 'user')
+
   const clear = useCallback(async () => {
     // Zero immediately so every instance of the badge updates in this tick,
-    // then confirm with the server.
+    // then confirm with the server. On failure, the next poll resyncs, but
+    // we toast so the user sees SOMETHING — the original bug report said
+    // "badge takes long to clear", which turns out to have been masked by
+    // a silent failure path.
+    const prev = countStore.get()
     countStore.set(0)
     try {
       await markAnnouncementsSeen()
     } catch {
-      // If the server write fails, the next poll will resync.
+      countStore.set(prev)
+      toast.error('Couldn\'t mark announcements as seen, will retry')
     }
   }, [])
-
-  useEffect(() => {
-    if (role !== 'user') {
-      countStore.set(0)
-      return
-    }
-    pollOwners++
-    fetchCount()
-    if (pollTimer === null) {
-      pollTimer = window.setInterval(fetchCount, POLL_INTERVAL_MS)
-    }
-    return () => {
-      pollOwners--
-      if (pollOwners <= 0 && pollTimer !== null) {
-        window.clearInterval(pollTimer)
-        pollTimer = null
-        pollOwners = 0
-      }
-    }
-  }, [role, fetchCount])
 
   return { count, clear, refetch: fetchCount }
 }
