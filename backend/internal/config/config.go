@@ -19,6 +19,8 @@ type Config struct {
 	SMTPUser string
 	SMTPPass string
 	SMTPFrom string
+
+	MailAllowNoop bool
 }
 
 func Load() (*Config, error) {
@@ -43,6 +45,8 @@ func Load() (*Config, error) {
 		SMTPUser:    os.Getenv("SMTP_USER"),
 		SMTPPass:    os.Getenv("SMTP_PASS"),
 		SMTPFrom:    os.Getenv("SMTP_FROM"),
+
+		MailAllowNoop: os.Getenv("MAIL_ALLOW_NOOP") == "true",
 	}, nil
 }
 
