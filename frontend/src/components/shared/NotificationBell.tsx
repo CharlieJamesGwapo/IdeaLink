@@ -1,7 +1,8 @@
-import { useEffect, useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Bell } from 'lucide-react'
 import { getUnreadCount } from '../../api/notifications'
 import { useAuth } from '../../hooks/useAuth'
+import { useGlobalPoll } from '../../hooks/useGlobalPoll'
 
 interface Props {
   onClick?: () => void
@@ -17,27 +18,16 @@ export function NotificationBell({ onClick }: Props) {
     return () => { mountedRef.current = false }
   }, [])
 
-  useEffect(() => {
-    if (!role || role === 'user') return
-
-    let cancelled = false
-
-    const fetch = async () => {
-      try {
-        const res = await getUnreadCount()
-        if (!cancelled && mountedRef.current) setCount(res.data.count)
-      } catch {
-        // silently ignore — bell just shows no badge
-      }
+  const fetch = useCallback(async () => {
+    try {
+      const res = await getUnreadCount()
+      if (mountedRef.current) setCount(res.data.count)
+    } catch {
+      // silently ignore — bell just shows no badge
     }
+  }, [])
 
-    fetch()
-    const interval = setInterval(fetch, 30_000)
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-  }, [role])
+  useGlobalPoll(fetch, Boolean(role) && role !== 'user')
 
   if (!role || role === 'user') return null
 
