@@ -238,6 +238,11 @@ var ErrRateLimited = errors.New("too many requests")
 // ErrPasswordTooShort mirrors the signup rule (min 6 chars).
 var ErrPasswordTooShort = errors.New("password must be at least 6 characters")
 
+// ErrMailSendFailed wraps mailer errors from the auth flow so the HTTP
+// layer can distinguish "delivery failed" (502) from "anything else"
+// (500).
+var ErrMailSendFailed = errors.New("mail send failed")
+
 func (s *AuthService) GetUserByID(userID int) (*models.User, error) {
 	return s.userRepo.FindUserByID(userID)
 }
@@ -288,9 +293,14 @@ func (s *AuthService) RequestPasswordReset(email string) error {
 	primaryURL = strings.TrimSpace(primaryURL)
 	link := strings.TrimRight(primaryURL, "/") + "/reset-password?token=" + rawToken
 	if err := s.mailer.SendPasswordReset(user.Email, link); err != nil {
-		// Token persisted — user can retry. Caller (HTTP handler) decides
-		// how to translate this (501 vs 502). See handlers/auth.go.
-		return err
+		// Pass ErrNotConfigured through unchanged so the handler can map it
+		// to 501. Everything else is wrapped in ErrMailSendFailed so the
+		// handler can distinguish a real delivery failure (502) from a DB
+		// or entropy error (500 fallthrough).
+		if errors.Is(err, mail.ErrNotConfigured) {
+			return err
+		}
+		return fmt.Errorf("%w: %v", ErrMailSendFailed, err)
 	}
 	return nil
 }
