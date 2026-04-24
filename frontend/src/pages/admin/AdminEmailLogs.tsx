@@ -15,8 +15,11 @@ export function AdminEmailLogs() {
   const [kind, setKind] = useState<KindFilter>('')
   const [status, setStatus] = useState<StatusFilter>('')
   const [page, setPage] = useState(0)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  const load = () => {
+  useEffect(() => {
+    let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     setError(null)
     getEmailLogs({
@@ -25,12 +28,11 @@ export function AdminEmailLogs() {
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     })
-      .then(res => setRows(res.data ?? []))
-      .catch(() => setError('Failed to load logs'))
-      .finally(() => setIsLoading(false))
-  }
-
-  useEffect(() => { load() }, [kind, status, page])
+      .then(res => { if (!cancelled) setRows(res.data ?? []) })
+      .catch(() => { if (!cancelled) setError('Failed to load logs') })
+      .finally(() => { if (!cancelled) setIsLoading(false) })
+    return () => { cancelled = true }
+  }, [kind, status, page, refreshKey])
 
   return (
     <div className="animate-fade-in space-y-5 pb-6">
@@ -45,7 +47,7 @@ export function AdminEmailLogs() {
           </p>
         </div>
         <button
-          onClick={load}
+          onClick={() => setRefreshKey(k => k + 1)}
           className="flex items-center gap-2 px-4 py-2 bg-ascb-orange/10 hover:bg-ascb-orange/20 text-ascb-orange border border-ascb-orange/30 rounded-xl text-sm font-medium transition-all font-ui"
         >
           <RefreshCw size={15} /> Refresh
@@ -96,14 +98,14 @@ export function AdminEmailLogs() {
         </div>
       ) : (
         <div className="bg-ascb-navy rounded-2xl border border-ascb-navy-mid overflow-hidden">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Email send attempts">
             <thead className="border-b border-ascb-navy-mid bg-ascb-navy-dark">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">When</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kind</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">When</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kind</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Error</th>
               </tr>
             </thead>
             <tbody>
