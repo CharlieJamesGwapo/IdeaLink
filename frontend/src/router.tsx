@@ -23,6 +23,7 @@ const AdminSuggestions   = lazy(() => import('./pages/admin/AdminSuggestions').t
 const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements').then(m => ({ default: m.AdminAnnouncements })))
 const AdminTestimonials  = lazy(() => import('./pages/admin/AdminTestimonials').then(m => ({ default: m.AdminTestimonials })))
 const AdminUsers         = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })))
+const AdminEmailLogs     = lazy(() => import('./pages/admin/AdminEmailLogs').then(m => ({ default: m.AdminEmailLogs })))
 
 const RegistrarDashboard   = lazy(() => import('./pages/registrar/RegistrarDashboard').then(m => ({ default: m.RegistrarDashboard })))
 const RegistrarSuggestions = lazy(() => import('./pages/registrar/RegistrarSuggestions').then(m => ({ default: m.RegistrarSuggestions })))
@@ -198,6 +199,7 @@ export function AppRouter() {
             <Route path="/admin/announcements"element={<AdminAnnouncements />} />
             <Route path="/admin/testimonials" element={<AdminTestimonials />} />
             <Route path="/admin/users"        element={<AdminUsers />} />
+            <Route path="/admin/email-logs"   element={<AdminEmailLogs />} />
           </Route>
         </Route>
 
