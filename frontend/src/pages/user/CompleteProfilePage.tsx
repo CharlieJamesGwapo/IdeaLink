@@ -25,6 +25,7 @@ export function CompleteProfilePage() {
         id: currentUser.id,
         education_level: (res.data as { education_level?: string | null }).education_level ?? level,
         college_department: (res.data as { college_department?: string | null }).college_department ?? (level === 'College' ? dept : null),
+        grade_level: null,
       }, role)
       toast.success('Profile updated')
       navigate('/user/submit')
