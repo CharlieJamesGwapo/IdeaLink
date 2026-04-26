@@ -40,3 +40,6 @@ var SuggestionAttachmentsSQL string
 
 //go:embed 013_email_logs.sql
 var EmailLogsSQL string
+
+//go:embed 014_user_grade_level.sql
+var UserGradeLevelSQL string

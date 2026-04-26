@@ -65,5 +65,8 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.EmailLogsSQL); err != nil {
 		log.Fatalf("failed to run email_logs migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.UserGradeLevelSQL); err != nil {
+		log.Fatalf("failed to run user_grade_level migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }
