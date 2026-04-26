@@ -5,6 +5,7 @@ export interface CurrentUser {
   id: number
   education_level: string | null
   college_department: string | null
+  grade_level: string | null
 }
 
 interface AuthContextValue {
@@ -57,20 +58,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false)
     }
 
-    timerId = setTimeout(() => finish(null, null), TIMEOUT_MS)
+    // stopLoading: end the loading state without overwriting cached auth.
+    // Used when /me fails for a transient reason (network error, 5xx, etc.)
+    // — we have no fresh signal, so the cached values stay authoritative.
+    const stopLoading = () => {
+      if (cancelled) return
+      cancelled = true
+      clearTimeout(timerId)
+      setIsLoading(false)
+    }
+
+    timerId = setTimeout(() => stopLoading(), TIMEOUT_MS)
 
     me()
       .then(res => {
         const userId = res.data?.user_id
         const roleVal = res.data?.role
         if (typeof userId === 'number' && typeof roleVal === 'string') {
-          // Only override cached education fields when the server actually
-          // includes them. A missing key (older backend, transient hiccup)
-          // must NOT null-out a known-good cached value, or the profile gate
-          // will reactivate on reload.
           const data = (res.data ?? {}) as unknown as Record<string, unknown>
           const hasEducation = 'education_level' in data
           const hasDept = 'college_department' in data
+          const hasGrade = 'grade_level' in data
           finish({
             id: userId,
             education_level: hasEducation
@@ -79,12 +87,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             college_department: hasDept
               ? (data.college_department as string | null | undefined) ?? null
               : cached?.user.college_department ?? null,
+            grade_level: hasGrade
+              ? (data.grade_level as string | null | undefined) ?? null
+              : cached?.user.grade_level ?? null,
           }, roleVal)
         } else {
+          // Server replied 200 OK but with no auth payload — treat as logged out.
           finish(null, null)
         }
       })
-      .catch(() => finish(null, null))
+      .catch((err: unknown) => {
+        // Only an explicit 401 from the server means "you are logged out."
+        // Network errors and 5xx are transient — keep the cached auth so a
+        // flaky backend doesn't kick the user out (B1 regression).
+        const status =
+          (err as { response?: { status?: number } } | null | undefined)?.response?.status
+        if (status === 401) {
+          finish(null, null)
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn('[auth] /me failed; retaining cached auth', err)
+          stopLoading()
+        }
+      })
 
     return () => { cancelled = true; clearTimeout(timerId) }
   }, [])

@@ -51,4 +51,46 @@ describe('AuthContext', () => {
     await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
     expect(screen.getByText(/EL: College/)).toBeInTheDocument()
   })
+
+  // B1 regression: only an explicit 401 should clear cached auth. Network
+  // errors and 5xx mean the server is currently unreachable, not that the
+  // user logged out — keeping the cache prevents the immediate-logout bug.
+  it('keeps cached auth when /me rejects with a network error', async () => {
+    localStorage.setItem(
+      'idealink_auth',
+      JSON.stringify({
+        user: { id: 42, education_level: 'HS', college_department: null, grade_level: '9' },
+        role: 'user',
+      }),
+    )
+    vi.mocked(authApi.me).mockRejectedValue(Object.assign(new Error('Network Error'), { request: {} }))
+    render(<AuthProvider><TestComponent /></AuthProvider>)
+    await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
+  })
+
+  it('keeps cached auth when /me rejects with a 5xx', async () => {
+    localStorage.setItem(
+      'idealink_auth',
+      JSON.stringify({
+        user: { id: 42, education_level: 'HS', college_department: null, grade_level: '9' },
+        role: 'user',
+      }),
+    )
+    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 502, data: 'Bad Gateway' } })
+    render(<AuthProvider><TestComponent /></AuthProvider>)
+    await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
+  })
+
+  it('clears cached auth when /me rejects with a 401', async () => {
+    localStorage.setItem(
+      'idealink_auth',
+      JSON.stringify({
+        user: { id: 42, education_level: 'HS', college_department: null, grade_level: '9' },
+        role: 'user',
+      }),
+    )
+    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 401 } })
+    render(<AuthProvider><TestComponent /></AuthProvider>)
+    await waitFor(() => expect(screen.getByText('Guest')).toBeInTheDocument())
+  })
 })
