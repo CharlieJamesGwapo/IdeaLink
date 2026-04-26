@@ -76,6 +76,8 @@ func main() {
 		auth.POST("/reset-password", authH.ResetPassword)
 		auth.GET("/me", middleware.AuthRequired(cfg.JWTSecret), authH.Me)
 		auth.POST("/complete-profile", middleware.AuthRequired(cfg.JWTSecret, "user"), authH.CompleteProfile)
+		auth.PATCH("/profile", middleware.AuthRequired(cfg.JWTSecret, "user"), authH.UpdateProfile)
+		auth.POST("/change-password", middleware.AuthRequired(cfg.JWTSecret, "user"), authH.ChangePassword)
 	}
 
 	api := r.Group("/api")
