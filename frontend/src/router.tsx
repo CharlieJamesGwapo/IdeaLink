@@ -17,6 +17,7 @@ const CompleteProfilePage = lazy(() => import('./pages/user/CompleteProfilePage'
 const SubmitPage         = lazy(() => import('./pages/user/SubmitPage').then(m => ({ default: m.SubmitPage })))
 const SubmissionsPage    = lazy(() => import('./pages/user/SubmissionsPage').then(m => ({ default: m.SubmissionsPage })))
 const AnnouncementsPage  = lazy(() => import('./pages/user/AnnouncementsPage').then(m => ({ default: m.AnnouncementsPage })))
+const MyAccountPage      = lazy(() => import('./pages/user/MyAccountPage').then(m => ({ default: m.MyAccountPage })))
 
 const AdminDashboard     = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const AdminSuggestions   = lazy(() => import('./pages/admin/AdminSuggestions').then(m => ({ default: m.AdminSuggestions })))
@@ -189,6 +190,7 @@ export function AppRouter() {
             <Route path="/user/submit"           element={<SubmitPage />} />
             <Route path="/user/submissions"      element={<SubmissionsPage />} />
             <Route path="/user/announcements"    element={<AnnouncementsPage />} />
+            <Route path="/user/account"          element={<MyAccountPage />} />
           </Route>
         </Route>
 
