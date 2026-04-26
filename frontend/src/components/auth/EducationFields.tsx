@@ -1,4 +1,4 @@
-import type { EducationLevel, CollegeDepartment } from '../../api/auth'
+import type { EducationLevel, CollegeDepartment, GradeLevel } from '../../api/auth'
 
 const DEPARTMENTS: { value: CollegeDepartment; label: string }[] = [
   { value: 'CCE', label: 'CCE — College of Computing Education' },
@@ -8,14 +8,33 @@ const DEPARTMENTS: { value: CollegeDepartment; label: string }[] = [
   { value: 'TVET', label: 'TVET — Technical & Vocational Education' },
 ]
 
+const HS_GRADES: GradeLevel[]  = ['7', '8', '9', '10']
+const SHS_GRADES: GradeLevel[] = ['11', '12']
+
 interface Props {
   level: EducationLevel | ''
   department: CollegeDepartment | ''
+  grade?: GradeLevel | ''
+  showGrade?: boolean
   onLevelChange: (level: EducationLevel) => void
   onDepartmentChange: (dept: CollegeDepartment | '') => void
+  onGradeChange?: (grade: GradeLevel | '') => void
 }
 
-export function EducationFields({ level, department, onLevelChange, onDepartmentChange }: Props) {
+export function EducationFields({
+  level,
+  department,
+  grade = '',
+  showGrade = false,
+  onLevelChange,
+  onDepartmentChange,
+  onGradeChange,
+}: Props) {
+  const grades =
+    level === 'HS'  ? HS_GRADES
+    : level === 'SHS' ? SHS_GRADES
+    : []
+
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
@@ -30,6 +49,7 @@ export function EducationFields({ level, department, onLevelChange, onDepartment
                 onClick={() => {
                   onLevelChange(opt)
                   if (opt !== 'College') onDepartmentChange('')
+                  if (opt === 'College' && onGradeChange) onGradeChange('')
                 }}
                 className={`h-11 rounded-xl font-ui text-sm font-semibold transition-all duration-200 border ${
                   selected
@@ -55,6 +75,22 @@ export function EducationFields({ level, department, onLevelChange, onDepartment
             <option value="">Select department…</option>
             {DEPARTMENTS.map(d => (
               <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {showGrade && grades.length > 0 && onGradeChange && (
+        <div className="space-y-1.5 animate-fade-in">
+          <label className="block text-xs font-semibold text-gray-400 font-ui">Grade Level</label>
+          <select
+            value={grade}
+            onChange={e => onGradeChange(e.target.value as GradeLevel | '')}
+            className="input-field h-11 w-full"
+          >
+            <option value="">Select grade…</option>
+            {grades.map(g => (
+              <option key={g} value={g}>Grade {g}</option>
             ))}
           </select>
         </div>
