@@ -68,3 +68,11 @@ type SuggestionAttachmentRepository interface {
 	CountBySuggestion(suggestionID int) (int, error)
 	FindBlob(attachmentID int) (*models.SuggestionAttachment, []byte, error)
 }
+
+type ServiceRepository interface {
+	ListByDepartment(department string, activeOnly bool) ([]*models.Service, error)
+	ListAll() ([]*models.Service, error)
+	FindByID(id int) (*models.Service, error)
+	Create(in models.CreateServiceInput) (*models.Service, error)
+	Update(id int, in models.UpdateServiceInput) (*models.Service, error)
+}
