@@ -43,3 +43,6 @@ var EmailLogsSQL string
 
 //go:embed 014_user_grade_level.sql
 var UserGradeLevelSQL string
+
+//go:embed 015_services.sql
+var ServicesSQL string
