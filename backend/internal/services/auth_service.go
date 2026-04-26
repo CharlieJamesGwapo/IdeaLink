@@ -259,6 +259,12 @@ var ErrPasswordTooShort = errors.New("password must be at least 6 characters")
 // (500).
 var ErrMailSendFailed = errors.New("mail send failed")
 
+// ErrInvalidCurrentPassword is returned by ChangePassword when the supplied
+// current password does not match the stored hash. This is intentionally
+// also returned when the user ID does not exist, so the handler can map both
+// to the same 401 without leaking which one happened.
+var ErrInvalidCurrentPassword = errors.New("current password is incorrect")
+
 func (s *AuthService) GetUserByID(userID int) (*models.User, error) {
 	return s.userRepo.FindUserByID(userID)
 }
@@ -354,4 +360,27 @@ func (s *AuthService) UpdateProfile(userID int, educationLevel string, collegeDe
 		return nil, err
 	}
 	return s.userRepo.FindUserByID(userID)
+}
+
+// ChangePassword swaps the user's password after verifying the current one.
+// Used by the My Account page when the user is already logged in.
+func (s *AuthService) ChangePassword(userID int, currentPassword, newPassword string) error {
+	if len(newPassword) < 6 {
+		return ErrPasswordTooShort
+	}
+	user, err := s.userRepo.FindUserByID(userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return ErrInvalidCurrentPassword
+	}
+	if !s.CheckPassword(user.Password, currentPassword) {
+		return ErrInvalidCurrentPassword
+	}
+	hashed, err := s.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+	return s.userRepo.UpdatePassword(userID, hashed)
 }

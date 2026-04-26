@@ -36,6 +36,7 @@ type mockAuthSvc struct {
 	completeResult *models.User
 	updateProfileResult *models.User
 	updateProfileErr    error
+	changePasswordErr error
 }
 
 func (m *mockAuthSvc) SignToken(userID int, role string) (string, error) {
@@ -93,6 +94,9 @@ func (m *mockAuthSvc) UpdateProfile(userID int, level string, dept *string, grad
 		return nil, m.updateProfileErr
 	}
 	return m.updateProfileResult, nil
+}
+func (m *mockAuthSvc) ChangePassword(userID int, currentPassword, newPassword string) error {
+	return m.changePasswordErr
 }
 
 func setupAuthRouter(svc services.AuthServicer) *gin.Engine {

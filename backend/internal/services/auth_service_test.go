@@ -473,3 +473,49 @@ func TestAuthService_ValidateEducation_CollegeRejectsGrade(t *testing.T) {
 }
 
 func ptr(s string) *string { return &s }
+
+// --- ChangePassword ---
+
+func TestAuthService_ChangePassword_HappyPath(t *testing.T) {
+	repo := newMockUserRepo()
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, _, err := svc.SignupUser("u@e.com", "oldpass", "U", "HS", nil)
+	require.NoError(t, err)
+
+	err = svc.ChangePassword(u.ID, "oldpass", "newpass")
+	require.NoError(t, err)
+
+	// Old password no longer works
+	_, _, loginErr := svc.LoginUser("u@e.com", "oldpass")
+	assert.EqualError(t, loginErr, "invalid credentials")
+
+	// New password works
+	_, _, loginErr = svc.LoginUser("u@e.com", "newpass")
+	assert.NoError(t, loginErr)
+}
+
+func TestAuthService_ChangePassword_WrongCurrent(t *testing.T) {
+	repo := newMockUserRepo()
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, _, err := svc.SignupUser("u@e.com", "oldpass", "U", "HS", nil)
+	require.NoError(t, err)
+
+	err = svc.ChangePassword(u.ID, "wrong-current", "newpass")
+	assert.ErrorIs(t, err, services.ErrInvalidCurrentPassword)
+}
+
+func TestAuthService_ChangePassword_TooShort(t *testing.T) {
+	repo := newMockUserRepo()
+	svc := services.NewAuthService(repo, &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	u, _, err := svc.SignupUser("u@e.com", "oldpass", "U", "HS", nil)
+	require.NoError(t, err)
+
+	err = svc.ChangePassword(u.ID, "oldpass", "12345")
+	assert.ErrorIs(t, err, services.ErrPasswordTooShort)
+}
+
+func TestAuthService_ChangePassword_UnknownUser(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	err := svc.ChangePassword(9999, "anything", "newpass")
+	assert.ErrorIs(t, err, services.ErrInvalidCurrentPassword)
+}
