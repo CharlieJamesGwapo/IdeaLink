@@ -142,5 +142,51 @@ func TestServicesHandler_AdminList_RepoError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
-// Stubs so the build compiles even though Create/Update/Delete tests live in later tasks.
-var _ = bytes.NewBufferString
+func TestServicesHandler_Create_Success(t *testing.T) {
+	repo := &mockServiceRepo{
+		createResult: sampleService(99, "New Service", true),
+	}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	body := `{"department":"Registrar Office","label":"New Service","icon_name":"BookOpen","display_order":9}`
+	req, _ := http.NewRequest("POST", "/api/admin/services", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "Registrar Office", repo.lastCreate.Department)
+	assert.Equal(t, "New Service",       repo.lastCreate.Label)
+	assert.Equal(t, "BookOpen",          repo.lastCreate.IconName)
+	assert.Equal(t, 9,                   repo.lastCreate.DisplayOrder)
+}
+
+func TestServicesHandler_Create_DuplicateLabel(t *testing.T) {
+	repo := &mockServiceRepo{createErr: repository.ErrServiceLabelConflict}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	body := `{"department":"Registrar Office","label":"Dup","icon_name":"BookOpen"}`
+	req, _ := http.NewRequest("POST", "/api/admin/services", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusConflict, w.Code)
+}
+
+func TestServicesHandler_Create_BadDepartment(t *testing.T) {
+	r := setupServicesRouter(&mockServiceRepo{})
+	w := httptest.NewRecorder()
+	body := `{"department":"Bogus","label":"x","icon_name":"BookOpen"}`
+	req, _ := http.NewRequest("POST", "/api/admin/services", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestServicesHandler_Create_LabelTooShort(t *testing.T) {
+	r := setupServicesRouter(&mockServiceRepo{})
+	w := httptest.NewRecorder()
+	body := `{"department":"Registrar Office","label":"x","icon_name":"BookOpen"}`
+	req, _ := http.NewRequest("POST", "/api/admin/services", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
