@@ -407,3 +407,57 @@ func TestAuthHandler_CompleteProfile_Invalid(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+// --- UpdateProfile handler ---
+
+func setupAuthRouterWithProfile(svc services.AuthServicer) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	h := handlers.NewAuthHandler(svc)
+	r := gin.New()
+	r.PATCH("/api/auth/profile", func(c *gin.Context) {
+		c.Set(middleware.CtxKeyUserID, 1)
+		c.Set(middleware.CtxKeyRole, services.RoleUser)
+		h.UpdateProfile(c)
+	})
+	r.POST("/api/auth/change-password", func(c *gin.Context) {
+		c.Set(middleware.CtxKeyUserID, 1)
+		c.Set(middleware.CtxKeyRole, services.RoleUser)
+		h.ChangePassword(c)
+	})
+	return r
+}
+
+func TestAuthHandler_UpdateProfile_Success(t *testing.T) {
+	level := "HS"
+	grade := "9"
+	svc := &mockAuthSvc{updateProfileResult: &models.User{ID: 1, Email: "u@e.com", EducationLevel: &level, GradeLevel: &grade}}
+	r := setupAuthRouterWithProfile(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/auth/profile", bytes.NewBufferString(`{"education_level":"HS","grade_level":"9"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"grade_level":"9"`)
+}
+
+func TestAuthHandler_UpdateProfile_Invalid(t *testing.T) {
+	svc := &mockAuthSvc{updateProfileErr: services.ErrInvalidEducation}
+	r := setupAuthRouterWithProfile(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/auth/profile", bytes.NewBufferString(`{"education_level":"HS","grade_level":"99"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestAuthHandler_UpdateProfile_MalformedBody(t *testing.T) {
+	r := setupAuthRouterWithProfile(&mockAuthSvc{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/auth/profile", bytes.NewBufferString(`{"education_level":""}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}

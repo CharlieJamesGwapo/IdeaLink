@@ -241,3 +241,33 @@ func (h *AuthHandler) CompleteProfile(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, user)
 }
+
+type updateProfileInput struct {
+	EducationLevel    string  `json:"education_level" binding:"required"`
+	CollegeDepartment *string `json:"college_department"`
+	GradeLevel        *string `json:"grade_level"`
+}
+
+func (h *AuthHandler) UpdateProfile(c *gin.Context) {
+	var input updateProfileInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+	user, err := h.svc.UpdateProfile(userID, input.EducationLevel, input.CollegeDepartment, input.GradeLevel)
+	if err != nil {
+		if errors.Is(err, services.ErrInvalidEducation) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid education level, department, or grade"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update profile"})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (h *AuthHandler) ChangePassword(c *gin.Context) {
+	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+}
