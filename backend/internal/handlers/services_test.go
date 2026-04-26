@@ -238,3 +238,34 @@ func TestServicesHandler_Update_InvalidID(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestServicesHandler_Delete_SoftDeletes(t *testing.T) {
+	disabled := sampleService(5, "Soon-to-be-disabled", false)
+	repo := &mockServiceRepo{updateResult: disabled}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/admin/services/5", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	require.NotNil(t, repo.lastUpdate.IsActive)
+	assert.False(t, *repo.lastUpdate.IsActive, "DELETE must call Update with IsActive=false")
+	assert.Equal(t, 5, repo.lastUpdateID)
+}
+
+func TestServicesHandler_Delete_NotFound(t *testing.T) {
+	repo := &mockServiceRepo{updateResult: nil}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/admin/services/9999", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestServicesHandler_Delete_InvalidID(t *testing.T) {
+	r := setupServicesRouter(&mockServiceRepo{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("DELETE", "/api/admin/services/xyz", nil)
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
