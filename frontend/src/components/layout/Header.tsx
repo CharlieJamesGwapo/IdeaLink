@@ -138,6 +138,7 @@ export function Header() {
                   { to: '/user/submit', label: 'Submit Feedback', badge: 0 },
                   { to: '/user/submissions', label: 'My Submissions', badge: statusUnread },
                   { to: '/user/announcements', label: 'Announcements', badge: unread },
+                  { to: '/user/account', label: 'My Account', badge: 0 },
                 ].map(({ to, label, badge }) => (
                   <NavLink key={to} to={to} className={({ isActive }) =>
                     `px-4 py-2 text-sm transition-all rounded-lg font-ui relative inline-flex items-center gap-1.5 ${
@@ -215,6 +216,7 @@ export function Header() {
                   { to: '/user/submit', label: 'Submit Feedback', badge: 0 },
                   { to: '/user/submissions', label: 'My Submissions', badge: statusUnread },
                   { to: '/user/announcements', label: 'Announcements', badge: unread },
+                  { to: '/user/account', label: 'My Account', badge: 0 },
                 ].map(({ to, label, badge }) => (
                   <NavLink key={to} to={to} className={({ isActive }) =>
                     `flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg transition-colors font-ui ${
