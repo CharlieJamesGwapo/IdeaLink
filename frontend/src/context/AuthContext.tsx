@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import axios from 'axios'
 import { me } from '../api/auth'
 
 export interface CurrentUser {
@@ -100,12 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Only an explicit 401 from the server means "you are logged out."
         // Network errors and 5xx are transient — keep the cached auth so a
         // flaky backend doesn't kick the user out (B1 regression).
-        const status =
-          (err as { response?: { status?: number } } | null | undefined)?.response?.status
+        const status = axios.isAxiosError(err) ? err.response?.status : undefined
         if (status === 401) {
           finish(null, null)
         } else {
-          // eslint-disable-next-line no-console
           console.warn('[auth] /me failed; retaining cached auth', err)
           stopLoading()
         }
