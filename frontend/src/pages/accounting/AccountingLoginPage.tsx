@@ -18,7 +18,7 @@ export function AccountingLoginPage() {
     setIsLoading(true)
     try {
       const res = await accountingLogin(email, password)
-      setAuth({ id: (res.data as any).id, education_level: null, college_department: null }, 'accounting')
+      setAuth({ id: (res.data as any).id, education_level: null, college_department: null, grade_level: null }, 'accounting')
       toast.success('Welcome, Finance Office!')
       navigate('/accounting/suggestions')
     } catch (err: any) {

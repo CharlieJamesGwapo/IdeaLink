@@ -26,6 +26,7 @@ export function StudentLoginPage() {
         id: (res.data as any).id,
         education_level: (res.data as any).education_level ?? null,
         college_department: (res.data as any).college_department ?? null,
+        grade_level: null,
       }, 'user')
       toast.success('Welcome back!')
       navigate('/user/submit')

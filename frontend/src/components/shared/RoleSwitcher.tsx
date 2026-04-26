@@ -77,6 +77,7 @@ export function RoleSwitcher() {
         id: (res.data as any).id,
         education_level: (res.data as any).education_level ?? null,
         college_department: (res.data as any).college_department ?? null,
+        grade_level: null,
       }, target.id)
       toast.success(`Switched to ${target.label}`, {
         description: `Now viewing as ${target.label} Portal`,

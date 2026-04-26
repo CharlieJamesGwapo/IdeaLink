@@ -19,7 +19,7 @@ export function AdminLoginPage() {
     setIsLoading(true)
     try {
       const res = await adminLogin(email, password)
-      setAuth({ id: res.data.id, education_level: null, college_department: null }, 'admin')
+      setAuth({ id: res.data.id, education_level: null, college_department: null, grade_level: null }, 'admin')
       toast.success('Welcome, Admin!')
       navigate('/admin/dashboard')
     } catch (err) {

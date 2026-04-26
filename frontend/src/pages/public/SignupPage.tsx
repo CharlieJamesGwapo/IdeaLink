@@ -61,6 +61,7 @@ export function SignupPage() {
         id: res.data.id,
         education_level: (res.data as { education_level?: string | null }).education_level ?? educationLevel,
         college_department: (res.data as { college_department?: string | null }).college_department ?? (educationLevel === 'College' ? collegeDepartment : null),
+        grade_level: null,
       }, 'user')
       toast.success('Account created! Welcome to IdeaLink.')
       navigate('/user/submit')
