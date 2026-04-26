@@ -105,7 +105,7 @@ func (s *AuthService) CheckPassword(hash, password string) bool {
 }
 
 func (s *AuthService) SignupUser(email, password, fullname, educationLevel string, collegeDepartment *string) (*models.User, string, error) {
-	if err := validateEducation(educationLevel, collegeDepartment); err != nil {
+	if err := validateEducation(educationLevel, collegeDepartment, nil); err != nil {
 		return nil, "", err
 	}
 	existing, err := s.userRepo.FindUserByEmail(email)
@@ -203,24 +203,40 @@ var allowedEducationLevels = map[string]bool{"HS": true, "SHS": true, "College":
 var allowedCollegeDepartments = map[string]bool{
 	"CCE": true, "CTE": true, "CABE": true, "CCJE": true, "TVET": true,
 }
+var allowedHSGrades = map[string]bool{"7": true, "8": true, "9": true, "10": true}
+var allowedSHSGrades = map[string]bool{"11": true, "12": true}
 
-// ErrInvalidEducation indicates the education_level/college_department combo is invalid.
-var ErrInvalidEducation = errors.New("invalid education level or department")
+// ErrInvalidEducation indicates the (education_level, college_department, grade_level) combo is invalid.
+var ErrInvalidEducation = errors.New("invalid education level, department, or grade")
 
 // validateEducation enforces:
-//   - education_level in {HS, SHS, College}
-//   - college_department required iff education_level == "College"
-//   - college_department must be one of the allowed codes
-func validateEducation(educationLevel string, collegeDepartment *string) error {
+//   HS:      grade_level in {7,8,9,10};   college_department MUST be nil
+//   SHS:     grade_level in {11,12};      college_department MUST be nil
+//   College: college_department in allowed set;  grade_level MUST be nil
+func validateEducation(educationLevel string, collegeDepartment *string, gradeLevel *string) error {
 	if !allowedEducationLevels[educationLevel] {
 		return ErrInvalidEducation
 	}
-	if educationLevel == "College" {
+	switch educationLevel {
+	case "College":
 		if collegeDepartment == nil || !allowedCollegeDepartments[*collegeDepartment] {
 			return ErrInvalidEducation
 		}
-	} else {
+		if gradeLevel != nil {
+			return ErrInvalidEducation
+		}
+	case "HS":
 		if collegeDepartment != nil {
+			return ErrInvalidEducation
+		}
+		if gradeLevel != nil && !allowedHSGrades[*gradeLevel] {
+			return ErrInvalidEducation
+		}
+	case "SHS":
+		if collegeDepartment != nil {
+			return ErrInvalidEducation
+		}
+		if gradeLevel != nil && !allowedSHSGrades[*gradeLevel] {
 			return ErrInvalidEducation
 		}
 	}
@@ -248,7 +264,7 @@ func (s *AuthService) GetUserByID(userID int) (*models.User, error) {
 }
 
 func (s *AuthService) CompleteProfile(userID int, educationLevel string, collegeDepartment *string) (*models.User, error) {
-	if err := validateEducation(educationLevel, collegeDepartment); err != nil {
+	if err := validateEducation(educationLevel, collegeDepartment, nil); err != nil {
 		return nil, err
 	}
 	if err := s.userRepo.UpdateProfile(userID, educationLevel, collegeDepartment, nil); err != nil {
@@ -325,4 +341,17 @@ func (s *AuthService) ResetPassword(rawToken, newPassword string) error {
 		return err
 	}
 	return s.resetRepo.MarkUsed(rowID)
+}
+
+// UpdateProfile lets a logged-in user change their education level,
+// department, or grade. Validates the combo end-to-end and returns the
+// updated User row.
+func (s *AuthService) UpdateProfile(userID int, educationLevel string, collegeDepartment *string, gradeLevel *string) (*models.User, error) {
+	if err := validateEducation(educationLevel, collegeDepartment, gradeLevel); err != nil {
+		return nil, err
+	}
+	if err := s.userRepo.UpdateProfile(userID, educationLevel, collegeDepartment, gradeLevel); err != nil {
+		return nil, err
+	}
+	return s.userRepo.FindUserByID(userID)
 }

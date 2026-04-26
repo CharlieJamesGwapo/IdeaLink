@@ -19,6 +19,7 @@ type AuthServicer interface {
 	RequestPasswordReset(email string) error
 	ResetPassword(rawToken, newPassword string) error
 	CompleteProfile(userID int, educationLevel string, collegeDepartment *string) (*models.User, error)
+	UpdateProfile(userID int, educationLevel string, collegeDepartment *string, gradeLevel *string) (*models.User, error)
 }
 
 // Mailer is the minimal interface the auth and provisioning services need

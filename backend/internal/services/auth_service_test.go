@@ -450,3 +450,26 @@ func TestAuthService_CompleteProfile_ValidatesAndPersists(t *testing.T) {
 	_, err = svc.CompleteProfile(u.ID, "Bogus", nil)
 	assert.ErrorIs(t, err, services.ErrInvalidEducation)
 }
+
+// --- grade_level validation ---
+
+func TestAuthService_ValidateEducation_HSRequiresJuniorGrade(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, err := svc.UpdateProfile(1, "HS", nil, ptr("11"))
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func TestAuthService_ValidateEducation_SHSRequiresSeniorGrade(t *testing.T) {
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, err := svc.UpdateProfile(1, "SHS", nil, ptr("9"))
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func TestAuthService_ValidateEducation_CollegeRejectsGrade(t *testing.T) {
+	dept := "CCE"
+	svc := services.NewAuthService(newMockUserRepo(), &mockResetRepo{}, &mockMailer{}, "s", "https://f")
+	_, err := svc.UpdateProfile(1, "College", &dept, ptr("12"))
+	assert.ErrorIs(t, err, services.ErrInvalidEducation)
+}
+
+func ptr(s string) *string { return &s }

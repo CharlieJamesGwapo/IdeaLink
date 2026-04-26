@@ -94,7 +94,7 @@ func (s *UserProvisioningService) ProvisionOne(input ProvisionInput) (ProvisionR
 		return res, nil
 	}
 
-	if err := validateEducation(input.EducationLevel, input.CollegeDepartment); err != nil {
+	if err := validateEducation(input.EducationLevel, input.CollegeDepartment, nil); err != nil {
 		res.Status = "error"
 		res.Error = "invalid education level/department"
 		return res, nil
