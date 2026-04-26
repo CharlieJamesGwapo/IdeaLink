@@ -24,3 +24,6 @@ Thumbs.db
 
 # Claude Code session state
 .claude/
+
+# Superpowers brainstorm artifacts (mockups, server state)
+.superpowers/
