@@ -11,7 +11,7 @@ type UserRepository interface {
 	FindUserByEmail(email string) (*models.User, error)
 	FindUserByID(id int) (*models.User, error)
 	UpdatePassword(userID int, hashedPassword string) error
-	UpdateEducation(userID int, educationLevel string, collegeDepartment *string) error
+	UpdateProfile(userID int, educationLevel string, collegeDepartment *string, gradeLevel *string) error
 	FindAdminByEmail(email string) (*models.AdminAccount, error)
 	FindRegistrarByEmail(email string) (*models.RegistrarAccount, error)
 	FindAccountingByEmail(email string) (*models.AccountingAccount, error)

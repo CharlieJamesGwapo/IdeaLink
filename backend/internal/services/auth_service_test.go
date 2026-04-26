@@ -95,11 +95,12 @@ func (m *mockUserRepo) UpdatePassword(userID int, hashedPassword string) error {
 	}
 	return nil
 }
-func (m *mockUserRepo) UpdateEducation(userID int, level string, dept *string) error {
+func (m *mockUserRepo) UpdateProfile(userID int, level string, dept *string, grade *string) error {
 	for _, u := range m.users {
 		if u.ID == userID {
 			u.EducationLevel = &level
 			u.CollegeDepartment = dept
+			u.GradeLevel = grade
 			return nil
 		}
 	}

@@ -251,7 +251,7 @@ func (s *AuthService) CompleteProfile(userID int, educationLevel string, college
 	if err := validateEducation(educationLevel, collegeDepartment); err != nil {
 		return nil, err
 	}
-	if err := s.userRepo.UpdateEducation(userID, educationLevel, collegeDepartment); err != nil {
+	if err := s.userRepo.UpdateProfile(userID, educationLevel, collegeDepartment, nil); err != nil {
 		return nil, err
 	}
 	return s.userRepo.FindUserByID(userID)
