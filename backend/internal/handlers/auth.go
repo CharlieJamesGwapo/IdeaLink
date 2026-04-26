@@ -268,6 +268,30 @@ func (h *AuthHandler) UpdateProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+type changePasswordInput struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required,min=6"`
+}
+
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"error": "not implemented"})
+	var input changePasswordInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+	err := h.svc.ChangePassword(userID, input.CurrentPassword, input.NewPassword)
+	if err != nil {
+		switch {
+		case errors.Is(err, services.ErrInvalidCurrentPassword):
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "current password is incorrect"})
+		case errors.Is(err, services.ErrPasswordTooShort):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 6 characters"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not change password"})
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Password updated"})
 }

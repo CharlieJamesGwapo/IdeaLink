@@ -461,3 +461,48 @@ func TestAuthHandler_UpdateProfile_MalformedBody(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+// --- ChangePassword handler ---
+
+func TestAuthHandler_ChangePassword_Success(t *testing.T) {
+	r := setupAuthRouterWithProfile(&mockAuthSvc{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/change-password", bytes.NewBufferString(`{"current_password":"old","new_password":"newpass"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "Password updated")
+}
+
+func TestAuthHandler_ChangePassword_WrongCurrent(t *testing.T) {
+	svc := &mockAuthSvc{changePasswordErr: services.ErrInvalidCurrentPassword}
+	r := setupAuthRouterWithProfile(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/change-password", bytes.NewBufferString(`{"current_password":"wrong","new_password":"newpass"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestAuthHandler_ChangePassword_TooShort(t *testing.T) {
+	svc := &mockAuthSvc{changePasswordErr: services.ErrPasswordTooShort}
+	r := setupAuthRouterWithProfile(svc)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/change-password", bytes.NewBufferString(`{"current_password":"old","new_password":"short"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestAuthHandler_ChangePassword_MissingFields(t *testing.T) {
+	r := setupAuthRouterWithProfile(&mockAuthSvc{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/auth/change-password", bytes.NewBufferString(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
