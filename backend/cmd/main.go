@@ -30,6 +30,7 @@ func main() {
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
 	attachmentRepo := repository.NewSuggestionAttachmentRepo(db)
 	emailLogRepo := repository.NewEmailLogRepo(db)
+	serviceRepo := repository.NewServiceRepo(db)
 
 	// Services
 	rawMailer := mail.NewSender(mail.Config{
@@ -56,6 +57,7 @@ func main() {
 	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
 	usersH := handlers.NewUsersHandler(provisioningSvc)
 	adminEmailLogsH := handlers.NewAdminEmailLogsHandler(emailLogRepo)
+	servicesH := handlers.NewServicesHandler(serviceRepo)
 
 	// Router
 	r := gin.Default()
@@ -97,6 +99,10 @@ func main() {
 			admin.POST("/suggestions/:id/feature", suggestionH.Feature)
 			admin.GET("/admin/analytics", adminH.Analytics)
 			admin.GET("/admin/email-logs", adminEmailLogsH.List)
+			admin.GET("/admin/services", servicesH.AdminList)
+			admin.POST("/admin/services", servicesH.Create)
+			admin.PATCH("/admin/services/:id", servicesH.Update)
+			admin.DELETE("/admin/services/:id", servicesH.Delete)
 		}
 
 		// Admin + Registrar can provision student accounts
@@ -125,6 +131,7 @@ func main() {
 			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)
 			authenticated.GET("/announcements/unread-count", announcementH.UnreadCount)
 			authenticated.POST("/announcements/mark-seen", announcementH.MarkSeen)
+			authenticated.GET("/services", servicesH.List)
 		}
 
 		// Admin + staff analytics
