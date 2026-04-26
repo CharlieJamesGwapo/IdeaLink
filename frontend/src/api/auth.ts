@@ -8,6 +8,7 @@ export interface MeResponse {
   role: string
   education_level?: string | null
   college_department?: string | null
+  grade_level?: string | null
 }
 
 export const signup = (
@@ -61,4 +62,23 @@ export const completeProfile = (
   client.post('/api/auth/complete-profile', {
     education_level: educationLevel,
     college_department: collegeDepartment,
+  })
+
+export type GradeLevel = '7' | '8' | '9' | '10' | '11' | '12'
+
+export const updateProfile = (
+  educationLevel: EducationLevel,
+  collegeDepartment: CollegeDepartment | null,
+  gradeLevel: GradeLevel | null,
+) =>
+  client.patch('/api/auth/profile', {
+    education_level: educationLevel,
+    college_department: collegeDepartment,
+    grade_level: gradeLevel,
+  })
+
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  client.post('/api/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
   })
