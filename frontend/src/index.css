@@ -144,6 +144,13 @@ body {
 .input-field::placeholder {
   color: rgba(156, 163, 175, 0.5);
 }
+/* Native <select> options render with the OS panel — translucent backgrounds
+   render as white-on-white in dark mode. Force a solid dark background and
+   white text so every option is readable, not just the hovered one. */
+.input-field option {
+  background-color: #0d1f3c;
+  color: #ffffff;
+}
 
 /* Stat card */
 .stat-card {
