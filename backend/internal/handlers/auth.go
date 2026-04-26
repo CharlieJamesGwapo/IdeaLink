@@ -160,6 +160,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		}
 		resp["education_level"] = user.EducationLevel
 		resp["college_department"] = user.CollegeDepartment
+		resp["grade_level"] = user.GradeLevel
 	}
 	c.JSON(http.StatusOK, resp)
 }
