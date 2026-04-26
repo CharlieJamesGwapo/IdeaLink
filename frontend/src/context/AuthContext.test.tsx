@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
+import axios from 'axios'
 import { AuthProvider, useAuthContext } from './AuthContext'
 import * as authApi from '../api/auth'
 
@@ -19,7 +20,9 @@ describe('AuthContext', () => {
   })
 
   it('shows Guest when /me returns 401', async () => {
-    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 401 } })
+    const err = new axios.AxiosError('Unauthorized')
+    err.response = { status: 401, data: null, headers: {}, config: {} as any }
+    vi.mocked(authApi.me).mockRejectedValue(err)
     render(<AuthProvider><TestComponent /></AuthProvider>)
     await waitFor(() => expect(screen.getByText('Guest')).toBeInTheDocument())
   })
@@ -63,7 +66,9 @@ describe('AuthContext', () => {
         role: 'user',
       }),
     )
-    vi.mocked(authApi.me).mockRejectedValue(Object.assign(new Error('Network Error'), { request: {} }))
+    const err = new axios.AxiosError('Network Error')
+    err.request = {}
+    vi.mocked(authApi.me).mockRejectedValue(err)
     render(<AuthProvider><TestComponent /></AuthProvider>)
     await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
   })
@@ -76,7 +81,9 @@ describe('AuthContext', () => {
         role: 'user',
       }),
     )
-    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 502, data: 'Bad Gateway' } })
+    const err = new axios.AxiosError('Bad Gateway')
+    err.response = { status: 502, data: 'Bad Gateway', headers: {}, config: {} as any }
+    vi.mocked(authApi.me).mockRejectedValue(err)
     render(<AuthProvider><TestComponent /></AuthProvider>)
     await waitFor(() => expect(screen.getByText(/Role: user/)).toBeInTheDocument())
   })
@@ -89,7 +96,9 @@ describe('AuthContext', () => {
         role: 'user',
       }),
     )
-    vi.mocked(authApi.me).mockRejectedValue({ response: { status: 401 } })
+    const err = new axios.AxiosError('Unauthorized')
+    err.response = { status: 401, data: null, headers: {}, config: {} as any }
+    vi.mocked(authApi.me).mockRejectedValue(err)
     render(<AuthProvider><TestComponent /></AuthProvider>)
     await waitFor(() => expect(screen.getByText('Guest')).toBeInTheDocument())
   })
