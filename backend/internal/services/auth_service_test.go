@@ -428,6 +428,13 @@ func TestAuthService_ResetPassword_ValidFlow(t *testing.T) {
 	err = svc.ResetPassword(rawToken, "newpass123")
 	require.NoError(t, err)
 	assert.Equal(t, []int{7}, resetRepo.used)
+
+	// Verify the new password actually authenticates.
+	_, _, loginErr := svc.LoginUser("u@e.com", "newpass123")
+	assert.NoError(t, loginErr)
+	// Old password no longer works.
+	_, _, loginErr = svc.LoginUser("u@e.com", "pass123")
+	assert.EqualError(t, loginErr, "invalid credentials")
 }
 
 // --- Complete profile ---
