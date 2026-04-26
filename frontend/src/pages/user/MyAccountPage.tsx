@@ -31,7 +31,9 @@ export function MyAccountPage() {
   const [current, setCurrent]   = useState('')
   const [newPw, setNewPw]       = useState('')
   const [confirm, setConfirm]   = useState('')
-  const [showPw, setShowPw]     = useState(false)
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew]         = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [savingPw, setSavingPw] = useState(false)
 
   // Hydrate fullname/email by re-reading /me (which the backend already populates).
@@ -41,13 +43,13 @@ export function MyAccountPage() {
     me()
       .then(res => {
         if (cancelled) return
-        const d = res.data as Record<string, unknown>
+        const d = res.data
         setProfile({
-          fullname: (d.fullname as string) ?? '',
-          email: (d.email as string) ?? '',
-          educationLevel: (d.education_level as EducationLevel) ?? '',
-          collegeDepartment: (d.college_department as CollegeDepartment) ?? '',
-          gradeLevel: (d.grade_level as GradeLevel) ?? '',
+          fullname: d.fullname ?? '',
+          email: d.email ?? '',
+          educationLevel: (d.education_level as EducationLevel | undefined) ?? '',
+          collegeDepartment: (d.college_department as CollegeDepartment | undefined) ?? '',
+          gradeLevel: (d.grade_level as GradeLevel | undefined) ?? '',
         })
       })
       .catch(() => { if (!cancelled) toast.error('Could not load your account.') })
@@ -91,6 +93,7 @@ export function MyAccountPage() {
 
   const onChangePw = async (e: FormEvent) => {
     e.preventDefault()
+    if (!current) { toast.error('Enter your current password'); return }
     if (newPw.length < 6) { toast.error('New password must be at least 6 characters'); return }
     if (newPw !== confirm) { toast.error('New password and confirmation do not match'); return }
     setSavingPw(true)
@@ -99,10 +102,11 @@ export function MyAccountPage() {
       toast.success('Password updated')
       setCurrent(''); setNewPw(''); setConfirm('')
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
+      const isAxios = axios.isAxiosError(err)
+      if (isAxios && err.response?.status === 401) {
         toast.error('Current password is incorrect')
       } else {
-        toast.error(axios.isAxiosError(err) ? (err.response?.data?.error ?? 'Could not change password') : 'Something went wrong')
+        toast.error(isAxios ? (err.response?.data?.error ?? 'Could not change password') : 'Something went wrong')
       }
     } finally {
       setSavingPw(false)
@@ -179,14 +183,14 @@ export function MyAccountPage() {
             <div className="relative">
               <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
               <input
-                type={showPw ? 'text' : 'password'}
+                type={showCurrent ? 'text' : 'password'}
                 value={current}
                 onChange={e => setCurrent(e.target.value)}
                 className="input-field pl-10 pr-11 h-11"
                 autoComplete="current-password"
               />
-              <button type="button" tabIndex={-1} onClick={() => setShowPw(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 p-0.5">
-                {showPw ? <Eye size={15} /> : <EyeOff size={15} />}
+              <button type="button" tabIndex={-1} onClick={() => setShowCurrent(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 p-0.5">
+                {showCurrent ? <Eye size={15} /> : <EyeOff size={15} />}
               </button>
             </div>
           </div>
@@ -196,13 +200,16 @@ export function MyAccountPage() {
             <div className="relative">
               <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
               <input
-                type={showPw ? 'text' : 'password'}
+                type={showNew ? 'text' : 'password'}
                 value={newPw}
                 onChange={e => setNewPw(e.target.value)}
                 placeholder="At least 6 characters"
-                className="input-field pl-10 h-11"
+                className="input-field pl-10 pr-11 h-11"
                 autoComplete="new-password"
               />
+              <button type="button" tabIndex={-1} onClick={() => setShowNew(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 p-0.5">
+                {showNew ? <Eye size={15} /> : <EyeOff size={15} />}
+              </button>
             </div>
           </div>
 
@@ -211,12 +218,15 @@ export function MyAccountPage() {
             <div className="relative">
               <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
               <input
-                type={showPw ? 'text' : 'password'}
+                type={showConfirm ? 'text' : 'password'}
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
-                className="input-field pl-10 h-11"
+                className="input-field pl-10 pr-11 h-11"
                 autoComplete="new-password"
               />
+              <button type="button" tabIndex={-1} onClick={() => setShowConfirm(v => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-300 p-0.5">
+                {showConfirm ? <Eye size={15} /> : <EyeOff size={15} />}
+              </button>
             </div>
           </div>
         </div>

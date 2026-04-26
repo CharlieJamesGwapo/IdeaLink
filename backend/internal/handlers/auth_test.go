@@ -267,7 +267,7 @@ func TestAuthHandler_Logout(t *testing.T) {
 func TestAuthHandler_Me(t *testing.T) {
 	level := "HS"
 	grade := "9"
-	svc := &mockAuthSvc{getUserResult: &models.User{ID: 1, EducationLevel: &level, GradeLevel: &grade}}
+	svc := &mockAuthSvc{getUserResult: &models.User{ID: 1, Fullname: "Alice Doe", Email: "alice@ascb.edu.ph", EducationLevel: &level, GradeLevel: &grade}}
 	r := setupAuthRouter(svc)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/auth/me", nil)
@@ -278,6 +278,8 @@ func TestAuthHandler_Me(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	assert.Equal(t, float64(1), resp["user_id"])
 	assert.Equal(t, services.RoleUser, resp["role"])
+	assert.Equal(t, "Alice Doe", resp["fullname"])
+	assert.Equal(t, "alice@ascb.edu.ph", resp["email"])
 	_, hasEducation := resp["education_level"]
 	assert.True(t, hasEducation, "education_level key must be present in /me response for role=user")
 	assert.Equal(t, "HS", resp["education_level"])

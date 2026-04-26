@@ -6,6 +6,8 @@ export type CollegeDepartment = 'CCE' | 'CTE' | 'CABE' | 'CCJE' | 'TVET'
 export interface MeResponse {
   user_id: number
   role: string
+  fullname?: string
+  email?: string
   education_level?: string | null
   college_department?: string | null
   grade_level?: string | null

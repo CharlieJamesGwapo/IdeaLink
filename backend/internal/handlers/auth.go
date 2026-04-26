@@ -158,6 +158,8 @@ func (h *AuthHandler) Me(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 			return
 		}
+		resp["fullname"] = user.Fullname
+		resp["email"] = user.Email
 		resp["education_level"] = user.EducationLevel
 		resp["college_department"] = user.CollegeDepartment
 		resp["grade_level"] = user.GradeLevel
