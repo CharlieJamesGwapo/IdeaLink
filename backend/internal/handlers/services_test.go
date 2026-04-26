@@ -190,3 +190,51 @@ func TestServicesHandler_Create_LabelTooShort(t *testing.T) {
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
+
+func TestServicesHandler_Update_PartialPatch(t *testing.T) {
+	repo := &mockServiceRepo{
+		updateResult: sampleService(7, "Renamed", true),
+	}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	body := `{"label":"Renamed"}`
+	req, _ := http.NewRequest("PATCH", "/api/admin/services/7", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, 7, repo.lastUpdateID)
+	require.NotNil(t, repo.lastUpdate.Label)
+	assert.Equal(t, "Renamed", *repo.lastUpdate.Label)
+	assert.Nil(t, repo.lastUpdate.Department)
+	assert.Nil(t, repo.lastUpdate.IconName)
+}
+
+func TestServicesHandler_Update_NotFound(t *testing.T) {
+	repo := &mockServiceRepo{updateResult: nil} // simulates id not in DB
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/admin/services/9999", bytes.NewBufferString(`{"label":"X new"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestServicesHandler_Update_DuplicateLabel(t *testing.T) {
+	repo := &mockServiceRepo{updateErr: repository.ErrServiceLabelConflict}
+	r := setupServicesRouter(repo)
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/admin/services/3", bytes.NewBufferString(`{"label":"existing"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusConflict, w.Code)
+}
+
+func TestServicesHandler_Update_InvalidID(t *testing.T) {
+	r := setupServicesRouter(&mockServiceRepo{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PATCH", "/api/admin/services/abc", bytes.NewBufferString(`{}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
