@@ -266,12 +266,25 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
             </div>
           </div>
 
-          {/* Attachments (loaded lazily when modal opens) */}
+          {/* Attachments (loaded lazily when modal opens). Always rendered so
+              admin/staff can confirm whether the user actually attached
+              anything — "No files attached" is informative, not noise. */}
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
+              <Paperclip size={11} /> Attachments{attachments ? ` (${attachments.length})` : ''}
+            </p>
+            {attachments === null && (
+              <p className="text-xs text-gray-500 font-ui italic">Loading…</p>
+            )}
+            {attachments && attachments.length === 0 && (
+              <p className="text-xs text-gray-500 font-ui italic px-3 py-2 rounded-lg bg-white/[0.02] border border-white/8">
+                No files attached.
+              </p>
+            )}
+          </div>
           {attachments && attachments.length > 0 && (
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
-                <Paperclip size={11} /> Attachments ({attachments.length})
-              </p>
+              {/* per-attachment list rendered below the always-on header */}
               <ul className="space-y-1.5">
                 {attachments.map(att => {
                   const url = attachmentDownloadURL(suggestion.id, att.id)

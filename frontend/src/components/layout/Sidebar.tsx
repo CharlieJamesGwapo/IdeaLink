@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare, Megaphone, Star, UserPlus, LogOut, X, Menu, Clock } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Megaphone, Star, UserPlus, LogOut, X, Menu, Clock, Layers } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import { logout } from '../../api/auth'
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/admin/suggestions',    icon: MessageSquare,   label: 'Feedback',      roles: ['admin'] },
   { to: '/admin/announcements',  icon: Megaphone,       label: 'Announcements', roles: ['admin'] },
   { to: '/admin/testimonials',   icon: Star,            label: 'Testimonials',  roles: ['admin'] },
+  { to: '/admin/services',       icon: Layers,          label: 'Services',      roles: ['admin'] },
   { to: '/admin/users',          icon: UserPlus,        label: 'Users',         roles: ['admin'] },
   { to: '/registrar/dashboard',     icon: LayoutDashboard, label: 'Dashboard',    roles: ['registrar'] },
   { to: '/registrar/suggestions',   icon: MessageSquare,   label: 'Feedback',     roles: ['registrar'] },
