@@ -28,6 +28,7 @@ func main() {
 	announcementRepo := repository.NewAnnouncementRepo(db)
 	testimonialRepo := repository.NewTestimonialRepo(db)
 	officeHoursRepo := repository.NewOfficeHoursRepo(db)
+	officeHoursClosuresRepo := repository.NewOfficeHoursClosuresRepo(db)
 	attachmentRepo := repository.NewSuggestionAttachmentRepo(db)
 	emailLogRepo := repository.NewEmailLogRepo(db)
 	serviceRepo := repository.NewServiceRepo(db)
@@ -53,7 +54,7 @@ func main() {
 	testimonialH := handlers.NewTestimonialHandler(testimonialSvc)
 	suggestionH := handlers.NewSuggestionHandler(suggestionSvc, attachmentRepo)
 	adminH := handlers.NewAdminHandler(suggestionRepo, userRepo)
-	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo)
+	officeHoursH := handlers.NewOfficeHoursHandler(officeHoursRepo, officeHoursClosuresRepo)
 	notificationsH := handlers.NewNotificationsHandler(suggestionRepo)
 	usersH := handlers.NewUsersHandler(provisioningSvc)
 	adminEmailLogsH := handlers.NewAdminEmailLogsHandler(emailLogRepo)
@@ -146,7 +147,10 @@ func main() {
 			staff.PATCH("/suggestions/:id/status", suggestionH.UpdateStatus)
 			staff.POST("/suggestions/:id/read", suggestionH.MarkReviewed)
 			staff.DELETE("/suggestions/:id", suggestionH.Delete)
-			staff.POST("/office-hours/:dept", officeHoursH.Set)
+			staff.PUT("/office-hours/:dept/schedule",        officeHoursH.PutSchedule)
+			staff.GET("/office-hours/:dept/closures",        officeHoursH.ListClosures)
+			staff.POST("/office-hours/:dept/closures",       officeHoursH.CreateClosure)
+			staff.DELETE("/office-hours/:dept/closures/:id", officeHoursH.CancelClosure)
 		}
 	}
 
