@@ -26,6 +26,10 @@
 html {
   scroll-behavior: smooth;
   font-family: var(--font-ui);
+  /* Tells the browser to render native controls (select dropdowns, scrollbars,
+     date pickers) in dark mode. Without this, Chrome on Windows ignores
+     <option> color rules and renders the dropdown panel with white-on-white. */
+  color-scheme: dark;
 }
 
 body {
