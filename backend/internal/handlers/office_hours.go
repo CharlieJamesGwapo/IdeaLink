@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -12,106 +15,205 @@ import (
 )
 
 type OfficeHoursHandler struct {
-	repo repository.OfficeHoursRepository
+	hoursRepo    repository.OfficeHoursRepository
+	closuresRepo repository.OfficeHoursClosuresRepository
 }
 
-func NewOfficeHoursHandler(repo repository.OfficeHoursRepository) *OfficeHoursHandler {
-	return &OfficeHoursHandler{repo: repo}
+func NewOfficeHoursHandler(hours repository.OfficeHoursRepository, closures repository.OfficeHoursClosuresRepository) *OfficeHoursHandler {
+	return &OfficeHoursHandler{hoursRepo: hours, closuresRepo: closures}
 }
 
-// GET /api/office-hours/:dept — public. is_open is computed from the
-// department's weekday schedule and any temporary closure override.
+// GET /api/office-hours/:dept — public read.
 func (h *OfficeHoursHandler) Get(c *gin.Context) {
 	dept := c.Param("dept")
-	oh, err := h.repo.GetByDepartment(dept)
+	oh, err := h.hoursRepo.GetByDepartment(dept)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	if oh == nil {
-		// No row yet — fall back to defaults.
-		defaults := &models.OfficeHours{
-			Department: dept,
-			OpenHour:   8,
-			CloseHour:  17,
+		// Auto-provision the parent row + default schedule on first read.
+		var ensureErr error
+		oh, ensureErr = h.hoursRepo.EnsureRow(dept)
+		if ensureErr != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": ensureErr.Error()})
+			return
 		}
-		c.JSON(http.StatusOK, buildStatus(defaults))
+	}
+	now := time.Now().In(manilaLocation())
+	status, err := h.buildPayload(oh, now)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, buildStatus(oh))
+	c.JSON(http.StatusOK, status)
 }
 
-// POST /api/office-hours/:dept — staff/admin only. Partial update.
-func (h *OfficeHoursHandler) Set(c *gin.Context) {
+// PUT /api/office-hours/:dept/schedule — staff. Replaces the 7-day schedule.
+func (h *OfficeHoursHandler) PutSchedule(c *gin.Context) {
 	dept := c.Param("dept")
-	roleVal, _ := c.Get(middleware.CtxKeyRole)
-	roleStr, _ := roleVal.(string)
-
-	if roleStr == "registrar" && dept != "Registrar Office" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "registrar can only update Registrar Office hours"})
-		return
-	}
-	if roleStr == "accounting" && dept != "Finance Office" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "accounting can only update Finance Office hours"})
+	if !authorizeDept(c, dept) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "cross-office edit is not allowed"})
 		return
 	}
 
-	var input models.SetOfficeHoursInput
+	var input models.PutScheduleInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if input.OpenHour != nil && input.CloseHour != nil && *input.OpenHour >= *input.CloseHour {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "open_hour must be earlier than close_hour"})
-		return
-	}
-
-	oh, err := h.repo.Update(dept, input)
-	if err != nil {
+	if err := validateSchedule(input.Schedule); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, buildStatus(oh))
+
+	oh, err := h.hoursRepo.EnsureRow(dept)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.hoursRepo.ReplaceSchedule(oh.ID, input.Schedule); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// Re-fetch to pick up the new updated_at.
+	oh, _ = h.hoursRepo.GetByDepartment(dept)
+	now := time.Now().In(manilaLocation())
+	status, err := h.buildPayload(oh, now)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, status)
 }
 
-// buildStatus applies the automatic open/closed decision.
-//
-// Precedence:
-//  1. Temporary closure (closed_until still in the future) → CLOSED.
-//  2. Weekday schedule (Mon–Fri, open_hour <= hour < close_hour, Asia/Manila) → OPEN.
-//  3. Otherwise → CLOSED.
-func buildStatus(oh *models.OfficeHours) models.OfficeHoursStatus {
-	now := time.Now().In(manilaLocation())
-	// If a temporary closure is active, honor it.
-	if oh.ClosedUntil != nil && oh.ClosedUntil.After(now) {
-		return models.OfficeHoursStatus{
-			Department:    oh.Department,
-			OpenHour:      oh.OpenHour,
-			CloseHour:     oh.CloseHour,
-			IsOpen:        false,
-			ClosureReason: oh.ClosureReason,
-			ClosedUntil:   oh.ClosedUntil,
-			UpdatedAt:     oh.UpdatedAt,
+// validateSchedule enforces: exactly 7 entries, weekdays 0..6 each once,
+// hours in range, open<close when not closed.
+func validateSchedule(s []models.DaySchedule) error {
+	if len(s) != 7 {
+		return errors.New("schedule must contain exactly 7 entries")
+	}
+	seen := make(map[int]bool, 7)
+	for _, d := range s {
+		if d.Weekday < 0 || d.Weekday > 6 {
+			return fmt.Errorf("weekday must be 0..6 (got %d)", d.Weekday)
+		}
+		if seen[d.Weekday] {
+			return fmt.Errorf("duplicate weekday %d", d.Weekday)
+		}
+		seen[d.Weekday] = true
+		if d.IsClosed {
+			continue
+		}
+		if d.OpenHour < 0 || d.OpenHour > 23 {
+			return fmt.Errorf("open_hour out of range on weekday %d", d.Weekday)
+		}
+		if d.CloseHour < 1 || d.CloseHour > 24 {
+			return fmt.Errorf("close_hour out of range on weekday %d", d.Weekday)
+		}
+		if d.OpenHour >= d.CloseHour {
+			return fmt.Errorf("open_hour must be earlier than close_hour on weekday %d", d.Weekday)
 		}
 	}
-	// Closure has expired — don't surface stale ClosureReason/ClosedUntil.
-	return models.OfficeHoursStatus{
-		Department: oh.Department,
-		OpenHour:   oh.OpenHour,
-		CloseHour:  oh.CloseHour,
-		IsOpen:     isOnSchedule(now, oh.OpenHour, oh.CloseHour),
-		UpdatedAt:  oh.UpdatedAt,
+	for i := 0; i < 7; i++ {
+		if !seen[i] {
+			return fmt.Errorf("missing weekday %d", i)
+		}
 	}
+	return nil
 }
 
-// isOnSchedule reports whether `now` falls inside the weekday hours window.
-func isOnSchedule(now time.Time, openHour, closeHour int) bool {
-	wd := now.Weekday()
-	if wd == time.Saturday || wd == time.Sunday {
-		return false
+// buildPayload assembles the OfficeHoursStatus response.
+func (h *OfficeHoursHandler) buildPayload(oh *models.OfficeHours, now time.Time) (models.OfficeHoursStatus, error) {
+	schedule, err := h.hoursRepo.GetSchedule(oh.ID)
+	if err != nil {
+		return models.OfficeHoursStatus{}, err
+	}
+	active, err := h.closuresRepo.GetActive(oh.ID, now)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return models.OfficeHoursStatus{}, err
+	}
+	upcoming, err := h.closuresRepo.GetUpcoming(oh.ID, now)
+	if err != nil {
+		return models.OfficeHoursStatus{}, err
+	}
+	status := computeStatus(now, schedule, active)
+	status.Department = oh.Department
+	status.Schedule = schedule
+	status.ActiveClosure = active
+	status.UpcomingClosures = upcoming
+	status.UpdatedAt = oh.UpdatedAt
+	return status, nil
+}
+
+// computeStatus is pure: given the clock, the schedule, and any active
+// closure, it returns is_open + a human status_message. Tested in
+// office_hours_test.go.
+//
+// Precedence:
+//  1. Active closure  → CLOSED (reason or "Temporarily closed").
+//  2. Today is closed → CLOSED ("Office is closed today").
+//  3. open_hour <= now.Hour() < close_hour → OPEN.
+//  4. Otherwise       → CLOSED ("Outside office hours").
+func computeStatus(now time.Time, schedule []models.DaySchedule, active *models.Closure) models.OfficeHoursStatus {
+	if active != nil {
+		msg := "Temporarily closed"
+		if active.Reason != nil && *active.Reason != "" {
+			msg = "Closed: " + *active.Reason
+		}
+		return models.OfficeHoursStatus{IsOpen: false, StatusMessage: msg}
+	}
+	wd := int(now.Weekday()) // 0=Sun..6=Sat — matches our schema.
+	var today *models.DaySchedule
+	for i := range schedule {
+		if schedule[i].Weekday == wd {
+			today = &schedule[i]
+			break
+		}
+	}
+	if today == nil {
+		return models.OfficeHoursStatus{IsOpen: false, StatusMessage: "No schedule configured"}
+	}
+	if today.IsClosed {
+		return models.OfficeHoursStatus{IsOpen: false, StatusMessage: "Office is closed today"}
 	}
 	h := now.Hour()
-	return h >= openHour && h < closeHour
+	if h >= today.OpenHour && h < today.CloseHour {
+		return models.OfficeHoursStatus{
+			IsOpen:        true,
+			StatusMessage: fmt.Sprintf("Open today, %s – %s", formatHour(today.OpenHour), formatHour(today.CloseHour)),
+		}
+	}
+	return models.OfficeHoursStatus{IsOpen: false, StatusMessage: "Outside office hours"}
+}
+
+// authorizeDept checks role-vs-dept (registrar role can only edit Registrar
+// Office, accounting role can only edit Finance Office). Admins pass through.
+func authorizeDept(c *gin.Context, dept string) bool {
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	role, _ := roleVal.(string)
+	if role == "registrar" && dept != "Registrar Office" {
+		return false
+	}
+	if role == "accounting" && dept != "Finance Office" {
+		return false
+	}
+	return true
+}
+
+func formatHour(h int) string {
+	if h == 0 || h == 24 {
+		return "12:00 AM"
+	}
+	suffix := "AM"
+	if h >= 12 {
+		suffix = "PM"
+	}
+	display := h % 12
+	if display == 0 {
+		display = 12
+	}
+	return fmt.Sprintf("%d:00 %s", display, suffix)
 }
 
 func manilaLocation() *time.Location {
