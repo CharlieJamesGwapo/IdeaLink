@@ -3,38 +3,18 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   Send, Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft, Plus,
-  FileText, Award, BookOpen, Shield, CreditCard, Shuffle, HelpCircle,
-  DollarSign, GraduationCap, Receipt, RotateCcw, AlertTriangle, Check,
-  Building2, Calculator, Star, Paperclip, X as XIcon,
+  Check, BookOpen, Building2, Calculator, Star, Paperclip, X as XIcon,
 } from 'lucide-react'
 import { submitSuggestion, getWeeklyUsage, uploadSuggestionAttachment, type WeeklyUsage } from '../../api/suggestions'
+import { listServices, type Service } from '../../api/services'
+import { ServiceIcon } from '../../lib/serviceIcons'
 import { Button } from '../../components/ui/Button'
 import { OfficeHoursBanner } from '../../components/shared/OfficeHoursBanner'
 import axios from 'axios'
 
-// ── Service category definitions ─────────────────────────────────────────────
-
-const REGISTRAR_SERVICES: { label: string; icon: React.ReactNode }[] = [
-  { label: 'Enrollment / Registration',  icon: <BookOpen size={16} /> },
-  { label: 'Transcript of Records (TOR)', icon: <FileText size={16} /> },
-  { label: 'Certificate of Enrollment',  icon: <Award size={16} /> },
-  { label: 'Good Moral Certificate',     icon: <Shield size={16} /> },
-  { label: 'Diploma & Authentication',   icon: <Award size={16} /> },
-  { label: 'ID Issuance',               icon: <CreditCard size={16} /> },
-  { label: 'Shifting / Cross-enrollment', icon: <Shuffle size={16} /> },
-  { label: 'Other Registrar Concern',    icon: <HelpCircle size={16} /> },
-]
-
-const ACCOUNTING_SERVICES: { label: string; icon: React.ReactNode }[] = [
-  { label: 'Tuition Fee Payment',        icon: <DollarSign size={16} /> },
-  { label: 'Scholarship / Financial Aid', icon: <GraduationCap size={16} /> },
-  { label: 'Fee Assessment',             icon: <Receipt size={16} /> },
-  { label: 'Clearance Processing',       icon: <CheckCircle2 size={16} /> },
-  { label: 'Refund Request',             icon: <RotateCcw size={16} /> },
-  { label: 'Receipt Re-issuance',        icon: <FileText size={16} /> },
-  { label: 'Billing Dispute',            icon: <AlertTriangle size={16} /> },
-  { label: 'Other Accounting Concern',   icon: <HelpCircle size={16} /> },
-]
+// Service categories are loaded from /api/services?department=… so the admin
+// Services page is the single source of truth — adding a service in the admin
+// catalog instantly makes it pickable here on the user submission form.
 
 // ── Step progress bar ─────────────────────────────────────────────────────────
 
@@ -93,7 +73,24 @@ export function SubmitPage() {
   const fetchUsage = () => getWeeklyUsage().then(res => setUsage(res.data)).catch(() => {})
   useEffect(() => { fetchUsage() }, [])
 
-  const services = department === 'Registrar Office' ? REGISTRAR_SERVICES : ACCOUNTING_SERVICES
+  // Service catalog for the chosen department, loaded fresh whenever the
+  // user picks a department. The list reflects whatever the admin has
+  // configured at /admin/services.
+  const [services, setServices] = useState<Service[]>([])
+  const [servicesLoading, setServicesLoading] = useState(false)
+  useEffect(() => {
+    if (department !== 'Registrar Office' && department !== 'Finance Office') {
+      setServices([])
+      return
+    }
+    let cancelled = false
+    setServicesLoading(true)
+    listServices(department)
+      .then(res => { if (!cancelled) setServices(res.data) })
+      .catch(() => { if (!cancelled) toast.error('Could not load services') })
+      .finally(() => { if (!cancelled) setServicesLoading(false) })
+    return () => { cancelled = true }
+  }, [department])
 
   const goTo = (next: 1 | 2 | 3, dir: 'forward' | 'backward') => {
     setDirection(dir)
@@ -170,25 +167,37 @@ export function SubmitPage() {
         <span className="text-ascb-orange font-semibold">{department}</span>
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6">
-        {services.map(svc => {
-          const selected = serviceCategory === svc.label
-          return (
-            <button
-              key={svc.label}
-              type="button"
-              onClick={() => setService(svc.label)}
-              className={`flex flex-col items-center text-center gap-2 p-3 rounded-xl border transition-all duration-150 active:scale-95 ${
-                selected
-                  ? 'border-ascb-orange bg-ascb-orange/12 text-ascb-orange shadow-md shadow-ascb-orange/15'
-                  : 'border-white/10 bg-white/3 text-gray-400 hover:border-ascb-orange/30 hover:text-white hover:bg-white/6'
-              }`}
-            >
-              <span className={`transition-colors ${selected ? 'text-ascb-orange' : 'text-gray-500'}`}>{svc.icon}</span>
-              <span className="text-xs font-ui font-medium leading-tight">{svc.label}</span>
-              {selected && <Check size={10} className="text-ascb-orange" />}
-            </button>
-          )
-        })}
+        {servicesLoading ? (
+          [...Array(6)].map((_, i) => (
+            <div key={i} className="h-20 rounded-xl border border-white/10 bg-white/3 animate-pulse" />
+          ))
+        ) : services.length === 0 ? (
+          <p className="col-span-2 sm:col-span-3 text-center text-sm text-gray-500 font-ui py-8">
+            No services available for this office yet.
+          </p>
+        ) : (
+          services.map(svc => {
+            const selected = serviceCategory === svc.label
+            return (
+              <button
+                key={svc.id}
+                type="button"
+                onClick={() => setService(svc.label)}
+                className={`flex flex-col items-center text-center gap-2 p-3 rounded-xl border transition-all duration-150 active:scale-95 ${
+                  selected
+                    ? 'border-ascb-orange bg-ascb-orange/12 text-ascb-orange shadow-md shadow-ascb-orange/15'
+                    : 'border-white/10 bg-white/3 text-gray-400 hover:border-ascb-orange/30 hover:text-white hover:bg-white/6'
+                }`}
+              >
+                <span className={`transition-colors ${selected ? 'text-ascb-orange' : 'text-gray-500'}`}>
+                  <ServiceIcon name={svc.icon_name} size={16} />
+                </span>
+                <span className="text-xs font-ui font-medium leading-tight">{svc.label}</span>
+                {selected && <Check size={10} className="text-ascb-orange" />}
+              </button>
+            )
+          })
+        )}
       </div>
       <div className="flex gap-3">
         <button
