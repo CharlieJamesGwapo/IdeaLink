@@ -227,10 +227,15 @@ export function HomePage() {
                   </div>
                   <p className="text-white text-sm font-semibold font-ui mt-2">{s.department}</p>
                   <p className="text-[11px] text-gray-300/80 font-ui mt-0.5">
-                    Mon–Fri · {formatHour(s.open_hour)} – {formatHour(s.close_hour)}
+                    {(() => {
+                      const wd = new Date().getDay()
+                      const day = s.schedule.find(d => d.weekday === wd)
+                      if (!day || day.is_closed) return 'Closed today'
+                      return `${formatHour(day.open_hour)} – ${formatHour(day.close_hour)}`
+                    })()}
                   </p>
-                  {!s.is_open && s.closure_reason && (
-                    <p className="text-[11px] text-red-200 font-body mt-1 line-clamp-2">{s.closure_reason}</p>
+                  {!s.is_open && s.active_closure?.reason && (
+                    <p className="text-[11px] text-red-200 font-body mt-1 line-clamp-2">{s.active_closure.reason}</p>
                   )}
                 </div>
               ))}

@@ -6,10 +6,20 @@ import type { OfficeHoursStatus } from '../../types'
 interface Props { department: string }
 
 function formatHour(h: number): string {
-  if (h === 24) return '12:00 AM'
+  if (h === 0 || h === 24) return '12:00 AM'
   const suffix = h >= 12 ? 'PM' : 'AM'
   const display = h % 12 === 0 ? 12 : h % 12
   return `${display}:00 ${suffix}`
+}
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function todayHoursLabel(status: OfficeHoursStatus): string {
+  const now = new Date()
+  const wd = now.getDay() // 0=Sun..6=Sat
+  const today = status.schedule.find(d => d.weekday === wd)
+  if (!today || today.is_closed) return `${DAY_LABELS[wd]} · Closed today`
+  return `${DAY_LABELS[wd]} · ${formatHour(today.open_hour)} – ${formatHour(today.close_hour)}`
 }
 
 export function OfficeHoursBanner({ department }: Props) {
@@ -31,7 +41,6 @@ export function OfficeHoursBanner({ department }: Props) {
   if (!status) return null
 
   const isOpen = status.is_open
-  const hoursLabel = `Mon–Fri  ${formatHour(status.open_hour)} – ${formatHour(status.close_hour)}`
 
   return (
     <div className={`flex items-start gap-3 p-4 rounded-xl border mb-2 transition-all duration-300 ${
@@ -39,7 +48,6 @@ export function OfficeHoursBanner({ department }: Props) {
     }`}>
       <div className="shrink-0 mt-0.5">
         {isOpen ? (
-          /* Animated pulse dot for open state */
           <span className="relative flex h-4 w-4 items-center justify-center mt-0.5">
             <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-40 animate-ping" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-400" />
@@ -55,16 +63,16 @@ export function OfficeHoursBanner({ department }: Props) {
           </span>
           <span className="text-sm font-medium text-white font-ui">{department}</span>
           <span className="text-xs text-gray-400 flex items-center gap-1 font-ui">
-            <Clock size={11} /> {hoursLabel}
+            <Clock size={11} /> {todayHoursLabel(status)}
           </span>
         </div>
-        {!isOpen && status.closure_reason && (
-          <p className="text-sm text-red-300 mt-1 font-body">{status.closure_reason}</p>
+        {!isOpen && status.active_closure?.reason && (
+          <p className="text-sm text-red-300 mt-1 font-body">{status.active_closure.reason}</p>
         )}
-        {!isOpen && status.closed_until && (
+        {!isOpen && status.active_closure?.end_at && (
           <p className="text-xs text-gray-400 mt-0.5 font-ui">
             Expected reopen:{' '}
-            {new Date(status.closed_until).toLocaleString('en-PH', {
+            {new Date(status.active_closure.end_at).toLocaleString('en-PH', {
               weekday: 'short', month: 'short', day: 'numeric',
               hour: 'numeric', minute: '2-digit',
             })}
