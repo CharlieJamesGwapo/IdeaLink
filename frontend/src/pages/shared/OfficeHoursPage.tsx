@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { Clock, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { createClosure, getOfficeHours, putSchedule } from '../../api/officeHours'
-import type { DaySchedule, OfficeHoursStatus } from '../../types'
+import { cancelClosure, createClosure, getOfficeHours, listClosures, putSchedule } from '../../api/officeHours'
+import type { Closure, DaySchedule, OfficeHoursStatus } from '../../types'
 
 interface Props {
   office: 'Registrar Office' | 'Finance Office'
@@ -18,6 +18,11 @@ export function OfficeHoursPage({ office }: Props) {
   const [closureTo,   setClosureTo]   = useState('')
   const [closureReason, setClosureReason] = useState('')
   const [creatingClosure, setCreatingClosure] = useState(false)
+  const [pastClosures, setPastClosures] = useState<Closure[]>([])
+  const [pastOffset,   setPastOffset]   = useState(0)
+  const [pastHasMore,  setPastHasMore]  = useState(false)
+  const [pastLoading,  setPastLoading]  = useState(false)
+  const [cancellingId, setCancellingId] = useState<number | null>(null)
 
   const reload = async () => {
     try {
@@ -99,6 +104,7 @@ export function OfficeHoursPage({ office }: Props) {
       setClosureFrom(from)
       setClosureTo(to)
       reload()
+      fetchPast(0, false)
     } catch (err) {
       toast.error(axios.isAxiosError(err) ? (err.response?.data?.error ?? 'Could not schedule closure') : 'Something went wrong')
     } finally {
@@ -106,7 +112,48 @@ export function OfficeHoursPage({ office }: Props) {
     }
   }
 
+  const PAST_PAGE_SIZE = 20
+
+  const fetchPast = async (offset = 0, append = false) => {
+    setPastLoading(true)
+    try {
+      const res = await listClosures(office, 'past', PAST_PAGE_SIZE, offset)
+      const next = res.data.closures
+      setPastClosures(append ? [...pastClosures, ...next] : next)
+      setPastHasMore(next.length === PAST_PAGE_SIZE)
+      setPastOffset(offset + next.length)
+    } catch {
+      toast.error('Could not load past closures')
+    } finally {
+      setPastLoading(false)
+    }
+  }
+
+  const handleCancel = async (id: number) => {
+    setCancellingId(id)
+    try {
+      await cancelClosure(office, id)
+      toast.success('Closure cancelled')
+      reload()
+      fetchPast(0, false)
+    } catch (err) {
+      toast.error(axios.isAxiosError(err) ? (err.response?.data?.error ?? 'Could not cancel closure') : 'Something went wrong')
+    } finally {
+      setCancellingId(null)
+    }
+  }
+
+  const fmtRange = (start: string, end: string) => {
+    const fmt = (s: string) => new Date(s).toLocaleString('en-PH', {
+      weekday: 'short', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit',
+    })
+    return `${fmt(start)} → ${fmt(end)}`
+  }
+
   useEffect(() => { reload() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [office])
+
+  useEffect(() => { fetchPast(0, false) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [office])
 
   useEffect(() => {
     const { from, to } = todayBounds()
@@ -247,7 +294,92 @@ export function OfficeHoursPage({ office }: Props) {
           {creatingClosure ? 'Scheduling…' : 'Schedule closure'}
         </button>
       </section>
-      {/* Card 3 — Closures Timeline (Task 14) */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 md:p-6 space-y-4">
+        <h2 className="text-base font-semibold text-white font-ui">Closures</h2>
+
+        {/* Active */}
+        {status.active_closure && (
+          <div>
+            <h3 className="text-xs uppercase text-red-300 tracking-widest font-ui mb-2">Active</h3>
+            <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 flex items-start gap-3">
+              <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-red-200 font-ui mb-0.5">Happening now</p>
+                <p className="text-sm text-white font-ui">{fmtRange(status.active_closure.start_at, status.active_closure.end_at)}</p>
+                {status.active_closure.reason && (
+                  <p className="text-xs text-gray-300 mt-1 font-body">{status.active_closure.reason}</p>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={cancellingId === status.active_closure.id}
+                onClick={() => handleCancel(status.active_closure!.id)}
+                className="h-8 px-3 rounded-lg text-xs font-semibold text-white bg-red-600 hover:bg-red-500 disabled:opacity-50"
+              >
+                {cancellingId === status.active_closure.id ? 'Cancelling…' : 'Cancel closure'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming */}
+        {status.upcoming_closures.length > 0 && (
+          <div>
+            <h3 className="text-xs uppercase text-yellow-300 tracking-widest font-ui mb-2">Upcoming</h3>
+            <div className="space-y-2">
+              {status.upcoming_closures.map(c => (
+                <div key={c.id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3 flex items-start gap-3">
+                  <Clock size={14} className="text-yellow-300 mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white font-ui">{fmtRange(c.start_at, c.end_at)}</p>
+                    {c.reason && <p className="text-xs text-gray-400 mt-0.5 font-body">{c.reason}</p>}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={cancellingId === c.id}
+                    onClick={() => handleCancel(c.id)}
+                    className="h-7 px-2.5 rounded-lg text-[11px] font-semibold text-gray-200 bg-white/8 hover:bg-white/15 disabled:opacity-50"
+                  >
+                    {cancellingId === c.id ? 'Cancelling…' : 'Cancel'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past */}
+        <div>
+          <h3 className="text-xs uppercase text-gray-500 tracking-widest font-ui mb-2">Past</h3>
+          {pastClosures.length === 0 && !pastLoading && (
+            <p className="text-xs text-gray-500 font-ui">No past closures.</p>
+          )}
+          <div className="space-y-2">
+            {pastClosures.map(c => (
+              <div key={c.id} className="rounded-xl border border-white/8 bg-white/[0.02] p-3 flex items-start gap-3 opacity-80">
+                <Clock size={14} className="text-gray-500 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-200 font-ui">{fmtRange(c.start_at, c.end_at)}</p>
+                  {c.reason && <p className="text-xs text-gray-400 mt-0.5 font-body">{c.reason}</p>}
+                </div>
+                {c.cancelled_at && (
+                  <span className="text-[10px] text-gray-500 font-ui uppercase tracking-widest mt-1">cancelled</span>
+                )}
+              </div>
+            ))}
+          </div>
+          {pastHasMore && (
+            <button
+              type="button"
+              disabled={pastLoading}
+              onClick={() => fetchPast(pastOffset, true)}
+              className="mt-3 text-xs font-ui text-ascb-orange hover:underline disabled:opacity-50"
+            >
+              {pastLoading ? 'Loading…' : 'Show more'}
+            </button>
+          )}
+        </div>
+      </section>
     </div>
   )
 }
