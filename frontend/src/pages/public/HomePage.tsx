@@ -529,7 +529,7 @@ export function HomePage() {
               <div className="space-y-1.5 text-gray-300 text-sm font-body">
                 <p>Bislig City, Surigao del Sur</p>
                 <p>Philippines</p>
-                <p className="text-ascb-orange font-medium">info@ascb.edu.ph</p>
+                <p className="text-ascb-orange font-medium">Tel No. 086 853 2306</p>
               </div>
             </div>
           </div>
