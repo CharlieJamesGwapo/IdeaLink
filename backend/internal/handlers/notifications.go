@@ -40,3 +40,30 @@ func (h *NotificationsHandler) UnreadCount(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"count": count})
 }
+
+// POST /api/notifications/mark-all-read — Facebook-style "clear the badge"
+// when staff clicks the bell. Scope follows the same rule as UnreadCount:
+// registrar clears Registrar Office, accounting clears Finance Office,
+// admin clears every office.
+func (h *NotificationsHandler) MarkAllRead(c *gin.Context) {
+	roleVal, _ := c.Get(middleware.CtxKeyRole)
+	roleStr, _ := roleVal.(string)
+
+	var marked int
+	var err error
+
+	switch roleStr {
+	case "registrar":
+		marked, err = h.suggestionRepo.MarkAllAsReadByDepartment("Registrar Office")
+	case "accounting":
+		marked, err = h.suggestionRepo.MarkAllAsReadByDepartment("Finance Office")
+	default:
+		marked, err = h.suggestionRepo.MarkAllAsRead()
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"marked": marked})
+}

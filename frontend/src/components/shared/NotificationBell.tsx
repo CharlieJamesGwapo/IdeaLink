@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Bell } from 'lucide-react'
-import { getUnreadCount } from '../../api/notifications'
+import { getUnreadCount, markAllNotificationsRead } from '../../api/notifications'
 import { useAuth } from '../../hooks/useAuth'
 import { useGlobalPoll } from '../../hooks/useGlobalPoll'
 
@@ -29,6 +29,21 @@ export function NotificationBell({ onClick }: Props) {
 
   useGlobalPoll(fetch, Boolean(role) && role !== 'user')
 
+  // Facebook-style: clicking the bell clears the badge for everything the
+  // current role can see, then runs the parent's onClick (typically a
+  // navigate to the feedback list). Optimistic — set count to 0 immediately
+  // so the badge disappears even before the server responds.
+  const handleClick = () => {
+    if (count > 0) {
+      setCount(0)
+      markAllNotificationsRead().catch(() => {
+        // server failed — re-fetch the real count so we don't lie to the user
+        fetch()
+      })
+    }
+    onClick?.()
+  }
+
   if (!role || role === 'user') return null
 
   const label = count > 0
@@ -37,7 +52,7 @@ export function NotificationBell({ onClick }: Props) {
 
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
       aria-label={label}
       title={label}

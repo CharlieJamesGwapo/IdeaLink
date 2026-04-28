@@ -68,25 +68,55 @@ export function RatingsPanel({ department }: Props) {
       )}
 
       {filtered.length > 0 && (
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-          {filtered.map(g => (
-            <li
-              key={`${g.department}-${g.category}`}
-              className="rounded-lg border border-white/6 bg-ascb-navy-dark/50 p-2.5 flex flex-col justify-between aspect-square min-h-[96px]"
-            >
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold text-white font-ui leading-tight line-clamp-2">{g.category}</p>
-                {!department && <p className="text-[9px] text-gray-500 font-ui mt-0.5 truncate">{g.department}</p>}
-              </div>
-              <div className="flex items-center justify-between gap-1 mt-1">
-                <div className="flex items-center gap-1">
-                  <Star size={11} className="text-ascb-gold" fill="currentColor" />
-                  <span className="text-sm font-bold text-ascb-gold font-ui tabular-nums leading-none">{g.average.toFixed(1)}</span>
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          {filtered.map(g => {
+            // Bars are 5★ → 1★ (top to bottom). Width is proportional to the
+            // bucket's share of the busiest bucket — so the mode fills the
+            // bar and the rest scale down for visual contrast.
+            const buckets: Array<1 | 2 | 3 | 4 | 5> = [5, 4, 3, 2, 1]
+            const counts = buckets.map(n => g.breakdown?.[String(n) as '1' | '2' | '3' | '4' | '5'] ?? 0)
+            const max = Math.max(1, ...counts)
+            return (
+              <li
+                key={`${g.department}-${g.category}`}
+                className="rounded-lg border border-white/6 bg-ascb-navy-dark/50 p-3 flex flex-col gap-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-white font-ui leading-tight line-clamp-2">{g.category}</p>
+                  {!department && <p className="text-[9px] text-gray-500 font-ui mt-0.5 truncate">{g.department}</p>}
                 </div>
-                <span className="text-[10px] text-gray-500 font-ui tabular-nums">{g.count}</span>
-              </div>
-            </li>
-          ))}
+
+                {/* Horizontal-bar rating distribution (5★ → 1★). */}
+                <div className="space-y-1 flex-1">
+                  {buckets.map((n, i) => {
+                    const c = counts[i]
+                    const pct = (c / max) * 100
+                    return (
+                      <div key={n} className="flex items-center gap-1.5 text-[10px] font-ui">
+                        <span className="w-3 text-right text-gray-500 tabular-nums">{n}</span>
+                        <Star size={8} className="text-ascb-gold/60 shrink-0" fill="currentColor" />
+                        <div className="flex-1 h-2 rounded-sm bg-white/5 overflow-hidden">
+                          <div
+                            className="h-full rounded-sm bg-ascb-gold/80"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="w-4 text-right text-gray-500 tabular-nums">{c}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-white/5">
+                  <div className="flex items-center gap-1">
+                    <Star size={11} className="text-ascb-gold" fill="currentColor" />
+                    <span className="text-sm font-bold text-ascb-gold font-ui tabular-nums leading-none">{g.average.toFixed(1)}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-500 font-ui tabular-nums">{g.count} rated</span>
+                </div>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>

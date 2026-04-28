@@ -167,6 +167,37 @@ func (r *SuggestionRepo) MarkAsRead(id int) error {
 	return err
 }
 
+// MarkAllAsRead clears the unread badge for every non-deleted suggestion.
+// Returns the number of rows that flipped from unread → read so the caller
+// can surface "marked N as read" feedback. Used by admin's bell click.
+func (r *SuggestionRepo) MarkAllAsRead() (int, error) {
+	res, err := r.db.Exec(
+		`UPDATE suggestions SET is_read = TRUE
+		 WHERE is_read = FALSE AND deleted_at IS NULL`,
+	)
+	if err != nil {
+		return 0, err
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
+
+// MarkAllAsReadByDepartment is the staff-scoped version: registrar/finance
+// only mark their own office's suggestions as read so they don't accidentally
+// clear the other office's badges.
+func (r *SuggestionRepo) MarkAllAsReadByDepartment(department string) (int, error) {
+	res, err := r.db.Exec(
+		`UPDATE suggestions SET is_read = TRUE
+		 WHERE is_read = FALSE AND deleted_at IS NULL AND department = $1`,
+		department,
+	)
+	if err != nil {
+		return 0, err
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
+
 // MarkStatusSeenByUser clears the unread-status-change badge for all of a
 // user's own suggestions. Call this when the user opens "My Submissions".
 func (r *SuggestionRepo) MarkStatusSeenByUser(userID int) error {

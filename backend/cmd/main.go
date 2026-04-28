@@ -130,6 +130,7 @@ func main() {
 			authenticated.GET("/suggestions/:id/attachments", suggestionH.ListAttachments)
 			authenticated.GET("/suggestions/:id/attachments/:aid", suggestionH.DownloadAttachment)
 			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)
+			authenticated.POST("/notifications/mark-all-read", notificationsH.MarkAllRead)
 			authenticated.GET("/announcements/unread-count", announcementH.UnreadCount)
 			authenticated.POST("/announcements/mark-seen", announcementH.MarkSeen)
 			authenticated.GET("/services", servicesH.List)

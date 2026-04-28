@@ -28,6 +28,8 @@ type SuggestionRepository interface {
 	FindByID(id int) (*models.Suggestion, error)
 	UpdateStatus(id int, status string) error
 	MarkAsRead(id int) error
+	MarkAllAsRead() (int, error)
+	MarkAllAsReadByDepartment(department string) (int, error)
 	MarkStatusSeenByUser(userID int) error
 	CountStatusUnreadByUser(userID int) (int, error)
 	CountUnread() (int, error)
