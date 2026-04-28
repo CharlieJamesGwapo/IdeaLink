@@ -17,6 +17,7 @@ type Suggestion struct {
 	StatusSeenByUser  bool      `json:"status_seen_by_user"`
 	SubmittedAt       time.Time `json:"submitted_at"`
 	SubmitterName     string    `json:"submitter_name,omitempty"`
+	AttachmentCount   int       `json:"attachment_count"`
 }
 
 type CreateSuggestionInput struct {

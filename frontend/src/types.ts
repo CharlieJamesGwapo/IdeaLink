@@ -38,6 +38,7 @@ export interface Suggestion {
   status_seen_by_user?: boolean
   submitted_at: string
   submitter_name?: string
+  attachment_count?: number
 }
 
 export interface Announcement {

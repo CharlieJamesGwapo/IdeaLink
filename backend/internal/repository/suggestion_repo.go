@@ -17,9 +17,15 @@ func NewSuggestionRepo(db *sql.DB) *SuggestionRepo {
 
 const selectSuggestions = `
 	SELECT s.id, s.user_id, s.department, COALESCE(s.service_category,''), s.user_role, s.title, s.description,
-	       s.status, s.rating, s.anonymous, s.is_read, s.status_seen_by_user, s.submitted_at, u.fullname
+	       s.status, s.rating, s.anonymous, s.is_read, s.status_seen_by_user, s.submitted_at, u.fullname,
+	       COALESCE(att.cnt, 0) AS attachment_count
 	FROM suggestions s
-	LEFT JOIN users u ON s.user_id = u.id `
+	LEFT JOIN users u ON s.user_id = u.id
+	LEFT JOIN (
+	  SELECT suggestion_id, COUNT(*) AS cnt
+	  FROM suggestion_attachments
+	  GROUP BY suggestion_id
+	) att ON att.suggestion_id = s.id `
 
 func (r *SuggestionRepo) scanRows(rows *sql.Rows) ([]*models.Suggestion, error) {
 	var suggestions []*models.Suggestion
@@ -29,7 +35,7 @@ func (r *SuggestionRepo) scanRows(rows *sql.Rows) ([]*models.Suggestion, error) 
 		var submitterName sql.NullString
 		var rating sql.NullInt16
 		err := rows.Scan(&s.ID, &s.UserID, &s.Department, &s.ServiceCategory, &userRole, &s.Title,
-			&s.Description, &s.Status, &rating, &s.Anonymous, &s.IsRead, &s.StatusSeenByUser, &s.SubmittedAt, &submitterName)
+			&s.Description, &s.Status, &rating, &s.Anonymous, &s.IsRead, &s.StatusSeenByUser, &s.SubmittedAt, &submitterName, &s.AttachmentCount)
 		if err != nil {
 			return nil, err
 		}
@@ -54,7 +60,7 @@ func (r *SuggestionRepo) scanRow(row *sql.Row) (*models.Suggestion, error) {
 	var submitterName sql.NullString
 	var rating sql.NullInt16
 	err := row.Scan(&s.ID, &s.UserID, &s.Department, &s.ServiceCategory, &userRole, &s.Title,
-		&s.Description, &s.Status, &rating, &s.Anonymous, &s.IsRead, &s.StatusSeenByUser, &s.SubmittedAt, &submitterName)
+		&s.Description, &s.Status, &rating, &s.Anonymous, &s.IsRead, &s.StatusSeenByUser, &s.SubmittedAt, &submitterName, &s.AttachmentCount)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

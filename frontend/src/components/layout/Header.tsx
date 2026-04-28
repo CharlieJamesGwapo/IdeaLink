@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 const HOME_ANCHORS = [
   { id: 'about',          label: 'About' },
   { id: 'foundation',     label: 'Foundation' },
-  { id: 'values',         label: 'Values' },
+  { id: 'values',         label: 'Core Values' },
   { id: 'goals',          label: 'Goals' },
   { id: 'how-it-works',   label: 'How It Works' },
   { id: 'announcements',  label: 'Announcements' },

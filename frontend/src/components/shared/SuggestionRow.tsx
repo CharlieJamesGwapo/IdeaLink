@@ -71,13 +71,23 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
         <td className="px-4 py-3 max-w-[260px]">
           <div className="flex items-start gap-1.5">
             <div className="flex-1 min-w-0">
-              <button
-                type="button"
-                onClick={() => openDetail()}
-                className="text-left text-sm text-white font-medium font-ui leading-snug line-clamp-1 hover:text-ascb-orange transition-colors"
-              >
-                {suggestion.title}
-              </button>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => openDetail()}
+                  className="text-left text-sm text-white font-medium font-ui leading-snug line-clamp-1 hover:text-ascb-orange transition-colors"
+                >
+                  {suggestion.title}
+                </button>
+                {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
+                  <span
+                    className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-ascb-orange/10 border border-ascb-orange/30 text-ascb-orange font-ui font-semibold"
+                    title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
+                  >
+                    <Paperclip size={9} /> {suggestion.attachment_count}
+                  </span>
+                )}
+              </div>
               {suggestion.service_category && (
                 <span className="text-xs text-ascb-gold/70 mt-0.5 block truncate font-ui">{suggestion.service_category}</span>
               )}
@@ -162,6 +172,14 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
               <span className="px-2 py-0.5 rounded-md bg-ascb-navy-dark border border-white/10 text-gray-400">
                 {suggestion.department}
               </span>
+              {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
+                <span
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-ascb-orange/10 border border-ascb-orange/30 text-ascb-orange font-semibold"
+                  title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
+                >
+                  <Paperclip size={10} /> {suggestion.attachment_count}
+                </span>
+              )}
               <span>{name}</span>
               <span className="ml-auto">{date}</span>
             </div>
