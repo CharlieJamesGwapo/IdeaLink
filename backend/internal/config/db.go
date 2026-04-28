@@ -71,5 +71,8 @@ func runMigrations(db *sql.DB) {
 	if _, err := db.Exec(migrations.ServicesSQL); err != nil {
 		log.Fatalf("failed to run services migration: %v", err)
 	}
+	if _, err := db.Exec(migrations.OfficeHoursV2SQL); err != nil {
+		log.Fatalf("failed to run office_hours_v2 migration: %v", err)
+	}
 	log.Println("Migrations applied")
 }

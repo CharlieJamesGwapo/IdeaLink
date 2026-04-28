@@ -46,3 +46,6 @@ var UserGradeLevelSQL string
 
 //go:embed 015_services.sql
 var ServicesSQL string
+
+//go:embed 016_office_hours_v2.sql
+var OfficeHoursV2SQL string
