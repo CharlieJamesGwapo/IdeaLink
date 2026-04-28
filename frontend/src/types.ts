@@ -73,12 +73,29 @@ export interface Analytics {
   by_category_accounting: { category: string; count: number }[]
 }
 
-export interface OfficeHoursStatus {
-  department: string
+export interface DaySchedule {
+  weekday: number       // 0=Sun..6=Sat
   open_hour: number
   close_hour: number
+  is_closed: boolean
+}
+
+export interface Closure {
+  id: number
+  start_at: string      // ISO timestamp
+  end_at: string
+  reason?: string | null
+  cancelled_at?: string | null
+  created_by_id?: number | null
+  created_at: string
+}
+
+export interface OfficeHoursStatus {
+  department: string
   is_open: boolean
-  closure_reason?: string
-  closed_until?: string
-  updated_at?: string
+  status_message: string
+  schedule: DaySchedule[]
+  active_closure: Closure | null
+  upcoming_closures: Closure[]
+  updated_at: string
 }
