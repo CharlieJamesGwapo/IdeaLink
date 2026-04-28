@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare, Megaphone, Star, UserPlus, LogOut, X, Menu } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Megaphone, Star, UserPlus, LogOut, X, Menu, Clock } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { useAuth } from '../../hooks/useAuth'
 import { logout } from '../../api/auth'
@@ -13,11 +13,13 @@ const navItems = [
   { to: '/admin/announcements',  icon: Megaphone,       label: 'Announcements', roles: ['admin'] },
   { to: '/admin/testimonials',   icon: Star,            label: 'Testimonials',  roles: ['admin'] },
   { to: '/admin/users',          icon: UserPlus,        label: 'Users',         roles: ['admin'] },
-  { to: '/registrar/dashboard',  icon: LayoutDashboard, label: 'Dashboard',     roles: ['registrar'] },
-  { to: '/registrar/suggestions',icon: MessageSquare,   label: 'Feedback',      roles: ['registrar'] },
-  { to: '/registrar/users',      icon: UserPlus,        label: 'Users',         roles: ['registrar'] },
-  { to: '/accounting/dashboard', icon: LayoutDashboard, label: 'Dashboard',     roles: ['accounting'] },
-  { to: '/accounting/suggestions',icon: MessageSquare,  label: 'Feedback',      roles: ['accounting'] },
+  { to: '/registrar/dashboard',     icon: LayoutDashboard, label: 'Dashboard',    roles: ['registrar'] },
+  { to: '/registrar/suggestions',   icon: MessageSquare,   label: 'Feedback',     roles: ['registrar'] },
+  { to: '/registrar/office-hours',  icon: Clock,           label: 'Office Hours', roles: ['registrar'] },
+  { to: '/registrar/users',         icon: UserPlus,        label: 'Users',        roles: ['registrar'] },
+  { to: '/accounting/dashboard',    icon: LayoutDashboard, label: 'Dashboard',    roles: ['accounting'] },
+  { to: '/accounting/suggestions',  icon: MessageSquare,   label: 'Feedback',     roles: ['accounting'] },
+  { to: '/accounting/office-hours', icon: Clock,           label: 'Office Hours', roles: ['accounting'] },
 ]
 
 const roleConfig: Record<string, { label: string; color: string; accent: string }> = {

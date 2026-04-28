@@ -5,6 +5,7 @@ import { Header } from './components/layout/Header'
 import { Footer } from './components/layout/Footer'
 import { Sidebar } from './components/layout/Sidebar'
 import { ErrorBoundary } from './components/shared/ErrorBoundary'
+import { OfficeHoursPage } from './pages/shared/OfficeHoursPage'
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────
 const HomePage           = lazy(() => import('./pages/public/HomePage').then(m => ({ default: m.HomePage })))
@@ -207,16 +208,18 @@ export function AppRouter() {
 
         <Route element={<RequireAuth role="registrar" />}>
           <Route element={<StaffLayout />}>
-            <Route path="/registrar/dashboard"   element={<RegistrarDashboard />} />
-            <Route path="/registrar/suggestions" element={<RegistrarSuggestions />} />
-            <Route path="/registrar/users"       element={<AdminUsers />} />
+            <Route path="/registrar/dashboard"    element={<RegistrarDashboard />} />
+            <Route path="/registrar/office-hours" element={<OfficeHoursPage office="Registrar Office" />} />
+            <Route path="/registrar/suggestions"  element={<RegistrarSuggestions />} />
+            <Route path="/registrar/users"        element={<AdminUsers />} />
           </Route>
         </Route>
 
         <Route element={<RequireAuth role="accounting" />}>
           <Route element={<StaffLayout />}>
-            <Route path="/accounting/dashboard"   element={<AccountingDashboard />} />
-            <Route path="/accounting/suggestions" element={<AccountingSuggestions />} />
+            <Route path="/accounting/dashboard"    element={<AccountingDashboard />} />
+            <Route path="/accounting/office-hours" element={<OfficeHoursPage office="Finance Office" />} />
+            <Route path="/accounting/suggestions"  element={<AccountingSuggestions />} />
           </Route>
         </Route>
 
