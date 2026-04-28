@@ -15,8 +15,8 @@ const HOME_ANCHORS = [
   { id: 'values',         label: 'Core Values' },
   { id: 'goals',          label: 'Goals' },
   { id: 'how-it-works',   label: 'How It Works' },
-  { id: 'announcements',  label: 'Announcements' },
   { id: 'testimonials',   label: 'Testimonials' },
+  { id: 'announcements',  label: 'Announcements' },
 ]
 
 export function Header() {

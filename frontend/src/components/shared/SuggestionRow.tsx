@@ -71,7 +71,7 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
         <td className="px-4 py-3 max-w-[260px]">
           <div className="flex items-start gap-1.5">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={() => openDetail()}
@@ -81,10 +81,10 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
                 </button>
                 {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
                   <span
-                    className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md bg-ascb-orange/10 border border-ascb-orange/30 text-ascb-orange font-ui font-semibold"
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-ascb-orange text-white font-ui font-bold shadow-sm shadow-ascb-orange/40"
                     title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
                   >
-                    <Paperclip size={9} /> {suggestion.attachment_count}
+                    <Paperclip size={11} strokeWidth={2.5} /> {suggestion.attachment_count}
                   </span>
                 )}
               </div>
@@ -174,10 +174,10 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
               </span>
               {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
                 <span
-                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-ascb-orange/10 border border-ascb-orange/30 text-ascb-orange font-semibold"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-ascb-orange text-white font-bold shadow-sm shadow-ascb-orange/40"
                   title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
                 >
-                  <Paperclip size={10} /> {suggestion.attachment_count}
+                  <Paperclip size={11} strokeWidth={2.5} /> {suggestion.attachment_count}
                 </span>
               )}
               <span>{name}</span>
