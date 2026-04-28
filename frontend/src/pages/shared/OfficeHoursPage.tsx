@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import axios from 'axios'
-import { getOfficeHours, putSchedule } from '../../api/officeHours'
+import { createClosure, getOfficeHours, putSchedule } from '../../api/officeHours'
 import type { DaySchedule, OfficeHoursStatus } from '../../types'
 
 interface Props {
@@ -14,6 +14,10 @@ export function OfficeHoursPage({ office }: Props) {
   const [loading, setLoading]   = useState(true)
   const [draftSchedule, setDraftSchedule] = useState<DaySchedule[] | null>(null)
   const [savingSchedule, setSavingSchedule] = useState(false)
+  const [closureFrom, setClosureFrom] = useState('')
+  const [closureTo,   setClosureTo]   = useState('')
+  const [closureReason, setClosureReason] = useState('')
+  const [creatingClosure, setCreatingClosure] = useState(false)
 
   const reload = async () => {
     try {
@@ -72,7 +76,43 @@ export function OfficeHoursPage({ office }: Props) {
     return `${display}:00 ${suffix}`
   }
 
+  const todayBounds = () => {
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+    return { from: `${date}T00:00`, to: `${date}T23:59` }
+  }
+
+  const submitClosure = async () => {
+    if (!closureFrom || !closureTo) { toast.error('Set both From and To'); return }
+    if (closureTo <= closureFrom)   { toast.error('To must be after From'); return }
+    setCreatingClosure(true)
+    try {
+      await createClosure(office, {
+        start_at: closureFrom,
+        end_at:   closureTo,
+        reason:   closureReason.trim() || undefined,
+      })
+      toast.success('Closure scheduled')
+      setClosureReason('')
+      const { from, to } = todayBounds()
+      setClosureFrom(from)
+      setClosureTo(to)
+      reload()
+    } catch (err) {
+      toast.error(axios.isAxiosError(err) ? (err.response?.data?.error ?? 'Could not schedule closure') : 'Something went wrong')
+    } finally {
+      setCreatingClosure(false)
+    }
+  }
+
   useEffect(() => { reload() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [office])
+
+  useEffect(() => {
+    const { from, to } = todayBounds()
+    setClosureFrom(from)
+    setClosureTo(to)
+  }, [])
 
   if (loading || !status) {
     return (
@@ -161,7 +201,52 @@ export function OfficeHoursPage({ office }: Props) {
         </div>
       </section>
 
-      {/* Card 2 — Schedule a Temporary Closure (Task 13) */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 md:p-6 space-y-4">
+        <h2 className="text-base font-semibold text-white font-ui">Schedule a Temporary Closure</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-gray-400 font-ui">From</label>
+            <input
+              type="datetime-local"
+              className="input-field h-11 w-full"
+              value={closureFrom}
+              onChange={e => setClosureFrom(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-gray-400 font-ui">To</label>
+            <input
+              type="datetime-local"
+              className="input-field h-11 w-full"
+              value={closureTo}
+              onChange={e => setClosureTo(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold text-gray-400 font-ui">Reason (optional)</label>
+          <textarea
+            className="input-field w-full pt-2 pb-2 min-h-[72px]"
+            maxLength={500}
+            value={closureReason}
+            onChange={e => setClosureReason(e.target.value)}
+            placeholder="Power outage, conference, etc."
+          />
+          <p className="text-[10px] text-gray-500 font-ui text-right">{closureReason.length}/500</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={submitClosure}
+          disabled={creatingClosure}
+          className="h-10 px-5 rounded-xl text-white font-semibold font-ui text-xs disabled:opacity-40"
+          style={{ background: 'linear-gradient(135deg, #F47C20 0%, #d4651a 100%)' }}
+        >
+          {creatingClosure ? 'Scheduling…' : 'Schedule closure'}
+        </button>
+      </section>
       {/* Card 3 — Closures Timeline (Task 14) */}
     </div>
   )
