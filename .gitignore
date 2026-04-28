@@ -27,3 +27,6 @@ Thumbs.db
 
 # Superpowers brainstorm artifacts (mockups, server state)
 .superpowers/
+
+# Git worktrees (subagent-driven development isolation)
+.worktrees/
