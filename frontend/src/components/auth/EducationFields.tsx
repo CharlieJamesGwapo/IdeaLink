@@ -1,11 +1,14 @@
 import type { EducationLevel, CollegeDepartment, GradeLevel } from '../../api/auth'
 
+// TVET removed from the picker per school request (2026-04-29). The
+// CollegeDepartment type still includes it so any pre-existing account
+// rows with department='TVET' continue to validate; new signups just
+// won't see it as an option.
 const DEPARTMENTS: { value: CollegeDepartment; label: string }[] = [
   { value: 'CCE', label: 'CCE — College of Computing Education' },
   { value: 'CTE', label: 'CTE — College of Teacher Education' },
   { value: 'CABE', label: 'CABE — College of Accountancy & Business Education' },
   { value: 'CCJE', label: 'CCJE — College of Criminal Justice Education' },
-  { value: 'TVET', label: 'TVET — Technical & Vocational Education' },
 ]
 
 const HS_GRADES: GradeLevel[]  = ['7', '8', '9', '10']

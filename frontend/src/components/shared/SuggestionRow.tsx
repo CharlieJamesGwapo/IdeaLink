@@ -79,12 +79,23 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
                 >
                   {suggestion.title}
                 </button>
-                {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
+                {/* Always-visible attachment indicator. Bright orange pill
+                    when files exist; subtle gray "0" when none — that way
+                    admin/staff can confirm at a glance whether an upload
+                    actually landed instead of guessing. */}
+                {(suggestion.attachment_count ?? 0) > 0 ? (
                   <span
                     className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-ascb-orange text-white font-ui font-bold shadow-sm shadow-ascb-orange/40"
                     title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
                   >
                     <Paperclip size={11} strokeWidth={2.5} /> {suggestion.attachment_count}
+                  </span>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full text-gray-600 font-ui"
+                    title="No files attached"
+                  >
+                    <Paperclip size={9} /> 0
                   </span>
                 )}
               </div>
@@ -172,12 +183,16 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
               <span className="px-2 py-0.5 rounded-md bg-ascb-navy-dark border border-white/10 text-gray-400">
                 {suggestion.department}
               </span>
-              {!!suggestion.attachment_count && suggestion.attachment_count > 0 && (
+              {(suggestion.attachment_count ?? 0) > 0 ? (
                 <span
                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-ascb-orange text-white font-bold shadow-sm shadow-ascb-orange/40"
                   title={`${suggestion.attachment_count} attached file${suggestion.attachment_count === 1 ? '' : 's'}`}
                 >
                   <Paperclip size={11} strokeWidth={2.5} /> {suggestion.attachment_count}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-gray-600" title="No files attached">
+                  <Paperclip size={9} /> 0
                 </span>
               )}
               <span>{name}</span>
