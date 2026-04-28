@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"time"
 
 	"idealink/internal/models"
@@ -59,6 +60,32 @@ type OfficeHoursRepository interface {
 	GetSchedule(officeHoursID int) ([]models.DaySchedule, error)
 	ReplaceSchedule(officeHoursID int, schedule []models.DaySchedule) error
 }
+
+type ClosureStatus string
+
+const (
+	ClosureStatusActive   ClosureStatus = "active"
+	ClosureStatusUpcoming ClosureStatus = "upcoming"
+	ClosureStatusPast     ClosureStatus = "past"
+	ClosureStatusAll      ClosureStatus = "all"
+)
+
+type OfficeHoursClosuresRepository interface {
+	Create(officeHoursID int, startAt, endAt time.Time, reason *string, createdByID *int) (*models.Closure, error)
+	List(officeHoursID int, status ClosureStatus, limit, offset int) ([]models.Closure, error)
+	GetActive(officeHoursID int, now time.Time) (*models.Closure, error)
+	GetUpcoming(officeHoursID int, now time.Time) ([]models.Closure, error)
+	FindByID(id int) (*models.Closure, error)
+	Cancel(id int, now time.Time) (*models.Closure, error)
+}
+
+// ErrClosureOverlap is returned by Create when the new range collides with
+// any non-cancelled closure on the same office (half-open intervals: end_at
+// touching another row's start_at is allowed).
+var ErrClosureOverlap = errors.New("closure overlaps with an existing closure")
+
+// ErrClosurePast is returned by Cancel when the closure has already ended.
+var ErrClosurePast = errors.New("closure is already past")
 
 type PasswordResetRepository interface {
 	Create(userID int, tokenHash string, expiresAt time.Time) error
