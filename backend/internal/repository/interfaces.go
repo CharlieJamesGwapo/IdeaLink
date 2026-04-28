@@ -52,8 +52,12 @@ type TestimonialRepository interface {
 }
 
 type OfficeHoursRepository interface {
+	// EnsureRow returns the office_hours row for a department, creating it on
+	// first call and seeding 7 default schedule rows (Mon-Fri 8-17, Sat/Sun closed).
+	EnsureRow(department string) (*models.OfficeHours, error)
 	GetByDepartment(department string) (*models.OfficeHours, error)
-	Update(department string, input models.SetOfficeHoursInput) (*models.OfficeHours, error)
+	GetSchedule(officeHoursID int) ([]models.DaySchedule, error)
+	ReplaceSchedule(officeHoursID int, schedule []models.DaySchedule) error
 }
 
 type PasswordResetRepository interface {

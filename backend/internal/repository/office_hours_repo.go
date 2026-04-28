@@ -3,11 +3,10 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"time"
-
-	"idealink/internal/models"
 
 	"github.com/lib/pq"
+
+	"idealink/internal/models"
 )
 
 type OfficeHoursRepo struct {
@@ -18,59 +17,9 @@ func NewOfficeHoursRepo(db *sql.DB) *OfficeHoursRepo {
 	return &OfficeHoursRepo{db: db}
 }
 
-func (r *OfficeHoursRepo) GetByDepartment(department string) (*models.OfficeHours, error) {
-	var oh models.OfficeHours
-	var closureReason sql.NullString
-	var closedUntil sql.NullTime
-	// Inline the literal (pq.QuoteLiteral is SQL-safe) instead of using $1.
-	// Parameterised reads against Render's pgbouncer intermittently surface
-	// `pq: unnamed prepared statement does not exist` when the pool
-	// reassigns backends between Parse and Execute. A simple-protocol query
-	// with no placeholders sidesteps the issue — this is the only public
-	// read on the homepage that relies on a bound parameter.
-	query := fmt.Sprintf(
-		`SELECT id, department, open_hour, close_hour, is_open, closure_reason, closed_until, updated_at
-		 FROM office_hours WHERE department = %s`,
-		pq.QuoteLiteral(department),
-	)
-	err := r.db.QueryRow(query).Scan(&oh.ID, &oh.Department, &oh.OpenHour, &oh.CloseHour, &oh.IsOpen, &closureReason, &closedUntil, &oh.UpdatedAt)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	if closureReason.Valid {
-		oh.ClosureReason = &closureReason.String
-	}
-	if closedUntil.Valid {
-		oh.ClosedUntil = &closedUntil.Time
-	}
-	return &oh, nil
-}
-
-// Update applies a partial change. Only non-nil fields are touched, so the
-// same endpoint can edit schedule, post a temporary closure, or clear one.
-func (r *OfficeHoursRepo) Update(department string, input models.SetOfficeHoursInput) (*models.OfficeHours, error) {
-	// Parse closed_until if provided. Accepts RFC3339 or HTML datetime-local.
-	var closedUntil *time.Time
-	if input.ClosedUntil != nil && *input.ClosedUntil != "" {
-		pht := time.FixedZone("PHT", 8*3600)
-		parsed := false
-		for _, layout := range []string{time.RFC3339, "2006-01-02T15:04"} {
-			t, err := time.ParseInLocation(layout, *input.ClosedUntil, pht)
-			if err == nil {
-				closedUntil = &t
-				parsed = true
-				break
-			}
-		}
-		if !parsed {
-			return nil, fmt.Errorf("invalid closed_until format; use RFC3339 or YYYY-MM-DDTHH:MM")
-		}
-	}
-
-	// Make sure a row exists for the department before we run partial updates.
+// EnsureRow returns the office_hours row for a department, creating it
+// (and seeding 7 schedule rows) on first call. Idempotent.
+func (r *OfficeHoursRepo) EnsureRow(department string) (*models.OfficeHours, error) {
 	if _, err := r.db.Exec(
 		`INSERT INTO office_hours (department) VALUES ($1) ON CONFLICT (department) DO NOTHING`,
 		department,
@@ -78,47 +27,102 @@ func (r *OfficeHoursRepo) Update(department string, input models.SetOfficeHoursI
 		return nil, err
 	}
 
-	if input.OpenHour != nil {
-		if *input.OpenHour < 0 || *input.OpenHour > 23 {
-			return nil, fmt.Errorf("open_hour must be 0-23")
-		}
-		if _, err := r.db.Exec(
-			`UPDATE office_hours SET open_hour = $1, updated_at = NOW() WHERE department = $2`,
-			*input.OpenHour, department,
-		); err != nil {
-			return nil, err
-		}
-	}
-	if input.CloseHour != nil {
-		if *input.CloseHour < 1 || *input.CloseHour > 24 {
-			return nil, fmt.Errorf("close_hour must be 1-24")
-		}
-		if _, err := r.db.Exec(
-			`UPDATE office_hours SET close_hour = $1, updated_at = NOW() WHERE department = $2`,
-			*input.CloseHour, department,
-		); err != nil {
-			return nil, err
-		}
-	}
-	if input.ClearClosure {
-		if _, err := r.db.Exec(
-			`UPDATE office_hours SET closure_reason = NULL, closed_until = NULL, updated_at = NOW() WHERE department = $1`,
-			department,
-		); err != nil {
-			return nil, err
-		}
-	} else if input.ClosureReason != nil || closedUntil != nil {
-		var reason *string
-		if input.ClosureReason != nil && *input.ClosureReason != "" {
-			reason = input.ClosureReason
-		}
-		if _, err := r.db.Exec(
-			`UPDATE office_hours SET closure_reason = $1, closed_until = $2, updated_at = NOW() WHERE department = $3`,
-			reason, closedUntil, department,
-		); err != nil {
-			return nil, err
-		}
+	// Seed schedule (idempotent — UNIQUE (office_hours_id, weekday) protects us).
+	if _, err := r.db.Exec(
+		`INSERT INTO office_hours_schedule (office_hours_id, weekday, open_hour, close_hour, is_closed)
+		 SELECT oh.id, w.weekday,
+		        CASE WHEN w.weekday BETWEEN 1 AND 5 THEN 8  ELSE 0 END,
+		        CASE WHEN w.weekday BETWEEN 1 AND 5 THEN 17 ELSE 1 END,
+		        w.weekday NOT BETWEEN 1 AND 5
+		 FROM office_hours oh
+		 CROSS JOIN (VALUES (0),(1),(2),(3),(4),(5),(6)) AS w(weekday)
+		 WHERE oh.department = $1
+		 ON CONFLICT (office_hours_id, weekday) DO NOTHING`,
+		department,
+	); err != nil {
+		return nil, err
 	}
 
 	return r.GetByDepartment(department)
+}
+
+// GetByDepartment uses an inlined literal to dodge Render's pgbouncer
+// "unnamed prepared statement" issue on simple-protocol reads from the
+// public homepage. See repository/suggestion_repo.go for the same pattern.
+func (r *OfficeHoursRepo) GetByDepartment(department string) (*models.OfficeHours, error) {
+	var oh models.OfficeHours
+	query := fmt.Sprintf(
+		`SELECT id, department, updated_at FROM office_hours WHERE department = %s`,
+		pq.QuoteLiteral(department),
+	)
+	err := r.db.QueryRow(query).Scan(&oh.ID, &oh.Department, &oh.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &oh, nil
+}
+
+func (r *OfficeHoursRepo) GetSchedule(officeHoursID int) ([]models.DaySchedule, error) {
+	rows, err := r.db.Query(
+		`SELECT weekday, open_hour, close_hour, is_closed
+		 FROM office_hours_schedule
+		 WHERE office_hours_id = $1
+		 ORDER BY weekday ASC`,
+		officeHoursID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make([]models.DaySchedule, 0, 7)
+	for rows.Next() {
+		var d models.DaySchedule
+		if err := rows.Scan(&d.Weekday, &d.OpenHour, &d.CloseHour, &d.IsClosed); err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, rows.Err()
+}
+
+// ReplaceSchedule writes exactly 7 rows for the office. Validation (7 entries,
+// no dup weekdays, open<close when not closed) is the caller's job — the SQL
+// CHECK constraints will reject violations as a backstop.
+func (r *OfficeHoursRepo) ReplaceSchedule(officeHoursID int, schedule []models.DaySchedule) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	for _, d := range schedule {
+		// Defensive defaults so closed rows still satisfy the table CHECK.
+		open, close := d.OpenHour, d.CloseHour
+		if d.IsClosed {
+			open, close = 0, 1
+		}
+		if _, err := tx.Exec(
+			`INSERT INTO office_hours_schedule (office_hours_id, weekday, open_hour, close_hour, is_closed)
+			 VALUES ($1, $2, $3, $4, $5)
+			 ON CONFLICT (office_hours_id, weekday)
+			 DO UPDATE SET open_hour = EXCLUDED.open_hour,
+			               close_hour = EXCLUDED.close_hour,
+			               is_closed = EXCLUDED.is_closed`,
+			officeHoursID, d.Weekday, open, close, d.IsClosed,
+		); err != nil {
+			return err
+		}
+	}
+
+	if _, err := tx.Exec(
+		`UPDATE office_hours SET updated_at = NOW() WHERE id = $1`,
+		officeHoursID,
+	); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
