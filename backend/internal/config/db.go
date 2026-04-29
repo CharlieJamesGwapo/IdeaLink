@@ -13,16 +13,18 @@ import (
 )
 
 func ConnectDB(databaseURL string) *sql.DB {
-	// Parse the URL with pgx and force simple query protocol. Extended protocol
-	// uses unnamed prepared statements that break behind transaction-mode
-	// poolers (Render/Neon/Supabase) — symptom: "unnamed prepared statement
-	// does not exist". Simple protocol sends statements as plain text with
-	// safely-escaped parameters, which is pooler-agnostic.
+	// Parse the URL with pgx and force exec mode. Default mode caches named
+	// prepared statements which break behind transaction-mode poolers
+	// (Render/Neon/Supabase) — symptom: "unnamed prepared statement does not
+	// exist". QueryExecModeExec sends Parse+Bind+Execute+Sync as one batch
+	// per query with no caching: pooler-safe AND keeps binary parameter
+	// encoding for bytea (file uploads). Simple protocol mode would force
+	// text-escaped hex for []byte, which corrupts file uploads.
 	cfg, err := pgx.ParseConfig(databaseURL)
 	if err != nil {
 		log.Fatalf("failed to parse DATABASE_URL: %v", err)
 	}
-	cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	cfg.DefaultQueryExecMode = pgx.QueryExecModeExec
 
 	db, err := sql.Open("pgx", stdlib.RegisterConnConfig(cfg))
 	if err != nil {
