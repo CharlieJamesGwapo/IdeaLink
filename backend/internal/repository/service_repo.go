@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"idealink/internal/models"
 )
@@ -99,8 +99,8 @@ func (r *ServiceRepo) Create(in models.CreateServiceInput) (*models.Service, err
 	)
 	s, err := scanService(row)
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, ErrServiceLabelConflict
 		}
 		return nil, err
@@ -154,8 +154,8 @@ func (r *ServiceRepo) Update(id int, in models.UpdateServiceInput) (*models.Serv
 		return nil, nil
 	}
 	if err != nil {
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return nil, ErrServiceLabelConflict
 		}
 		return nil, err

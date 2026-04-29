@@ -7,11 +7,24 @@ import (
 	"time"
 
 	"idealink/internal/migrations"
-	_ "github.com/lib/pq"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 func ConnectDB(databaseURL string) *sql.DB {
-	db, err := sql.Open("postgres", databaseURL)
+	// Parse the URL with pgx and force simple query protocol. Extended protocol
+	// uses unnamed prepared statements that break behind transaction-mode
+	// poolers (Render/Neon/Supabase) — symptom: "unnamed prepared statement
+	// does not exist". Simple protocol sends statements as plain text with
+	// safely-escaped parameters, which is pooler-agnostic.
+	cfg, err := pgx.ParseConfig(databaseURL)
+	if err != nil {
+		log.Fatalf("failed to parse DATABASE_URL: %v", err)
+	}
+	cfg.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	db, err := sql.Open("pgx", stdlib.RegisterConnConfig(cfg))
 	if err != nil {
 		log.Fatalf("failed to open DB: %v", err)
 	}

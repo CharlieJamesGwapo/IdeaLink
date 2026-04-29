@@ -2,9 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
-
-	"github.com/lib/pq"
 
 	"idealink/internal/models"
 )
@@ -46,16 +43,12 @@ func (r *OfficeHoursRepo) EnsureRow(department string) (*models.OfficeHours, err
 	return r.GetByDepartment(department)
 }
 
-// GetByDepartment uses an inlined literal to dodge Render's pgbouncer
-// "unnamed prepared statement" issue on simple-protocol reads from the
-// public homepage. See repository/suggestion_repo.go for the same pattern.
 func (r *OfficeHoursRepo) GetByDepartment(department string) (*models.OfficeHours, error) {
 	var oh models.OfficeHours
-	query := fmt.Sprintf(
-		`SELECT id, department, updated_at FROM office_hours WHERE department = %s`,
-		pq.QuoteLiteral(department),
-	)
-	err := r.db.QueryRow(query).Scan(&oh.ID, &oh.Department, &oh.UpdatedAt)
+	err := r.db.QueryRow(
+		`SELECT id, department, updated_at FROM office_hours WHERE department = $1`,
+		department,
+	).Scan(&oh.ID, &oh.Department, &oh.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
