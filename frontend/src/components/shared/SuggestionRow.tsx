@@ -281,26 +281,22 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
             </div>
           </div>
 
-          {/* Attachments (loaded lazily when modal opens). Always rendered so
-              admin/staff can confirm whether the user actually attached
-              anything — "No files attached" is informative, not noise. */}
-          <div>
-            <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
-              <Paperclip size={11} /> Attachments{attachments ? ` (${attachments.length})` : ''}
-            </p>
-            {attachments === null && (
+          {/* Attachments (loaded lazily when modal opens). Hidden entirely
+              when the suggestion has zero attachments — the row-level 0
+              badge already conveys that, no need to repeat it here. */}
+          {attachments === null && (
+            <div>
+              <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
+                <Paperclip size={11} /> Attachments
+              </p>
               <p className="text-xs text-gray-500 font-ui italic">Loading…</p>
-            )}
-            {attachments && attachments.length === 0 && (
-              <div className="flex items-center gap-2 text-xs text-gray-500 font-ui italic py-1">
-                <Paperclip size={12} className="opacity-50" />
-                No files attached.
-              </div>
-            )}
-          </div>
+            </div>
+          )}
           {attachments && attachments.length > 0 && (
             <div>
-              {/* per-attachment list rendered below the always-on header */}
+              <p className="text-[11px] uppercase tracking-wider text-gray-500 font-ui mb-1.5 flex items-center gap-1.5">
+                <Paperclip size={11} /> Attachments ({attachments.length})
+              </p>
               <ul className="space-y-1.5">
                 {attachments.map(att => {
                   const url = attachmentDownloadURL(suggestion.id, att.id)
