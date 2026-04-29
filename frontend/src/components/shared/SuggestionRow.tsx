@@ -292,9 +292,10 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
               <p className="text-xs text-gray-500 font-ui italic">Loading…</p>
             )}
             {attachments && attachments.length === 0 && (
-              <p className="text-xs text-gray-500 font-ui italic px-3 py-2 rounded-lg bg-white/[0.02] border border-white/8">
+              <div className="flex items-center gap-2 text-xs text-gray-500 font-ui italic py-1">
+                <Paperclip size={12} className="opacity-50" />
                 No files attached.
-              </p>
+              </div>
             )}
           </div>
           {attachments && attachments.length > 0 && (
