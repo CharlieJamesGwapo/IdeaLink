@@ -1,14 +1,27 @@
-import { useEffect, useState } from 'react'
-import { Eye, Trash2, Building2, Tag, User as UserIcon, Calendar, Star, Paperclip, FileText, Download } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { Eye, Trash2, Building2, Tag, User as UserIcon, Calendar, Star, Paperclip, FileText, Download, Upload } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 import {
   listSuggestionAttachments,
+  uploadSuggestionAttachment,
   attachmentDownloadURL,
   type SuggestionAttachment,
 } from '../../api/suggestions'
+import { useAuth } from '../../hooks/useAuth'
 import type { Suggestion } from '../../types'
+
+const MAX_ATTACHMENTS = 3
+const MAX_BYTES = 5 * 1024 * 1024
+const ALLOWED_MIMES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+])
 
 interface Props {
   suggestion: Suggestion
@@ -36,6 +49,10 @@ const nextBtnColor  = (s: string) =>
 export function SuggestionRow({ suggestion, showActions, showFeature, showDelete, viewer = 'staff', onStatusChange, onOpen, onFeature, onDelete }: Props) {
   const [detailOpen, setDetailOpen] = useState(false)
   const [attachments, setAttachments] = useState<SuggestionAttachment[] | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { role } = useAuth()
+  const canUpload = role === 'admin' || role === 'registrar' || role === 'accounting'
 
   // Load attachments lazily when the detail modal opens.
   useEffect(() => {
@@ -46,6 +63,56 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
       .catch(() => { if (!cancelled) setAttachments([]) })
     return () => { cancelled = true }
   }, [detailOpen, suggestion.id])
+
+  const handleUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const current = attachments?.length ?? 0
+    const remaining = MAX_ATTACHMENTS - current
+    if (remaining <= 0) {
+      toast.error(`Max ${MAX_ATTACHMENTS} files per feedback.`)
+      return
+    }
+    const picked = Array.from(files).slice(0, remaining)
+    if (files.length > remaining) {
+      toast.error(`Only ${remaining} more file${remaining === 1 ? '' : 's'} allowed.`)
+    }
+
+    const valid: File[] = []
+    for (const f of picked) {
+      if (!ALLOWED_MIMES.has(f.type)) {
+        toast.error(`${f.name}: only JPG / PNG / GIF / WebP / PDF allowed.`)
+        continue
+      }
+      if (f.size > MAX_BYTES) {
+        toast.error(`${f.name}: exceeds 5 MB limit.`)
+        continue
+      }
+      valid.push(f)
+    }
+    if (valid.length === 0) return
+
+    setUploading(true)
+    const uploaded: SuggestionAttachment[] = []
+    const failures: string[] = []
+    for (const file of valid) {
+      try {
+        const res = await uploadSuggestionAttachment(suggestion.id, file)
+        uploaded.push(res.data)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'upload failed'
+        failures.push(`${file.name}: ${msg}`)
+      }
+    }
+    if (uploaded.length > 0) {
+      setAttachments(prev => [...(prev ?? []), ...uploaded])
+      toast.success(`Uploaded ${uploaded.length} file${uploaded.length === 1 ? '' : 's'}.`)
+    }
+    if (failures.length > 0) {
+      toast.error(failures.join(', '))
+    }
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const handleDelete = () => {
     if (window.confirm(`Delete "${suggestion.title}"? This hides the feedback from all staff views.`)) {
@@ -295,6 +362,27 @@ export function SuggestionRow({ suggestion, showActions, showFeature, showDelete
               <p className="text-xs text-gray-500 font-ui italic px-3 py-2 rounded-lg bg-white/[0.02] border border-white/8">
                 No files attached.
               </p>
+            )}
+            {canUpload && attachments && attachments.length < MAX_ATTACHMENTS && (
+              <div className="mt-2">
+                <label className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border border-ascb-orange/40 text-ascb-orange hover:bg-ascb-orange/10 cursor-pointer font-ui transition-colors">
+                  <Upload size={13} />
+                  {uploading ? 'Uploading…' : 'Add file'}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={e => handleUpload(e.target.files)}
+                  />
+                </label>
+                <p className="text-[10px] text-gray-500 font-ui mt-1">
+                  JPG / PNG / GIF / WebP / PDF · up to 5 MB · {MAX_ATTACHMENTS - attachments.length} slot
+                  {MAX_ATTACHMENTS - attachments.length === 1 ? '' : 's'} left
+                </p>
+              </div>
             )}
           </div>
           {attachments && attachments.length > 0 && (
