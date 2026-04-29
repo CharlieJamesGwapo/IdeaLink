@@ -117,17 +117,16 @@ func main() {
 		user := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user"))
 		{
 			user.POST("/suggestions", suggestionH.Submit)
+			user.POST("/suggestions/:id/attachments", suggestionH.UploadAttachment)
 			user.GET("/submissions/status-unread-count", suggestionH.StatusUnreadCount)
 			user.POST("/submissions/mark-seen", suggestionH.MarkSubmissionsSeen)
 			user.GET("/submissions/weekly-usage", suggestionH.WeeklyUsage)
 		}
 
-		// Authenticated (all roles). Attachment upload is gated by
-		// canViewSuggestion in the handler — submitter or matching-office staff.
+		// Authenticated (all roles)
 		authenticated := api.Group("", middleware.AuthRequired(cfg.JWTSecret, "user", "admin", "registrar", "accounting"))
 		{
 			authenticated.GET("/suggestions", suggestionH.List)
-			authenticated.POST("/suggestions/:id/attachments", suggestionH.UploadAttachment)
 			authenticated.GET("/suggestions/:id/attachments", suggestionH.ListAttachments)
 			authenticated.GET("/suggestions/:id/attachments/:aid", suggestionH.DownloadAttachment)
 			authenticated.GET("/notifications/unread-count", notificationsH.UnreadCount)

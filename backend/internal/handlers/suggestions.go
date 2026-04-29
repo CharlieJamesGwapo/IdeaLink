@@ -201,17 +201,30 @@ func (h *SuggestionHandler) Delete(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// POST /api/suggestions/:id/attachments — submitter or staff of the matching
-// office may attach. Multipart field "file". Max 3 files per suggestion,
-// 5 MB each, image/jpeg|png|gif|webp or application/pdf only.
+// POST /api/suggestions/:id/attachments — user role, submitter-only.
+// Multipart field "file". Max 3 files per suggestion, 5 MB each,
+// image/jpeg|png|gif|webp or application/pdf only.
 func (h *SuggestionHandler) UploadAttachment(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	if ok, status, msg := h.canViewSuggestion(c, id); !ok {
-		c.JSON(status, gin.H{"error": msg})
+	userIDVal, _ := c.Get(middleware.CtxKeyUserID)
+	userID, _ := userIDVal.(int)
+
+	// Verify ownership — only the submitter can attach files.
+	suggestion, err := h.svc.FindByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if suggestion == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
+		return
+	}
+	if suggestion.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "you can only attach files to your own feedback"})
 		return
 	}
 
